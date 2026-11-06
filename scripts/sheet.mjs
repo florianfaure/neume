@@ -1,11 +1,11 @@
 // node scripts/sheet.mjs — la planche de contrôle : chaque icône à chaque taille, de 12 à 64.
-// Une page autonome (sheet/index.html) : les données et le code de rendu de src/render.js y sont
+// Une page autonome (sheet/index.html) : les données et le code de rendu de packages/svg/src/render.js y sont
 // recopiés tels quels, pour qu'elle s'ouvre sans serveur et montre exactement ce que le paquet rendra.
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { read } from "../src/io.js";
 
-const render = readFileSync(new URL("../src/render.js", import.meta.url), "utf8").replace(/^export /gm, "");
+const render = readFileSync(new URL("../packages/svg/src/render.js", import.meta.url), "utf8").replace(/^export /gm, "");
 const data = JSON.stringify({ grand: read("grand"), petit: read("petit") });
 
 const html = `<!doctype html>

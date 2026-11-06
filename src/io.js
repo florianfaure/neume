@@ -3,6 +3,10 @@
 // de fichier, pour que les diffs de PR se lisent comme des dessins.
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { unhex } from "../packages/svg/src/render.js";
+
+// unhex vit avec la règle de rendu (le paquet en a besoin) ; on la réexporte pour ingest.
+export { unhex };
 
 export const SETS = { grand: 12, petit: 8 };
 export const file = (set) => new URL(`../icons/${set}.json`, import.meta.url);
@@ -21,11 +25,6 @@ export function write(set, icons) {
 export function hex(rows) {
   const w = rows.length / 4;
   return rows.map((r) => parseInt(r.replace(/\./g, "0").replace(/#/g, "1"), 2).toString(16).padStart(w, "0")).join("");
-}
-export function unhex(h, n) {
-  const w = n / 4;
-  return Array.from({ length: n }, (_, y) =>
-    parseInt(h.slice(y * w, y * w + w), 16).toString(2).padStart(n, "0").replace(/0/g, ".").replace(/1/g, "#"));
 }
 export function digest({ offset, rows }) {
   let h = 0x811c9dc5;

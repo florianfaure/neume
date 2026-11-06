@@ -1,0 +1,23 @@
+{
+  "name": "@neume-icons/svg",
+  "version": "0.1.0",
+  "description": "Neume — a pixel icon set. Framework-agnostic core: sizing rule, SVG paths, icon data and prebuilt SVG files.",
+  "keywords": ["icons", "pixel", "pixel-art", "svg", "neume"],
+  "license": "MIT",
+  "author": "Florian Faure",
+  "homepage": "https://neume.dev",
+  "repository": { "type": "git", "url": "git+https://github.com/florianfaure/neume.git", "directory": "packages/svg" },
+  "publishConfig": { "access": "public" },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": { "types": "./src/index.d.ts", "default": "./src/index.js" },
+    "./render": { "types": "./src/render.d.ts", "default": "./src/render.js" },
+    "./data": { "types": "./src/data.d.ts", "default": "./src/data.js" },
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "files": ["src", "dist", "README.md", "LICENSE"]
+}
