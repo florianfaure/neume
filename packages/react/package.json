@@ -1,0 +1,23 @@
+{
+  "name": "@neume-icons/react",
+  "version": "0.1.0",
+  "description": "Neume — a pixel icon set as React components. One module per icon, tree-shakeable.",
+  "keywords": ["icons", "pixel", "pixel-art", "react", "svg", "neume"],
+  "license": "MIT",
+  "author": "Florian Faure",
+  "homepage": "https://neume.dev",
+  "repository": { "type": "git", "url": "git+https://github.com/florianfaure/neume.git", "directory": "packages/react" },
+  "publishConfig": { "access": "public" },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./icons/*": { "types": "./dist/icons/*.d.ts", "default": "./dist/icons/*.js" },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "dependencies": { "@neume-icons/svg": "^0.1.0" },
+  "peerDependencies": { "react": ">=18" }
+}
