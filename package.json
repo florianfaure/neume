@@ -1,0 +1,13 @@
+{
+  "name": "neume",
+  "private": true,
+  "description": "Neume — a pixel icon set.",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "ingest": "node scripts/ingest.mjs",
+    "check": "node scripts/check.mjs",
+    "sheet": "node scripts/check.mjs && node scripts/sheet.mjs"
+  }
+}
