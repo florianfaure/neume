@@ -11,7 +11,8 @@
     "ingest": "node scripts/ingest.mjs",
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs && node scripts/smoke.mjs",
-    "sheet": "npm run check && node scripts/sheet.mjs"
+    "sheet": "npm run check && node scripts/sheet.mjs",
+    "version": "node scripts/version.mjs"
   },
   "workspaces": [
     "packages/*"

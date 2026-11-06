@@ -1,0 +1,28 @@
+# Publication sur npm, déclenchée par une release GitHub (tag vX.Y.Z) — et par rien d'autre.
+# Aucun jeton : npm reconnaît ce workflow comme « trusted publisher » (OIDC), réglage fait une fois
+# par paquet sur npmjs.com. Le nom de fichier `release.yml` fait partie de ce réglage : ne pas le renommer.
+name: release
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      # La publication de confiance demande npm ≥ 11.5.1.
+      - run: npm install -g npm@^11.5.1
+      - run: npm ci
+      - name: Le tag et les paquets disent la même version
+        run: node scripts/version.mjs --assert "${GITHUB_REF_NAME#v}"
+      - run: npm run check
+      # Le cœur d'abord : @neume-icons/react en dépend.
+      - run: npm publish -w @neume-icons/svg --access public
+      - run: npm publish -w @neume-icons/react --access public

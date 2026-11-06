@@ -31,3 +31,16 @@ Monorepo npm workspaces : `packages/svg` (`@neume-icons/svg`, le cœur) et `pack
 (`@neume-icons/react`). Ne jamais éditer à la main `packages/svg/src/data.js`, `packages/svg/dist/`
 ni `packages/react/dist/` : `npm run build` les écrit, `npm run check` refuse qu'ils soient périmés.
 Le React importe le cœur par `@neume-icons/svg/render` (aucune donnée tirée). Pas de `npm publish` ici.
+
+## Sortir une version
+
+Les deux paquets sortent toujours ensemble, à la même version (semver : une icône ajoutée = mineure,
+un tracé modifié = correctif, une icône retirée ou renommée = majeure).
+
+1. Sur une branche : `npm run version <x.y.z>` (met les deux `package.json`, la dépendance et le lock
+   à jour, relance le build), commit, PR, fusion par Florian.
+2. Florian crée une release GitHub au tag `v<x.y.z>`. `.github/workflows/release.yml` vérifie que le
+   tag et les paquets disent la même version, relance `npm run check`, puis publie svg puis react.
+   Aucun jeton : npm reconnaît ce workflow comme « trusted publisher ». Ne renomme pas le fichier.
+
+`.github/workflows/check.yml` rejoue `npm run check` sur chaque PR.
