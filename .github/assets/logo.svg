@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" shape-rendering="crispEdges">
+  <!-- Placeholder: two square notes, a clivis, until the real Neume logo is drawn. -->
+  <style>path{fill:#111}@media (prefers-color-scheme:dark){path{fill:#eee}}</style>
+  <path d="M4 8h16v16h-16zM28 24h16v16h-16zM16 24h4v12h-4z"/>
+</svg>

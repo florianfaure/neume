@@ -6,13 +6,13 @@
 
 import { readFileSync } from "node:fs";
 import { read, hex, unhex } from "../src/io.js";
-import { SIZES, svg } from "../packages/svg/src/render.js";
+import { SIZES, svg, path } from "../packages/svg/src/render.js";
 
 const ROOT = new URL("../", import.meta.url);
 const text = (p) => readFileSync(new URL(p, ROOT), "utf8");
 
 /** Les emplacements entièrement générés : build les vide avant d'écrire, check les compare en entier. */
-export const GENERATED = ["packages/svg/dist", "packages/react/dist", "packages/svg/src/data.js"];
+export const GENERATED = ["packages/svg/dist", "packages/react/dist", "packages/svg/src/data.js", ".github/assets/preview.svg"];
 
 const HEADER = "// Généré par scripts/build.mjs depuis icons/*.json — ne pas modifier à la main.\n";
 const RESERVED = new Set(["Icon", "IconProps", "createIcon"]);
@@ -78,6 +78,15 @@ export function generate() {
   put("packages/react/dist/index.js", HEADER + list.map((C) => `export { ${C} } from "./icons/${C}.js";`).join("\n") + "\n");
   put("packages/react/dist/index.d.ts",
     HEADER + `export type { Icon, IconProps } from "./create-icon.js";\n` + list.map((C) => `export { ${C} } from "./icons/${C}.js";`).join("\n") + "\n");
+
+  // L'aperçu du README : toutes les icônes 12 × 12 à 24 px, dans l'ordre de Figma, clair et sombre.
+  const COLS = 16, PITCH = 40, PAD = 8;
+  const rowsCount = Math.ceil(names.length / COLS);
+  const cells = names.map((n, i) =>
+    `<path transform="translate(${(i % COLS) * PITCH + PAD} ${Math.floor(i / COLS) * PITCH + PAD})" d="${path(sets.grand[n], 2, 24)}"/>`);
+  put(".github/assets/preview.svg",
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${COLS * PITCH}" height="${rowsCount * PITCH}" viewBox="0 0 ${COLS * PITCH} ${rowsCount * PITCH}" shape-rendering="crispEdges">\n` +
+    `<style>path{fill:#111}@media (prefers-color-scheme:dark){path{fill:#eee}}</style>\n${cells.join("\n")}\n</svg>\n`);
 
   return files;
 }
