@@ -4,9 +4,17 @@
 // Pages lues : « 24px » (grand, 12 × 12 cases) et « 16px » (petit, 8 × 8 cases). Une case = 2 × 2 px.
 // Chaque cadre est rastérisé au pixel (test du centre de chaque pixel), puis réduit en cases :
 // tous les blocs doivent tomber sur la même parité (ox, oy ∈ {0, 1}) et être pleins ou vides.
-// Sortie compacte : { grand: [[nom, ox, oy, hex]], petit: [...], issues: [...] }, hex = lignes de
-// cases, 3 caractères par ligne en 12 × 12, 2 en 8 × 8. `scripts/ingest.mjs` la transforme en
-// fichiers lisibles dans icons/.
+//
+// Deux temps, pour que peu de données transitent (voir .claude/skills/sync) :
+//   MODE = "digest" → { grand: [[nom, empreinte | null]], petit: […], issues } : toutes les icônes,
+//                     dans l'ordre de Figma, null pour une icône refusée ;
+//   MODE = "full"   → { grand: [[nom, ox, oy, hex]], … } : seulement les icônes de ONLY
+//                     (« grand/nom », « petit/nom »), hex = lignes de cases, 3 caractères par
+//                     ligne en 12 × 12, 2 en 8 × 8.
+// L'empreinte est un FNV-1a de `${ox}${oy}${hex}`, recalculée à l'identique par src/io.js.
+
+const MODE = "digest";
+const ONLY = [];
 
 const SETS = [
   { key: "grand", page: "24px", px: 24, cells: 12 },
@@ -44,6 +52,8 @@ function inside(polysList, px, py, evenodd) {
   return evenodd ? w % 2 !== 0 : w !== 0;
 }
 
+const digest = (str) => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };
+
 const isBlack = (fills) =>
   fills !== figma.mixed && fills.filter((f) => f.visible !== false).every((f) =>
     f.type === "SOLID" && f.color.r === 0 && f.color.g === 0 && f.color.b === 0 && (f.opacity ?? 1) === 1);
@@ -56,9 +66,14 @@ for (const s of SETS) {
   const frames = page.children.filter((n) => n.type === "FRAME")
     .sort((a, b) => (a.y - b.y) || (a.x - b.x));
   const list = [];
+  const seen = new Set();
   for (const f of frames) {
-    const bad = (m) => result.issues.push(`${s.page} / ${f.name} : ${m}`);
-    if (f.width !== s.px || f.height !== s.px) { bad(`cadre ${f.width} × ${f.height}`); continue; }
+    let refused = false;
+    const bad = (m) => { refused = true; result.issues.push(`${s.page} / ${f.name} : ${m}`); };
+    if (seen.has(f.name)) bad("nom en double");
+    seen.add(f.name);
+    const out = () => { if (MODE === "digest") list.push([f.name, null]); };
+    if (f.width !== s.px || f.height !== s.px) { bad(`cadre ${f.width} × ${f.height}`); out(); continue; }
     const fx = f.absoluteTransform[0][2], fy = f.absoluteTransform[1][2];
     const leaves = f.findAll((n) => n.visible && !("children" in n));
     if (f.findAll((n) => n.type === "BOOLEAN_OPERATION").length) bad("opération booléenne : aplatis-la");
@@ -92,7 +107,7 @@ for (const s of SETS) {
     // Parité : premier pixel plein trouvé en colonne et en ligne
     let minX = s.px, minY = s.px;
     px.forEach((r, y) => r.forEach((v, x) => { if (v) { minX = Math.min(minX, x); minY = Math.min(minY, y); } }));
-    if (minX === s.px) { bad("cadre vide"); continue; }
+    if (minX === s.px) { bad("cadre vide"); out(); continue; }
     const ox = minX % 2, oy = minY % 2;
     const at = (x, y) => (x >= 0 && y >= 0 && x < s.px && y < s.px ? px[y][x] : 0);
     const cells = [];
@@ -106,9 +121,12 @@ for (const s of SETS) {
     // Aucun pixel plein hors des cases (bord de la parité impaire)
     const covered = cells.reduce((a, r) => a + r.reduce((b, v) => b + v, 0), 0) * 4;
     const total = px.reduce((a, r) => a + r.reduce((b, v) => b + v, 0), 0);
-    if (broken || covered !== total) { bad("blocs hors grille ou parités mélangées"); continue; }
+    if (broken || covered !== total) { bad("blocs hors grille ou parités mélangées"); out(); continue; }
+    if (refused) { out(); continue; }
     const w = s.cells / 4;
-    list.push([f.name, ox, oy, cells.map((r) => parseInt(r.join(""), 2).toString(16).padStart(w, "0")).join("")]);
+    const hex = cells.map((r) => parseInt(r.join(""), 2).toString(16).padStart(w, "0")).join("");
+    if (MODE === "digest") list.push([f.name, digest(`${ox}${oy}${hex}`)]);
+    else if (ONLY.includes(`${s.key}/${f.name}`)) list.push([f.name, ox, oy, hex]);
   }
   result[s.key] = list;
 }
