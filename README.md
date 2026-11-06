@@ -24,7 +24,13 @@ That half-cell is kept: it is exact at even scales, and leaves 0.5 px at odd one
 
 ## Repository
 
+An npm workspaces monorepo.
+
 - `icons/grand.json`, `icons/petit.json` — the source of truth, one row of cells per line.
 - `figma/extract.js` — reads the Figma file through the Desktop Bridge plugin. No Figma token.
-- `src/render.js` — the sizing rule and the SVG path, shared by everything.
-- `npm run ingest <extract.json>` · `npm run check` · `npm run sheet` (control sheet in `sheet/`).
+- `packages/svg` — `@neume-icons/svg`: the sizing rule and the SVG path (`src/render.js`, the only copy),
+  the compact icon data, and prebuilt SVG files at 12, 16 and 24 px.
+- `packages/react` — `@neume-icons/react`: one component per icon, built on the core.
+- `scripts/build.mjs` generates everything that ships from `icons/*.json`; generated files are committed
+  and `npm run check` fails when they are out of date.
+- `npm run ingest <extract.json>` · `npm run build` · `npm run check` · `npm run sheet` (control sheet in `sheet/`).
