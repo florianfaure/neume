@@ -10,7 +10,7 @@ Neume terminé. Dépôt privé jusqu'au lancement.
   à 2 px par case (pages « 24px » et « 16px »), sur une seule parité par icône ; la parité impaire
   centre une tige d'une case (`offset` = 1).
 - **Le calage** (`packages/svg/src/render.js`, seule version) : toute taille par pas de 4 de 12 à 64 ; la plus
-  grande version nette qui tient, centrée. 12 → grand ×1 · 16–20 → petit ×2 · 24–32 → ×2 ·
+  grande version nette qui tient, centrée. 12 → petit ×1 (grand ×1 sans petit) · 16–20 → petit ×2 · 24–32 → ×2 ·
   36–44 → ×3 · 48–56 → ×4 · 60–64 → ×5. Une case vaut toujours un nombre entier de pixels.
 - **La source de vérité** est `icons/*.json`, écrite par `scripts/ingest.mjs` seulement. On ne la
   retouche pas à la main : on corrige dans Figma et on resynchronise (skill `/sync`).

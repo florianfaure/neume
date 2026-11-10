@@ -1,6 +1,6 @@
 # @neume-icons/react
 
-Neume is a pixel icon set: 171 icons on a 12 × 12 grid, 65 of them also on an 8 × 8 grid for dense UIs.
+Neume is a pixel icon set: 251 icons on a 12 × 12 grid, 228 of them also on an 8 × 8 grid for dense UIs.
 Each icon is a React component in its own module, so bundlers keep only the ones you import.
 
 ```sh

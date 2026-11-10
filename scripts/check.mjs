@@ -33,9 +33,10 @@ for (const [set, n] of Object.entries(SETS)) {
 for (const name of Object.keys(sets.petit)) if (!sets.grand[name]) warn.push(`petit / ${name} : pas de version 12 × 12`);
 
 // Auto-test de la table de calage.
-const expect = { 12: "grand1", 16: "petit2", 20: "petit2", 24: "grand2", 32: "grand2", 36: "grand3", 44: "grand3", 48: "grand4", 56: "grand4", 60: "grand5", 64: "grand5" };
+const expect = { 12: "petit1", 16: "petit2", 20: "petit2", 24: "grand2", 32: "grand2", 36: "grand3", 44: "grand3", 48: "grand4", 56: "grand4", 60: "grand5", 64: "grand5" };
 for (const [s, e] of Object.entries(expect)) { const p = pick(+s, true); if (p.set + p.k !== e) errors.push(`calage : ${s} px donne ${p.set} ×${p.k}, attendu ${e}`); }
 if (pick(16, false).set !== "grand") errors.push("calage : 16 px sans petit doit retomber sur le grand ×1");
+if (pick(12, false).set !== "grand") errors.push("calage : 12 px sans petit doit retomber sur le grand ×1");
 
 // Calage des tailles quelconques : vers le bas, bornées à 12–64.
 for (const [a, e] of [[30, 28], [70, 64], [5, 12], [12, 12], [64, 64], [65, 64], [11.9, 12]]) if (snap(a) !== e) errors.push(`snap : ${a} donne ${snap(a)}, attendu ${e}`);

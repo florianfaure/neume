@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src=".github/assets/preview.svg" alt="The 171 Neume icons, at 24 px.">
+  <img src=".github/assets/preview.svg" alt="The 251 Neume icons, at 24 px.">
 </p>
 
 ## Why Neume
@@ -23,8 +23,8 @@
   box (see [Centring](#centring)).
 - **Any size from 12 to 64, in steps of 4.** The component shows the largest crisp version that fits, and
   centres it. No setting to tune.
-- **A second, smaller drawing for dense UIs.** 65 icons also exist on an 8 × 8 grid, used at 16 and 20 px,
-  where a shrunken 12 × 12 would be too busy.
+- **A second, smaller drawing for dense UIs.** Every icon except cursors and brands also exists on an 8 × 8
+  grid, used at 12, 16 and 20 px, where a shrunken 12 × 12 would be too busy.
 
 ## Install
 
@@ -59,7 +59,7 @@ svg("arrow-up", 32); // '<svg … width="32" height="32" …>'
 
 | You ask for | You get |
 |---|---|
-| 12 | the 12 × 12 drawing, 1 px per cell |
+| 12 | the 8 × 8 drawing, 1 px per cell (the 12 × 12 if there is no 8 × 8) |
 | 16, 20 | the 8 × 8 drawing, 2 px per cell (the 12 × 12 at 1 px if there is no 8 × 8) |
 | 24, 28, 32 | the 12 × 12 drawing, 2 px per cell |
 | 36, 40, 44 | 3 px per cell |

@@ -17,7 +17,7 @@ export function snap(size) {
 /** La version affichée pour une taille : quel set, et combien de pixels par case. */
 export function pick(size, hasPetit) {
   if (!SIZES.includes(size)) throw new Error(`taille ${size} : un multiple de 4 entre 12 et 64`);
-  if (size >= 16 && size <= 20 && hasPetit) return { set: "petit", k: 2 };
+  if (size <= 20 && hasPetit) return { set: "petit", k: size === 12 ? 1 : 2 };
   if (size < 24) return { set: "grand", k: 1 };
   return { set: "grand", k: Math.floor(size / 12) };
 }
