@@ -4,10 +4,21 @@
   "description": "Neume — a pixel icon set.",
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "ingest": "node scripts/ingest.mjs",
-    "check": "node scripts/check.mjs",
-    "sheet": "node scripts/check.mjs && node scripts/sheet.mjs"
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs && node scripts/smoke.mjs",
+    "sheet": "npm run check && node scripts/sheet.mjs",
+    "version": "node scripts/version.mjs"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
 }

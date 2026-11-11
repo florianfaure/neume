@@ -1,6 +1,10 @@
 // node scripts/check.mjs — le vérificateur. Rouge : rien ne sort.
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { SETS, read } from "../src/io.js";
-import { SIZES, pick, path } from "../src/render.js";
+import { generate, GENERATED } from "./generate.mjs";
+import { SIZES, pick, path, snap } from "../packages/svg/src/render.js";
 
 const errors = [];
 const warn = [];
@@ -29,10 +33,26 @@ for (const [set, n] of Object.entries(SETS)) {
 for (const name of Object.keys(sets.petit)) if (!sets.grand[name]) warn.push(`petit / ${name} : pas de version 12 × 12`);
 
 // Auto-test de la table de calage.
-const expect = { 12: "grand1", 16: "petit2", 20: "petit2", 24: "grand2", 32: "grand2", 36: "grand3", 44: "grand3", 48: "grand4", 56: "grand4", 60: "grand5", 64: "grand5" };
+const expect = { 12: "petit1", 16: "petit2", 20: "petit2", 24: "grand2", 32: "grand2", 36: "grand3", 44: "grand3", 48: "grand4", 56: "grand4", 60: "grand5", 64: "grand5" };
 for (const [s, e] of Object.entries(expect)) { const p = pick(+s, true); if (p.set + p.k !== e) errors.push(`calage : ${s} px donne ${p.set} ×${p.k}, attendu ${e}`); }
 if (pick(16, false).set !== "grand") errors.push("calage : 16 px sans petit doit retomber sur le grand ×1");
+if (pick(12, false).set !== "grand") errors.push("calage : 12 px sans petit doit retomber sur le grand ×1");
+
+// Calage des tailles quelconques : vers le bas, bornées à 12–64.
+for (const [a, e] of [[30, 28], [70, 64], [5, 12], [12, 12], [64, 64], [65, 64], [11.9, 12]]) if (snap(a) !== e) errors.push(`snap : ${a} donne ${snap(a)}, attendu ${e}`);
+
+// Les paquets générés doivent être à jour : `npm run build` ne doit rien changer.
+const files = generate();
+for (const [p, content] of files) {
+  const f = new URL(`../${p}`, import.meta.url);
+  if (!existsSync(f)) errors.push(`${p} : manquant — lancer npm run build`);
+  else if (readFileSync(f, "utf8") !== content) errors.push(`${p} : périmé — lancer npm run build`);
+}
+const walk = (dir) => !existsSync(dir) ? [] : statSync(dir).isFile() ? [dir] : readdirSync(dir).flatMap((e) => walk(join(dir, e)));
+const root = fileURLToPath(new URL("../", import.meta.url));
+for (const g of GENERATED) for (const f of walk(join(root, g))) { const rel = relative(root, f); if (!files.has(rel)) errors.push(`${rel} : ne devrait plus exister — lancer npm run build`); }
 
 for (const w of warn) console.log(`· ${w}`);
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); console.error(`\n${errors.length} erreur(s).`); process.exit(1); }
 console.log(`✓ ${Object.keys(sets.grand).length} icônes 12 × 12, ${Object.keys(sets.petit).length} icônes 8 × 8 — tout est net de 12 à 64.`);
+console.log(`✓ ${files.size} fichiers générés à jour.`);
