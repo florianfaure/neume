@@ -80,25 +80,7 @@
   background-position: calc(var(--site-dot-pitch) / 2) calc(var(--site-dot-pitch) / 2);
 }
 
-/* La barre du catalogue : la rangée des thèmes se replie, la ligne « où je suis » se déplie. */
-.site-fold {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition:
-    grid-template-rows var(--duration-slow) var(--ease-out),
-    opacity var(--duration-base) var(--ease-out);
-}
-
-.site-fold[data-folded] {
-  grid-template-rows: 0fr;
-  opacity: 0;
-}
-
-.site-fold > * {
-  overflow: hidden;
-  min-height: 0;
-}
-
+/* La barre du catalogue : la ligne « où je suis » se déplie quand la rangée des thèmes se retire. */
 .site-where {
   max-width: 0;
   margin-right: 0;

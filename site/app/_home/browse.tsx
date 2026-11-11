@@ -9,6 +9,7 @@ import { SearchField } from "@/components/ui/search-field";
 import { Slider } from "@/components/ui/slider";
 import { Tile } from "@/components/ui/tile";
 import type { Theme } from "@/data/themes";
+import { cn } from "@/lib/cn";
 import { NeumeIcon } from "@/lib/neume";
 import { SIZES } from "@neume-icons/svg/render";
 
@@ -40,20 +41,37 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
   const visible = themes.filter((t) => t.icons.length > 0);
   const shown = visible.reduce((sum, t) => sum + t.icons.length, 0);
 
-  // Le défilement : la barre colle quand la sentinelle est passée, se compacte en descendant, se déplie en
-  // remontant ; le thème sous la barre est celui que la rangée de puces allume.
+  // Le défilement : la barre colle quand la sentinelle est passée ; elle se compacte en descendant et se
+  // déplie en remontant, avec une hystérésis de 24 px (une inertie qui tremble ne la fait pas clignoter) ;
+  // le thème sous la barre est celui que la rangée de puces allume. Sous `md` la barre ne se compacte pas :
+  // ses deux rangées s'empilent dans le flux, et en changer la hauteur ferait sauter la page.
   useEffect(() => {
-    let last = window.scrollY;
+    const wide = window.matchMedia("(min-width: 768px)");
+    let base = window.scrollY;
+    let folded = false;
     let frame = 0;
     const update = () => {
       frame = 0;
       const y = window.scrollY;
-      const dy = y - last;
       const isStuck = (sentinel.current?.getBoundingClientRect().top ?? 1) < 0;
       setStuck(isStuck);
-      if (!isStuck) setCompact(false);
-      else if (Math.abs(dy) > 6) setCompact(dy > 0);
-      if (Math.abs(dy) > 6) last = y;
+      if (!isStuck || !wide.matches) {
+        folded = false;
+        base = y;
+      } else if (!folded) {
+        base = Math.min(base, y);
+        if (y - base > 24) {
+          folded = true;
+          base = y;
+        }
+      } else {
+        base = Math.max(base, y);
+        if (base - y > 24) {
+          folded = false;
+          base = y;
+        }
+      }
+      setCompact(folded);
 
       const bar = sentinel.current?.nextElementSibling;
       const line = (bar?.getBoundingClientRect().bottom ?? 0) + 16;
@@ -70,16 +88,22 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
     };
     frame = requestAnimationFrame(update);
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
     return () => {
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
       if (frame !== 0) cancelAnimationFrame(frame);
     };
   }, [themes]);
 
-  // La puce du thème courant reste visible dans sa rangée.
+  // La puce du thème courant reste visible dans sa rangée. On fait défiler la rangée elle-même, jamais la
+  // page : `scrollIntoView` aurait tiré la fenêtre vers la barre à chaque changement de thème.
   useEffect(() => {
-    const radio = chips.current?.querySelector<HTMLInputElement>(`input[value="${active}"]`);
-    radio?.closest("label")?.scrollIntoView({ inline: "nearest", block: "nearest" });
+    const row = chips.current;
+    const label = row?.querySelector<HTMLInputElement>(`input[value="${active}"]`)?.closest("label");
+    if (!row || !label) return;
+    const left = label.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft;
+    row.scrollTo({ left: left - row.clientWidth / 4, behavior: "smooth" });
   }, [active]);
 
   const goTo = (value: string) => {
@@ -112,36 +136,45 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
       <div
         data-stuck={stuck ? "" : undefined}
         data-compact={compact ? "" : undefined}
-        className="sticky top-[var(--nav-bar-offset)] z-[var(--z-raised)] -mx-[var(--layout-gutter)] border-b-[length:var(--border-thin)] border-transparent bg-surface px-[var(--layout-gutter)] transition-[top,border-color] duration-[var(--duration-base)] ease-out data-[stuck]:border-border-subtle"
+        className="pointer-events-none sticky top-[var(--nav-bar-offset)] z-[var(--z-raised)] -mx-[var(--layout-gutter)] transition-[top] duration-[var(--duration-base)] ease-out md:pb-12"
       >
-        <div className="flex flex-wrap items-center gap-2 py-4 transition-[padding] duration-[var(--duration-slow)] ease-out in-data-[compact]:py-2">
-          <span aria-hidden="true" className="site-where font-pixel text-body text-text-primary">
-            {label}
-          </span>
-          <div className="min-w-0 flex-1 basis-full md:basis-0 md:max-w-[var(--site-search-width)]">
-            <SearchField
-              label="Search icons"
-              placeholder="Search icons"
-              shortcut="/"
-              value={query}
-              onValueChange={onQueryChange}
-            />
+        {/* La hauteur dans le flux ne change jamais : la rangée du haut a la sienne, la rangée des thèmes
+            est posée dans la place qu'on lui réserve dessous (`pb-12`) et se retire sans la libérer. */}
+        <div className="pointer-events-auto relative border-b-[length:var(--border-thin)] border-transparent bg-surface px-[var(--layout-gutter)] transition-[border-color] duration-[var(--duration-base)] ease-out in-data-[stuck]:border-border-subtle">
+          <div className="flex flex-wrap items-center gap-2 py-3 md:h-16 md:flex-nowrap">
+            <span aria-hidden="true" className="site-where font-pixel text-body text-text-primary">
+              {label}
+            </span>
+            <div className="min-w-0 flex-1 basis-full md:basis-0 md:max-w-[var(--site-search-width)]">
+              <SearchField
+                label="Search icons"
+                placeholder="Search icons"
+                shortcut="/"
+                value={query}
+                onValueChange={onQueryChange}
+              />
+            </div>
+            <div className="w-full md:ml-auto md:w-[var(--site-slider-width)]">
+              <Slider
+                label="Icon size"
+                steps={SIZES}
+                value={size}
+                onValueChange={onSizeChange}
+                formatValueText={(value) => `${value} pixels`}
+              />
+            </div>
           </div>
           <div
-            className={`w-full md:ml-auto md:w-[var(--site-slider-width)] ${compact ? "max-md:hidden" : ""}`}
+            inert={compact}
+            className={cn(
+              "bg-surface px-[var(--layout-gutter)] max-md:-mx-[var(--layout-gutter)]",
+              "md:absolute md:inset-x-0 md:top-full md:h-12",
+              "border-b-[length:var(--border-thin)] border-transparent in-data-[stuck]:border-border-subtle",
+              "transition-[opacity,translate,border-color] duration-[var(--duration-base)] ease-out",
+              compact && "pointer-events-none -translate-y-2 opacity-0",
+            )}
           >
-            <Slider
-              label="Icon size"
-              steps={SIZES}
-              value={size}
-              onValueChange={onSizeChange}
-              formatValueText={(value) => `${value} pixels`}
-            />
-          </div>
-        </div>
-        <div className="site-fold" data-folded={compact ? "" : undefined} inert={compact}>
-          <div ref={chips}>
-            <div className="overflow-x-auto pb-4 [scrollbar-width:none]">
+            <div ref={chips} className="overflow-x-auto py-2 [scrollbar-width:none]">
               <ChipGroup
                 label="Themes"
                 items={[

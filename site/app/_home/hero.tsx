@@ -36,7 +36,7 @@ export function Hero({ total }: { total: number }) {
             id="hero-title"
             className="text-balance font-pixel text-display font-normal text-text-primary"
           >
-            Pixel icons, crisp at every size
+            Pixel icons for real interfaces
           </h1>
         </Reveal>
         <Reveal timing="load">

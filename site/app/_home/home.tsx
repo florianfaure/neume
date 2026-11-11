@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 
 import { BrandLockup, BrandMark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
+import { CodeBlock } from "@/components/ui/code-block";
 import { CommandPalette } from "@/components/ui/command-palette";
 import type { CommandPaletteGroup } from "@/components/ui/command-palette";
 import { Footer } from "@/components/ui/footer";
 import { IconSheet } from "@/components/ui/icon-sheet";
+import { Kbd } from "@/components/ui/kbd";
 import { NavBar } from "@/components/ui/nav-bar";
 import { NavItem } from "@/components/ui/nav-item";
 import { ThemeSelector } from "@/components/ui/theme-selector";
@@ -113,7 +115,7 @@ export function Home() {
     <>
       <NavBar
         behavior="auto-hide"
-        brand={<BrandLockup />}
+        brand={<BrandMark className="size-8 text-text-primary" />}
         brandLabel="Neume"
         label="Main"
         actions={
@@ -128,13 +130,16 @@ export function Home() {
               href={REPO_URL}
               newTab
             />
-            <Button
-              variant="ghost"
-              content="icon"
-              icon="search"
-              label="Search (⌘K)"
-              onClick={() => setPaletteOpen(true)}
-            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                content="icon-label"
+                icon="search"
+                label="Search"
+                onClick={() => setPaletteOpen(true)}
+              />
+              <Kbd keys="mod+k" onTrigger={() => setPaletteOpen(true)} />
+            </div>
             <ThemeSelector />
           </>
         }
@@ -156,11 +161,43 @@ export function Home() {
             onSizeChange={setSize}
             onOpen={openSheet}
           />
+          <section
+            aria-labelledby="closing-title"
+            className="mt-32 flex flex-col items-center gap-6 text-center"
+          >
+            <h2
+              id="closing-title"
+              className="max-w-[var(--site-hero-copy-width)] text-balance font-pixel text-h1 font-normal text-text-primary"
+            >
+              Drop it into your next interface
+            </h2>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <CodeBlock code={INSTALL_COMMAND} label="Copy command" />
+              <Button
+                variant="secondary"
+                content="icon-label"
+                icon="github"
+                label="Star on GitHub"
+                href={REPO_URL}
+                newTab
+              />
+            </div>
+          </section>
           <div className="mt-32">
             <Footer
               variant="columns"
               brand={<BrandLockup />}
               lead="A pixel icon set drawn square by square, for React and plain SVG."
+              newsletter={
+                <Button
+                  variant="secondary"
+                  content="icon-label"
+                  icon="github"
+                  label="View on GitHub"
+                  href={REPO_URL}
+                  newTab
+                />
+              }
               groups={[
                 {
                   title: "Neume",
@@ -178,8 +215,7 @@ export function Home() {
                   ],
                 },
               ]}
-              social={[{ label: "GitHub", href: REPO_URL, icon: "github" }]}
-              start="Neume · MIT licence"
+              start="MIT licence"
               end="Drawn by Florian Faure"
               display={
                 <BrandMark className="size-[var(--site-footer-mark-size)] text-list-highlight" />
