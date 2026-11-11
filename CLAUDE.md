@@ -44,3 +44,26 @@ un tracé modifié = correctif, une icône retirée ou renommée = majeure).
    Aucun jeton : npm reconnaît ce workflow comme « trusted publisher ». Ne renomme pas le fichier.
 
 `.github/workflows/check.yml` rejoue `npm run check` sur chaque PR.
+
+## Le site (`site/`)
+
+Le site neume.dev vit dans `site/` : Next.js 16 / React 19 / Tailwind v4, **export statique** (`out/`), servi
+par un Worker Cloudflare en assets statiques (`site/wrangler.jsonc`, nom `neume-dev`). Pleine largeur. `site`
+est un **workspace npm** de la racine : `@neume-icons/react` y est le paquet local, et une seule copie de React
+est installée (la racine épingle `react` et `react-dom` à la version du site, 19.2.8). Un `file:` aurait installé
+une seconde copie de React sous les icônes (qui utilisent `useId`).
+
+**Les copies.** Les composants, tokens, polices et `lib/` du site sont des copies du portfolio, listées dans
+`site/COPIES.md` avec le commit d'origine. On ne les modifie **jamais** ici : on corrige dans le portfolio, puis
+`node scripts/copy-from-portfolio.mjs` les recopie (`--check` échoue si l'une diffère). Elles seront remplacées
+par le paquet Consort.
+
+```bash
+cd site
+npm run dev      # http://localhost:3100
+npm run check    # lint + tsc + copies:check + build (export dans site/out)
+```
+
+**Déploiement.** `wrangler deploy` depuis `site/` reste le geste de Florian ; rien ici ne touche le compte
+Cloudflare. Le site n'a pas de workflow GitHub : `npm ci` à la racine l'installe, mais `npm run check` de la
+racine ne le construit pas.

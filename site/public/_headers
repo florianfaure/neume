@@ -1,0 +1,48 @@
+# Les images de `public/` ne sont pas hachées : leur nom ne change pas quand leur contenu change, donc
+# elles ne peuvent pas être `immutable`. Une heure de cache, puis une revalidation en arrière-plan
+# pendant un jour : la visite suivante ne retélécharge rien, et une image remplacée arrive en une heure.
+# Ces règles précèdent celle des fichiers hachés : Cloudflare concatène les en-têtes de toutes les
+# règles qui correspondent à un chemin, et `/*.svg` attrape aussi `/_next/static/media/icon.*.svg`.
+# La règle des fichiers hachés, plus bas, détache donc l'en-tête (`!`) avant de poser le sien.
+/*.webp
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+/*.jpeg
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+/*.jpg
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+/*.svg
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+# Cache immuable sur les fichiers hachés de Next. Leur nom contient un hash de contenu :
+# ils ne changent jamais sans changer de nom, donc les revalider est du gaspillage pur.
+# C'est ce qui rend la deuxième visite gratuite, polices comprises. Le `!` retire ce que les
+# règles d'images ci-dessus auraient posé sur une image hachée.
+/_next/static/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+# Trois portes qui n'ont aucune raison d'être ouvertes sur un site sans formulaire,
+# sans tiers et sans entrée utilisateur. Pas de CSP : le script anti-flash est inline,
+# et une CSP correcte imposerait de recalculer son hash à chaque build.
+# Spec : docs/specs/2026-08-12-mise-en-ligne-design.md § 11.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+
+# Le jumeau Markdown de chaque page projet : `/work/<slug>.md`, un route handler figé au build
+# (`app/(reading)/work/<slug>.md/route.ts`). L'export statique perd l'en-tête que le handler pose, et
+# Cloudflare sert un fichier texte sans charset : sans cette règle, les tirets longs et les points
+# médians du texte s'afficheraient en mojibake chez un navigateur qui ne devine pas l'UTF-8.
+# Spec : docs/specs/2026-10-19-vue-markdown-design.md § 5.
+/work/*.md
+  Content-Type: text/markdown; charset=utf-8
+
+# L'image Open Graph de chaque page projet : `out/work/<slug>/opengraph-image-<hash>`, une route
+# d'image figée au build (`app/(reading)/work/[slug]/opengraph-image.tsx`). Le fichier n'a pas
+# d'extension, et Cloudflare le servirait en octets bruts sous le `nosniff` posé plus haut : un
+# robot de partage refuserait l'image. Son nom ne change pas avec son contenu, d'où le cache des
+# images de `public/`. Spec : docs/specs/2026-10-28-lot-k-arrivee-design.md § 2.
+/work/:slug/opengraph-image-*
+  Content-Type: image/jpeg
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
