@@ -1,0 +1,118 @@
+/*
+ * site.css — ce qui est propre au site de Neume, et que le design system ne porte pas.
+ *
+ * Ce fichier n'est PAS une copie du portfolio (`COPIES.md`) : il garde les quelques mesures de PAGE
+ * (la largeur de la mise en page pleine largeur, la hauteur du hero, la cellule du mur d'icônes) et les
+ * quelques règles que Tailwind ne sait pas écrire sans valeur arbitraire (un masque, une grille
+ * auto-remplie, une rangée de grille qui se replie). Une mesure de page est un token ici, nommé
+ * `--site-*`, et le code de page la lit par `var(--site-…)`, jamais par un littéral. Les couleurs, les
+ * durées et les courbes viennent toutes des tokens sémantiques du système.
+ */
+
+:root {
+  /* La largeur de la mise en page pleine largeur : le prototype validé de l'accueil (1440 px). */
+  --site-max-width: 90rem;
+  --site-hero-height: 37.5rem;
+  --site-hero-copy-width: 45rem;
+  --site-lede-width: 32.5rem;
+  /* Le mur d'icônes du hero : la cellule, l'opacité au repos, le rayon d'allumage au pointeur (en cellules). */
+  --site-wall-cell: 4rem;
+  --site-wall-opacity: 0.32;
+  --site-wall-reach: 1.5;
+  --site-scene-width: 17.5rem;
+  --site-slider-width: 23.75rem;
+  --site-search-width: 35rem;
+  --site-tile-min: 7rem;
+  --site-dot-pitch: 0.5rem;
+  --site-where-width: 12.5rem;
+  --site-footer-mark-size: 24rem;
+}
+
+/* Le mur : une grille de cellules carrées, évidée au centre pour que le texte du hero respire. */
+.site-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--site-wall-cell));
+  grid-auto-rows: var(--site-wall-cell);
+  justify-content: center;
+  align-content: center;
+  -webkit-mask-image: radial-gradient(
+    ellipse 60% 70% at 50% 50%,
+    transparent 30%,
+    var(--color-text-primary) 75%
+  );
+  mask-image: radial-gradient(
+    ellipse 60% 70% at 50% 50%,
+    transparent 30%,
+    var(--color-text-primary) 75%
+  );
+}
+
+/* Une icône qui se redessine : la découpe descend, en douze images — une par ligne de la grille. */
+@keyframes site-cell-draw {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+.site-cell-draw {
+  animation: site-cell-draw var(--duration-slow) steps(12) both;
+}
+
+/* La grille d'un thème : autant de tuiles que la largeur en admet. */
+.site-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (min-width: 48rem) {
+  .site-tile-grid {
+    grid-template-columns: repeat(auto-fill, minmax(var(--site-tile-min), 1fr));
+  }
+}
+
+/* Le semis de points derrière l'icône de la scène « Crisp at every size » : un point par demi-case de 8. */
+.site-dots {
+  background-image: radial-gradient(var(--color-slider-tick) 1px, transparent 1px);
+  background-size: var(--site-dot-pitch) var(--site-dot-pitch);
+  background-position: calc(var(--site-dot-pitch) / 2) calc(var(--site-dot-pitch) / 2);
+}
+
+/* La barre du catalogue : la rangée des thèmes se replie, la ligne « où je suis » se déplie. */
+.site-fold {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows var(--duration-slow) var(--ease-out),
+    opacity var(--duration-base) var(--ease-out);
+}
+
+.site-fold[data-folded] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.site-fold > * {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.site-where {
+  max-width: 0;
+  margin-right: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition:
+    max-width var(--duration-slow) var(--ease-out),
+    margin var(--duration-slow) var(--ease-out),
+    opacity var(--duration-base) var(--ease-out);
+}
+
+[data-compact] .site-where {
+  max-width: var(--site-where-width);
+  margin-right: var(--space-2);
+  opacity: 1;
+}

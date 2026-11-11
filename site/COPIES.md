@@ -5,7 +5,7 @@ modifient dans le portfolio (`/Users/florianfaure/portfolio`) ; `site/` en garde
 identiques, octet pour octet. Un défaut se corrige dans le portfolio, puis on recopie. En phase 3,
 ces copies seront remplacées par le paquet Consort.
 
-Ce qui n'est pas une copie et qui est donc du site : `app/` (layout, pages), `next.config.ts`,
+Ce qui n'est pas une copie et qui est donc du site : `app/` (layout, pages), `data/`, `styles/site.css` (les mesures de page `--site-*`), `public/_headers` (ne garde que les règles du site : il a été copié du portfolio au temps 1, puis nettoyé de ses règles `/work/…` au temps 2), `next.config.ts`,
 `wrangler.jsonc`, `package.json`, `tsconfig.json`, `eslint.config.mjs`, `postcss.config.mjs`, `scripts/`.
 `app/layout.tsx` reprend les réglages de polices et les deux scripts de tête du layout du portfolio.
 
@@ -24,7 +24,7 @@ node scripts/copy-from-portfolio.mjs [chemin-du-portfolio] --check  # échoue si
 Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> rev-parse HEAD`.
 `npm run check` lance le `--check` ; sans portfolio sur la machine, il est sauté avec un avertissement.
 
-## Fichiers copiés (51)
+## Fichiers copiés (50)
 
 - `styles/globals.css`
 - `styles/tokens/primitives.css`
@@ -36,7 +36,6 @@ Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> re
 - `public/fonts/geist-OFL.txt`
 - `public/fonts/geist-mono-OFL.txt`
 - `public/fonts/pixelify-sans-OFL.txt`
-- `public/_headers`
 - `lib/cn.ts`
 - `lib/new-tab.tsx`
 - `lib/shortcut.ts`

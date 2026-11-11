@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
+import { Toaster } from "@/components/ui/toaster";
 import "@/styles/globals.css";
+import "@/styles/site.css";
 
 // Les quatre faces ci-dessous, et les deux scripts de tête, sont recopiés du `app/layout.tsx` du
 // portfolio (commit dans COPIES.md) : le pourquoi de chaque réglage y est écrit. Ce fichier-ci est
@@ -102,7 +104,7 @@ const REVEAL_SCRIPT = `!function(){var d=document.documentElement,n=0;if(!("Inte
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://neume.dev"),
-  title: "Neume",
+  title: "Neume — pixel icons, crisp at every size",
   description: "A pixel icon set, drawn on two grids and shipped as SVG and React.",
 };
 
@@ -122,7 +124,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: `${THEME_SCRIPT};${REVEAL_SCRIPT}` }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

@@ -25,7 +25,6 @@ export const COPIES = [
   "public/fonts/geist-OFL.txt",
   "public/fonts/geist-mono-OFL.txt",
   "public/fonts/pixelify-sans-OFL.txt",
-  "public/_headers",
   "lib/cn.ts",
   "lib/new-tab.tsx",
   "lib/shortcut.ts",

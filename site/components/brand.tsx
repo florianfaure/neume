@@ -1,0 +1,29 @@
+import { cn } from "@/lib/cn";
+
+/**
+ * Le signe de Neume — provisoire, comme le mot « Neume » qui l'accompagne : le logo vient au temps 4 du
+ * site. Un vecteur, jamais un pixel : `currentColor`, décoratif.
+ */
+export function BrandMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="12 12 72 72"
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+      className={cn("block", className)}
+    >
+      <path d="M20 15.4739C20 16.6353 20.5805 17.72 21.5469 18.3643L69.7812 50.5202C72.4394 52.2923 76 50.3868 76 47.192V38C76 35.7909 74.2091 34 72 34H64C61.7909 34 60 32.2091 60 30V16C60 13.7909 61.7909 12 64 12H80C82.2091 12 84 13.7909 84 16V80C84 82.2091 82.2091 84 80 84H79.4745C77.5556 84 76 82.4444 76 80.5255C76 79.3638 75.4194 78.279 74.4528 77.6346L26.2188 45.4788C23.5606 43.7067 20 45.6123 20 48.807V80C20 82.2091 18.2091 84 16 84C13.7909 84 12 82.2091 12 80V16C12 13.7909 13.7909 12 16 12H16.5261C18.4447 12 20 13.5553 20 15.4739Z" />
+    </svg>
+  );
+}
+
+/** Le lien d'accueil de la barre et du pied : le signe puis le mot, en police pixel. */
+export function BrandLockup() {
+  return (
+    <span className="inline-flex items-center gap-2 text-text-primary">
+      <BrandMark className="size-6" />
+      <span className="font-pixel text-h4">Neume</span>
+    </span>
+  );
+}
