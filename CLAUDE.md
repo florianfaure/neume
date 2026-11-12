@@ -71,7 +71,7 @@ npm run check    # lint + tsc + copies:check + build (export dans site/out)
 (`site/wrangler.jsonc`). Workers Builds le reconstruit depuis GitHub : **un push sur `main` met en production**,
 toute autre branche produit une URL de preview. Réglages côté Cloudflare : racine du dépôt `/`, build
 `npm run build -w site`, déploiement `npx wrangler deploy -c site/wrangler.jsonc`, preview
-`npx wrangler versions upload -c site/wrangler.jsonc`. Le build distant ne lance **pas** `copies:check`, qui lit
+`npx wrangler preview -c site/wrangler.jsonc`. Le build distant ne lance **pas** `copies:check`, qui lit
 `~/portfolio` : c'est `npm run check` en local qui le tient, avant de pousser. `www.neume.dev` redirige en 301
 vers l'apex, par une Redirect Rule de zone. `npx wrangler deploy` depuis `site/` reste possible en secours ;
 c'est un geste de Florian, comme tout ce qui touche le compte Cloudflare. `npm run check` de la racine ne
