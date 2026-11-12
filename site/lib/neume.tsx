@@ -1,7 +1,7 @@
 import * as Icons from "@neume-icons/react";
 import type { Icon as NeumeIconComponent } from "@neume-icons/react";
 import { svg as renderSvg } from "@neume-icons/svg";
-import { grand, petit } from "@neume-icons/svg/data";
+import { grand } from "@neume-icons/svg/data";
 import { decode } from "@neume-icons/svg/render";
 import type { Icon as Drawing } from "@neume-icons/svg/render";
 
@@ -23,14 +23,8 @@ export function NeumeIcon({ name, size = 24 }: { name: string; size?: number }) 
   return Component ? <Component size={size} /> : null;
 }
 
-export const hasMini = (name: string) => name in petit;
-
 /** Le grand dessin (12 × 12) d'une icône : ses lignes et son décalage. */
 export const drawingOf = (name: string): Drawing => decode(grand[name]);
-
-/** Le mini (8 × 8) d'une icône, quand elle en a un. */
-export const miniOf = (name: string): Drawing | undefined =>
-  name in petit ? decode(petit[name]) : undefined;
 
 /** Le SVG qu'on copie : celui du paquet, sans l'`aria-hidden` qui n'a de sens que dans une page. */
 export const svgOf = (name: string, size: number) =>

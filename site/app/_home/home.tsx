@@ -15,7 +15,7 @@ import { NavBar } from "@/components/ui/nav-bar";
 import { NavItem } from "@/components/ui/nav-item";
 import { ThemeSelector } from "@/components/ui/theme-selector";
 import { KEYWORDS, THEMES } from "@/data/themes";
-import { drawingOf, importOf, jsxOf, miniOf, svgOf } from "@/lib/neume";
+import { drawingOf, importOf, jsxOf, svgOf } from "@/lib/neume";
 import { toast } from "@/lib/toast";
 import { Browse, REPO_URL } from "./browse";
 import { Features } from "./features";
@@ -110,7 +110,6 @@ export function Home() {
 
   const index = current ? order.indexOf(current) : -1;
   const step = (by: number) => setCurrent(order[(index + by + order.length) % order.length]);
-  const mini = current ? miniOf(current) : undefined;
   const big = current ? drawingOf(current) : undefined;
 
   return (
@@ -237,7 +236,6 @@ export function Home() {
           tag={THEME_OF.get(current)}
           rows={big.rows}
           offset={big.offset as Offset}
-          petit={mini ? { rows: mini.rows, offset: mini.offset as Offset } : undefined}
           importLine={importOf(current)}
           svg={svgOf(current, size)}
           jsx={jsxOf(current, size)}

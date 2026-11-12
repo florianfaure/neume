@@ -41,8 +41,7 @@ export function Hero({ total }: { total: number }) {
         </Reveal>
         <Reveal timing="load">
           <p className="mx-auto max-w-[var(--site-lede-width)] text-pretty font-body text-body-lg text-text-secondary">
-            Neume is a pixel icon set drawn square by square. Every size from 12 to 64 lands on whole
-            pixels, so icons stay sharp in any interface. For React, or as plain SVG.
+            Neume is a pixel icon set drawn square by square, for React or as plain SVG.
           </p>
         </Reveal>
         <Reveal timing="load">

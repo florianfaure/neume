@@ -23,7 +23,7 @@ export function Features() {
           Made for interfaces
         </h2>
         <p className="font-body text-body text-text-secondary">
-          Square pixels that hold up in real products, from a 12 px badge to a 64 px empty state.
+          Square pixels that hold up in real products, from a small badge to a large empty state.
         </p>
       </header>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -37,8 +37,8 @@ export function Features() {
         <Slot>
           <FeatureCard
             scene={<SizesScene />}
-            title="Crisp at every size"
-            description="12 to 64, in steps of 4. Always whole pixels."
+            title="One size prop"
+            description="Set a number. The drawing follows."
           />
         </Slot>
         <Slot>
@@ -73,7 +73,7 @@ export function Features() {
           <FeatureCard
             scene={<DenseScene />}
             title="Dense lists"
-            description="The 8 × 8 minis take over at 16 and 20 px, where detail would turn to mush."
+            description="Made for menus, palettes and sidebars."
           />
         </Slot>
       </div>

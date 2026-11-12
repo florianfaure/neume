@@ -105,7 +105,7 @@ const STATUS = {
  * LES STATUTS (décision de Florian, 2026-11-11, après le prototype : « super » pour le rouge et le vert,
  * l'orangé tourné vers l'orange). `negative`, `positive`, `warning` : la pastille passe au BLANC de la page
  * (`--color-surface`) et prend un filet de 1 px à la couleur du statut ; le message dessous prend la même
- * couleur et est précédé de l'icône (`alert-circle`, `check-circle`, `alert-triangle`, de Neume, à 16 px : leur mini).
+ * couleur et est précédé de l'icône (`alert-circle`, `check-circle`, `alert-triangle`, de Neume, à 16 px).
  * LA COULEUR NE VA JAMAIS SEULE (loi 7) : le type exige un `message` avec tout `status`, donc l'icône et
  * le mot sont toujours là. Le texte tient 4.5:1 sur la page, le filet 3:1 (paires dans
  * `scripts/contrast-pairs.json`). Le message est lu par l'assistance : `role="alert"` en négatif, une

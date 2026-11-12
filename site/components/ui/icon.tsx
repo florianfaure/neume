@@ -1,5 +1,5 @@
-import { grand, petit } from "@neume-icons/svg/data";
-import { type Compact, decode, path, pick } from "@neume-icons/svg/render";
+import { grand } from "@neume-icons/svg/data";
+import { decode, path, pick } from "@neume-icons/svg/render";
 import { cn } from "@/lib/cn";
 
 interface IconProps {
@@ -265,8 +265,8 @@ interface IconProps {
     | "discord"
     | "notion";
   /**
-   * La taille rendue, en px CSS : 12, 16, 24 ou 48 (loi 5), 24 par défaut. Le DESSIN, lui, n'est pas
-   * choisi par l'appel : c'est le calage de Neume qui le prend (docstring du composant).
+   * La taille rendue, en px CSS : 12, 16, 24 ou 48 (loi 5), 24 par défaut. Le DESSIN, lui, est toujours
+   * le grand de 12 × 12, que le calage de Neume met à l'échelle de cette taille (docstring du composant).
    */
   size?: 12 | 16 | 24 | 48;
 }
@@ -291,9 +291,9 @@ function trace(name: IconName, size: NonNullable<IconProps["size"]>): string {
   const key = `${name}@${size}`;
   let d = TRACES.get(key);
   if (d === undefined) {
-    const small: Compact | undefined = petit[name];
-    const { set, k } = pick(size, small !== undefined);
-    d = path(decode(set === "petit" && small ? small : grand[name]), k, size);
+    /* Le grand dessin 12 × 12 à toutes les tailles, depuis Neume 0.2.0 : `pick` rend le facteur exact. */
+    const { k } = pick(size);
+    d = path(decode(grand[name]), k, size);
     TRACES.set(key, d);
   }
   return d;
@@ -305,7 +305,8 @@ function trace(name: IconName, size: NonNullable<IconProps["size"]>): string {
  *
  * NEUME EST LA SOURCE UNIQUE, depuis le 2026-11-11 (`docs/specs/2026-11-11-icon-neume-design.md`).
  * Neume (neume.dev, licence MIT) est le set d'icônes de Florian : 251 dessins sur une grille de
- * 12 × 12, dont 228 aussi sur une grille de 8 × 8 pour les petites tailles. Le paquet est une
+ * 12 × 12. Ses 228 minis de 8 × 8 restent dans le paquet, mais `Icon` ne les lit plus depuis Neume
+ * 0.2.0 (2026-11-12, décision de Florian : un seul dessin, un rapport de trait constant). Le paquet est une
  * dépendance à VERSION EXACTE — une mise à jour de Neume est un geste délibéré, qui change des
  * dessins sous nos pieds et repasse donc `Icon` en `draft`. Les tracés copiés de Pixelarticons, les
  * relevés de nodes et le glyphe repris du favicon sont sortis le même jour ; leur table et sa
@@ -319,13 +320,15 @@ function trace(name: IconName, size: NonNullable<IconProps["size"]>): string {
  * de styles ouverte, que la loi 11 refuse ; et sa dépendance au cœur est en `^0.1.0`, qui ne fige
  * pas la version.
  *
- * LE CALAGE DE NEUME CHOISIT LE DESSIN, et c'est ce qui rend `size` légitime. Une case tombe toujours
- * sur un nombre ENTIER de pixels, et la plus grande version nette qui tient est centrée : à 12, le
- * mini de 8 × 8 à 1 px par case ; à 16, le mini à 2 px par case ; à 24, le grand de 12 × 12 à 2 px ;
- * à 48, le grand à 4 px. Une icône sans mini — les marques — prend son grand à 1 px par case à 12 et
- * à 16. Aucune taille n'est donc la réduction d'un dessin fait pour une autre, et aucune ne bave en
- * densité 1× : la loi 6 tient à toute taille, sans exception. Ce qui reste fermé est la LISTE des
- * tailles, par le type de `size`.
+ * LE CALAGE DE NEUME MET LE DESSIN À L'ÉCHELLE, et c'est ce qui rend `size` légitime. Depuis Neume
+ * 0.2.0, le grand dessin de 12 × 12 sert à toutes les tailles, agrandi au facteur exact `size / 12` :
+ * à 12, 1 px par case ; à 24, 2 px ; à 48, 4 px — nets, une case tombant sur un nombre entier de
+ * pixels. À 16, une case vaut 1,33 px : le dessin est LISSÉ, et c'est la seule taille d'`Icon` qui
+ * l'est — l'exception nominative de la loi 6, son prix à l'angle mort n° 37 de
+ * `.claude/rules/loi-06-pixel-art.md`. Jusqu'au 2026-11-12, le
+ * mini de 8 × 8 tenait 12 et 16, nets ; Florian l'a écarté pour un rapport de trait constant d'une
+ * taille à l'autre et un seul dessin à tenir. Ce qui reste fermé est la LISTE des tailles, par le
+ * type de `size`.
  *
  * DÉCORATIF, TOUJOURS. `aria-hidden` et `focusable="false"` sans condition. Le nom accessible
  * appartient au CONTRÔLE qui contient l'icône, jamais au glyphe : sans cette règle, un bouton icône

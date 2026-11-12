@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Slider } from "@/components/ui/slider";
-import { hasMini, NeumeIcon } from "@/lib/neume";
+import { NeumeIcon } from "@/lib/neume";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { pick, SIZES } from "@neume-icons/svg/render";
 
@@ -31,8 +31,8 @@ export function SizesScene() {
     return () => clearInterval(tick);
   }, [reduced, touched]);
 
-  const { set, k } = pick(size, hasMini(NAME));
-  const grid = set === "petit" ? 8 : 12;
+  const { k } = pick(size);
+  const cell = String(Number(k.toFixed(2)));
 
   return (
     <div className="flex w-full max-w-[var(--site-scene-width)] flex-col items-center gap-4">
@@ -42,7 +42,7 @@ export function SizesScene() {
       <p className="flex gap-2 font-body text-caption tabular-nums" aria-live="off">
         <span className="text-text-primary">{size} px</span>
         <span className="text-text-tertiary">
-          {grid} × {grid} cells, {k} px each
+          12 × 12 cells, {cell} px each
         </span>
       </p>
       <div className="w-full">
