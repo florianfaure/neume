@@ -59,7 +59,7 @@ export function Features() {
           <FeatureCard
             scene={<FeedbackScene />}
             title="Feedback"
-            description="Status at 24 px, next to the words it supports."
+            description="Status icons that sit next to the words they support."
           />
         </Slot>
         <Slot>
