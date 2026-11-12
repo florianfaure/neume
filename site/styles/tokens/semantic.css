@@ -1423,10 +1423,10 @@
 
   /* DELTA — le second cran d'icône. Déclaré par `Icon`, pour `LocationLine` (2026-08-10).
    *
-   * 16 px. Depuis le 2026-11-11, `Icon` rend Neume seul et la taille est une prop
-   * (`docs/specs/2026-11-11-icon-neume-design.md`) : à 16, le calage de Neume prend le MINI de
-   * 8 × 8 à 2 px par case, un dessin fait pour cette taille — ou, pour une icône sans mini, le grand
-   * de 12 × 12 à 1 px par case. Une case y tombe toujours sur un nombre entier de pixels (loi 5).
+   * 16 px. Depuis le 2026-11-12 (Neume 0.2.0, `docs/specs/2026-11-11-icon-neume-design.md` § 4),
+   * `Icon` rend à toutes ses tailles le grand dessin de 12 × 12, au facteur exact : à 16, une case
+   * vaut 1,33 px et le tracé est lissé — l'exception nominative de la loi 6, « L'icône de 16 px,
+   * lissée ». Ce que ce commentaire disait avant est dans `docs/history/icon.md`.
    *
    * En px et non en rem, pour la raison de `--size-icon` juste au-dessus. */
   --size-icon-sm: 16px;
@@ -1436,11 +1436,9 @@
    *
    * 12 px. Il a été jusqu'au 2026-11-11 la taille d'une RÉDUCTION — le `pin` de 16 rendu à ×0,75, des
    * blocs de 1,5 px CSS qui bavaient en densité 1× — puis d'un second glyphe de même grain ; la loi 5
-   * le nommait glyphe par glyphe. Depuis que `Icon` rend Neume seul, le calage prend à 12 le MINI de
-   * 8 × 8 à 1 px par case, centré dans la boîte de 12 (ou le grand de 12 × 12 à 1 px, sans mini) :
-   * aucune réduction, aucune frange, et la liste nominative tombe. Le prix a changé de nature : le
-   * dessin n'occupe plus que 8 px des 12. Ce que ce commentaire disait avant est dans
-   * `docs/history/icon.md`.
+   * le nommait glyphe par glyphe. Depuis le 2026-11-12 (Neume 0.2.0), `Icon` y rend le grand dessin
+   * de 12 × 12 à 1 px par case : aucune réduction, aucune frange, le dessin remplit sa boîte, et la
+   * liste nominative reste tombée. Ce que ce commentaire disait avant est dans `docs/history/icon.md`.
    *
    * En px et non en rem, pour la raison de `--size-icon` plus haut. */
   --size-icon-xs: 12px;
