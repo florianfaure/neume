@@ -94,7 +94,13 @@ const geistMonoLatin = localFont({
   // 0,6 em que Geist Mono, donc aucun décalage horizontal pendant le `swap`. C'était le réglage de
   // la face `latin-ext` au commit `c671687`, raisonnement compris.
   adjustFontFallback: false,
-  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
+  fallback: [
+    "ui-monospace",
+    "SFMono-Regular",
+    "Menlo",
+    "Consolas",
+    "monospace",
+  ],
   variable: "--font-geist-mono-latin",
 });
 
@@ -105,7 +111,20 @@ const REVEAL_SCRIPT = `!function(){var d=document.documentElement,n=0;if(!("Inte
 export const metadata: Metadata = {
   metadataBase: new URL("https://neume.dev"),
   title: "Neume — pixel icons for real interfaces",
-  description: "A pixel icon set drawn square by square, shipped as SVG and React.",
+  description:
+    "A pixel icon set drawn square by square, shipped as SVG and React.",
+  alternates: { canonical: "/" },
+  // L'image (`app/opengraph-image.png`) et les icônes (`icon.svg`, `favicon.ico`, `apple-icon.png`) sont
+  // des fichiers de app/, branchés par Next. Ils sortent de `scripts/brand-assets.mjs`.
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Neume",
+    title: "Neume — pixel icons for real interfaces",
+    description:
+      "A pixel icon set drawn square by square, shipped as SVG and React.",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -122,7 +141,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `${THEME_SCRIPT};${REVEAL_SCRIPT}` }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `${THEME_SCRIPT};${REVEAL_SCRIPT}`,
+          }}
+        />
       </head>
       <body>
         {children}
