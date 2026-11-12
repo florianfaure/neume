@@ -9,6 +9,7 @@ import { CommandPalette } from "@/components/ui/command-palette";
 import type { CommandPaletteGroup } from "@/components/ui/command-palette";
 import { Footer } from "@/components/ui/footer";
 import { IconSheet } from "@/components/ui/icon-sheet";
+import type { IconName } from "@/components/ui/icon";
 import { Kbd } from "@/components/ui/kbd";
 import { NavBar } from "@/components/ui/nav-bar";
 import { NavItem } from "@/components/ui/nav-item";
@@ -72,6 +73,7 @@ export function Home() {
         items: THEMES.flatMap((t) =>
           t.icons.map((name) => ({
             label: name,
+            icon: name as IconName,
             meta: t.label,
             keywords: (KEYWORDS[name] ?? "").split(" ").filter(Boolean),
             onSelect: () => {
@@ -84,22 +86,22 @@ export function Home() {
       {
         label: "Pages",
         items: [
-          { label: "Docs", icon: "file-text-sm" as const, href: "/docs" },
-          { label: "Changelog", icon: "file-text-sm" as const, href: "/changelog" },
+          { label: "Docs", icon: "file-text" as const, href: "/docs" },
+          { label: "Changelog", icon: "history" as const, href: "/changelog" },
         ],
       },
       {
         label: "Actions",
         items: [
-          { label: "Copy the install command", icon: "copy-sm" as const, onSelect: copyCommand },
+          { label: "Copy the install command", icon: "copy" as const, onSelect: copyCommand },
           {
             label: "Switch theme",
-            icon: "moon-sm" as const,
+            icon: "moon" as const,
             keywords: ["dark", "light", "mode"],
             onSelect: () =>
               document.querySelector<HTMLInputElement>('input[name="theme"]:not(:checked)')?.click(),
           },
-          { label: "Open GitHub", icon: "external-link-sm" as const, href: REPO_URL, newTab: true },
+          { label: "Open GitHub", icon: "external-link" as const, href: REPO_URL, newTab: true },
         ],
       },
     ],
@@ -115,6 +117,7 @@ export function Home() {
     <>
       <NavBar
         behavior="auto-hide"
+        align="content"
         brand={<BrandMark className="size-8 text-text-primary" />}
         brandLabel="Neume"
         label="Main"
@@ -188,7 +191,7 @@ export function Home() {
               variant="columns"
               brand={<BrandLockup />}
               lead="A pixel icon set drawn square by square, for React and plain SVG."
-              newsletter={
+              action={
                 <Button
                   variant="secondary"
                   content="icon-label"

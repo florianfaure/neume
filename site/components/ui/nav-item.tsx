@@ -12,7 +12,7 @@ interface NavItemProps {
    * courant est gris comme les autres. Décision de Florian du 2026-11-11 ; voir la docstring.
    */
   current?: boolean;
-  /** Ouvre le lien dans un nouvel onglet, avec la mention `sr-only` de `lib/new-tab.tsx` et le glyphe `external-link-xs` après le mot. */
+  /** Ouvre le lien dans un nouvel onglet, avec la mention `sr-only` de `lib/new-tab.tsx` et le glyphe `external-link` de 16 px après le mot. */
   newTab?: boolean;
 }
 
@@ -41,7 +41,7 @@ interface NavItemProps {
  * clic ne dépend pas de la hauteur du mot. Pas de calque de pointage : la hauteur est la vraie.
  *
  * `newTab` : `target="_blank"`, `rel="noopener"` et la mention en `sr-only` viennent de
- * `lib/new-tab.tsx`, avec `external-link-xs` (12 px, loi 5) après le mot, à 4 px. Aucun `cursor-pointer` :
+ * `lib/new-tab.tsx`, avec `external-link` à 16 px (loi 5) après le mot, à 4 px. Aucun `cursor-pointer` :
  * le curseur est une décision de site (`@layer base` de `globals.css`).
  *
  * Sous `prefers-reduced-motion`, `globals.css` ramène les durées à 1 ms et `--scale-press` à 1.
@@ -65,7 +65,7 @@ export function NavItem({ label, href, current, newTab }: NavItemProps) {
     >
       <span>{label}</span>
       {newTabNotice(newTab)}
-      {newTab ? <Icon name="external-link-xs" /> : null}
+      {newTab ? <Icon name="external-link" size={16} /> : null}
     </a>
   );
 }

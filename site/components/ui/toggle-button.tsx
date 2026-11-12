@@ -59,6 +59,16 @@ type ToggleButtonProps = ToggleButtonBaseProps &
  * ajoute un second signal quand l'appelant a deux glyphes. La paire du fond portant le glyphe est dans
  * `scripts/contrast-pairs.json`.
  *
+ * LE GLYPHE FAIT UN « POP » À CHAQUE BASCULE (2026-11-12, `refine`, retour de Florian sur neume.dev, pris du
+ * prototype de l'accueil, `.tg.pop`) : il monte de 4 px (`--lift-glyph-pop`) et redescend, en trois paliers
+ * (`steps(3)`) sur 240 ms (`--duration-glyph-pop`) — des tokens neufs, aucun existant n'avait cette durée ni
+ * cette amplitude. Passager et LIÉ AU GESTE : il part au clic, jamais au premier rendu ni à un changement de
+ * `pressed` venu du parent seul, et il revient à l'identité (`translate` individuel, qui ne touche ni au
+ * `scale` du clic ni à un `transform`). Un glyphe en mouvement n'est pas jugé à l'échelle entière (loi 6,
+ * exception « le mouvement ») ; il ne joue pas sous `prefers-reduced-motion`, où `globals.css` ramène la montée
+ * à 0. Le glyphe est enveloppé d'un `<span>` dont la `key` suit le nombre de clics, pour rejouer l'animation à
+ * chaque bascule, y compris deux de suite.
+ *
  * CLIENT : il porte l'état de la forme non contrôlée. Contrôlé, il ne le garde pas : la valeur
  * affichée est `pressed`, et un clic ne fait qu'appeler `onPressedChange`.
  *
@@ -74,10 +84,14 @@ export function ToggleButton({
   onPressedChange,
 }: ToggleButtonProps) {
   const [inner, setInner] = useState(defaultPressed);
+  /* Le nombre de clics : il sert de clé au glyphe, qui rejoue son « pop » à chaque bascule, et il vaut 0
+   * tant que personne n'a cliqué — le premier rendu ne bouge pas. */
+  const [pops, setPops] = useState(0);
   const on = pressed ?? inner;
 
   const toggle = () => {
     const next = !on;
+    setPops((count) => count + 1);
     if (pressed === undefined) setInner(next);
     onPressedChange?.(next);
   };
@@ -104,7 +118,16 @@ export function ToggleButton({
       )}
     >
       <span className="sr-only">{label}</span>
-      <Icon name={on && pressedIcon ? pressedIcon : icon} />
+      <span
+        key={pops}
+        className={cn(
+          "inline-flex",
+          pops > 0 &&
+            "[--glyph-pop-lift:var(--lift-glyph-pop)] [animation:glyph-pop_var(--duration-glyph-pop)_steps(3)]",
+        )}
+      >
+        <Icon name={on && pressedIcon ? pressedIcon : icon} />
+      </span>
     </button>
   );
 

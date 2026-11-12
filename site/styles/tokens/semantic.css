@@ -708,6 +708,18 @@
   --size-feature-card-scene-height: 240px;
   --size-toast-width: 360px;
   --duration-toast-visible: 4000ms;
+
+  /* DELTA 2026-11-12 — `ChipGroup` (retouche demandée par le site de Neume, `docs/history/chip-group.md`).
+   * `--size-chip-group-fade` : 48 px, la largeur du fondu de bord de `ChipGroup` quand sa rangée défile — assez
+   * pour que la flèche, posée dessus, ait un fond qui s'efface et non des chips tranchées. Un objet de taille
+   * arrêtée, justifié au champ `responsive`. Ne se remappe pas en dark. */
+  --size-chip-group-fade: 48px;
+
+  /* DELTA 2026-11-12 — `NavBar` (`docs/history/nav-bar.md`). `--size-nav-bar-content-width` : 1440 px, la largeur
+   * du contenu que `NavBar align="content"` donne à sa rangée — la largeur centrée des pages larges du site de
+   * Neume. Un MAXIMUM : sous 1440 px la rangée prend la fenêtre. Taille arrêtée, justifiée au champ
+   * `responsive` ; ne se remappe pas en dark. */
+  --size-nav-bar-content-width: 1440px;
   --color-chip-outlined-surface: color-mix(in oklch, var(--neutral-0) 85%, transparent);
 
   /* DELTA 2026-11-06 — le damier et la boîte de l'aperçu pixel, déclarés par `PixelPreview` (spec
@@ -1391,9 +1403,9 @@
    * n'est pas d'amender le schéma, qui a raison, mais de nommer la dimension qui était déjà
    * une décision.
    *
-   * En px et non en rem, pour la raison de `--border-thin` : Pixelarticons est dessiné sur
-   * une grille de 24 pixels logiques, et un glyphe qui grandirait avec la taille de police
-   * racine tomberait sur des demi-pixels — la loi 6 tombe avec lui.
+   * En px et non en rem, pour la raison de `--border-thin` : une icône est dessinée sur une
+   * grille de cases entières, et un glyphe qui grandirait avec la taille de police racine
+   * tomberait sur des demi-pixels — la loi 6 tombe avec lui.
    *
    * Consommation : `size-[var(--size-icon)]` (loi 1, troisième exception tolérée). Non mappé
    * dans `@theme inline` : Tailwind v4 n'expose pas de namespace de thème pour une dimension
@@ -1405,44 +1417,24 @@
 
   /* DELTA — le second cran d'icône. Déclaré par `Icon`, pour `LocationLine` (2026-08-10).
    *
-   * 16 px, et c'est l'amendement de la loi 5 du 2026-08-10 : la loi n'autorisait que 24 et 48,
-   * tout en écrivant dans son « pourquoi » que « s'il faut plus petit que 24, la réponse est un
-   * dessin adapté à cette taille, pas une réduction ». Le glyphe `pin` EST ce dessin — 28 blocs
-   * de 2 px dans 16 × 16, relevé du node `114:1656` de Florian.
-   *
-   * CE N'EST PAS UNE PROP DE `Icon`. La taille est intrinsèque au glyphe, portée par sa table de
-   * tracés : un même nom ne se rend jamais à deux tailles, parce que ce seraient deux dessins et
-   * que le rasteriseur en supprimerait des pixels (loi 5). Ce token nomme donc la boîte d'une
-   * FAMILLE de glyphes, pas une option d'appel.
+   * 16 px. Depuis le 2026-11-11, `Icon` rend Neume seul et la taille est une prop
+   * (`docs/specs/2026-11-11-icon-neume-design.md`) : à 16, le calage de Neume prend le MINI de
+   * 8 × 8 à 2 px par case, un dessin fait pour cette taille — ou, pour une icône sans mini, le grand
+   * de 12 × 12 à 1 px par case. Une case y tombe toujours sur un nombre entier de pixels (loi 5).
    *
    * En px et non en rem, pour la raison de `--size-icon` juste au-dessus. */
   --size-icon-sm: 16px;
 
-  /* DELTA — le troisième cran d'icône, et LE SEUL QUI NE SOIT PAS UNE GRILLE DE DESSIN. Déclaré
-   * par `Icon`, pour `LocationLine` (2026-08-10, en fin de journée).
+  /* DELTA — le troisième cran d'icône. Déclaré par `Icon`, pour `LocationLine` (2026-08-10, en fin
+   * de journée).
    *
-   * 12 px, et c'est le troisième amendement de la loi 5 du même jour. Les deux premiers ouvraient
-   * une taille à un DESSIN FAIT POUR ELLE — le 16 le matin avec le `pin`, puis les contrôles le
-   * soir avec les quatre glyphes de thème. Celui-ci ouvre une taille à une RÉDUCTION, ce que la
-   * loi refusait depuis le premier jour, et il est le seul des trois à coûter quelque chose.
-   *
-   * CE QU'IL COÛTE, CHIFFRÉ. Le `pin` est une grille de 8 × 8 pixels logiques rendue en blocs de
-   * 2 unités dans une boîte de 16 : ses tailles propres sont donc 8, 16 et 24, et 12 n'en est pas
-   * une. Un pixel logique y vaut 1,5 px CSS — 3 pixels physiques sur un écran 2×, où le dessin
-   * reste net, et un pixel et demi sur un écran 1×, où le rasteriseur invente la moitié manquante
-   * et pose des franges grises. C'est très exactement le ×1,5 que le « pourquoi » de la loi 6
-   * décrit comme le pire cas.
-   *
-   * POURQUOI IL EXISTE QUAND MÊME : décision de Florian du 2026-08-10, prise APRÈS que le calcul
-   * ci-dessus lui ait été présenté avec ses trois issues — garder le pin à 16, redessiner un pin
-   * pour 12, ou assumer la réduction. Il a redonné le node `114:1893`, qui porte le dessin de 16
-   * mis à ×0,75 par Figma : blocs de 1,5 px sur des demi-coordonnées. Ce n'est donc pas un oubli à
-   * corriger, et la sortie, le jour où elle est voulue, est un DESSIN de 12 × 12 ou de 6 × 6 en
-   * coordonnées entières — après quoi ce token cesse d'être une exception sans changer de valeur.
-   *
-   * IL NE PEUT PAS ÊTRE LA BOÎTE DU `viewBox`, contrairement aux deux crans au-dessus : le tracé
-   * du `pin` reste écrit dans l'espace de 16, seul son rendu descend à 12. C'est ce qui a séparé
-   * dans `icon.tsx` la GRILLE DE DESSIN de la TAILLE RENDUE, jusque-là un seul champ.
+   * 12 px. Il a été jusqu'au 2026-11-11 la taille d'une RÉDUCTION — le `pin` de 16 rendu à ×0,75, des
+   * blocs de 1,5 px CSS qui bavaient en densité 1× — puis d'un second glyphe de même grain ; la loi 5
+   * le nommait glyphe par glyphe. Depuis que `Icon` rend Neume seul, le calage prend à 12 le MINI de
+   * 8 × 8 à 1 px par case, centré dans la boîte de 12 (ou le grand de 12 × 12 à 1 px, sans mini) :
+   * aucune réduction, aucune frange, et la liste nominative tombe. Le prix a changé de nature : le
+   * dessin n'occupe plus que 8 px des 12. Ce que ce commentaire disait avant est dans
+   * `docs/history/icon.md`.
    *
    * En px et non en rem, pour la raison de `--size-icon` plus haut. */
   --size-icon-xs: 12px;
@@ -1451,32 +1443,31 @@
    * composition. Déclaré par `Icon`, pour `LookingGlasses` (spec
    * `docs/specs/2026-10-21-lot-f-clins-design.md` § 3.2).
    *
-   * Comme `--size-icon-xs`, IL N'EST PAS LA BOÎTE DU `viewBox` : le seul glyphe qui le porte,
-   * `glasses`, reste écrit dans l'espace de 16 du favicon, et seul son rendu monte. Mais là où le 12
-   * est une réduction à ×0,75, le 48 est un agrandissement ENTIER, ×3 : chaque unité du dessin tombe
-   * sur 3 pixels CSS, et la loi 6 tient sans exception à toute densité.
+   * À 48, le calage de Neume prend le grand de 12 × 12 à 4 px par case : un agrandissement ENTIER, et
+   * la loi 6 tient à toute densité.
    *
    * En px et non en rem, pour la raison de `--size-icon` plus haut. Consommation :
    * `size-[var(--size-icon-lg)]`, non mappé dans `@theme inline`, comme les trois autres crans. */
   --size-icon-lg: 48px;
 
-  /* DELTA 2026-10-21 — la cellule des lunettes. Déclarée par `LookingGlasses` (spec
+  /* DELTA 2026-10-21 — la case des lunettes. Déclarée par `LookingGlasses` (spec
    * `docs/specs/2026-10-21-lot-f-clins-design.md` § 3.2), et justifiée par lui seul.
    *
-   * 3 PX : une cellule du dessin d'`app/icon.svg` rendu à 48 par `Icon` (`glasses`, grille de 16,
-   * ×3). C'est le grain des pupilles — un bloc d'une cellule dans chaque verre —, de leur pas — elles
-   * ne se déplacent que d'une cellule entière, jamais entre deux —, et du trait qui les remplace au
-   * clignement. Tout ce que le composant pose en dimension est un multiple entier de ce token : la
-   * loi 6 tient parce qu'aucune position ne tombe entre deux pixels.
+   * 4 PX depuis le 2026-11-11 (3 px avant, la cellule du dessin du favicon rendu à ×3) : une case de
+   * la grille de 12 × 12 de Neume rendue à 48 par `Icon` (`glasses`). C'est le grain des pupilles —
+   * un bloc d'une case dans chaque verre —, de leur pas — elles ne se déplacent que d'une case
+   * entière, jamais entre deux —, et du trait qui les remplace au clignement. Toute dimension du
+   * composant en est un multiple entier, toute position aussi à la demi-case de Neume près : la loi 6
+   * tient parce qu'aucune position ne tombe entre deux pixels.
    *
-   * IL DÉPEND DE `--size-icon-lg` sans le lire : 48 ÷ 16 = 3. Le jour où le 48 change, celui-ci
+   * IL DÉPEND DE `--size-icon-lg` sans le lire : 48 ÷ 12 = 4. Le jour où le 48 change, celui-ci
    * change avec lui, et c'est écrit ici parce que rien ne le vérifie.
    *
    * En px et non en rem, pour la raison de `--size-icon` plus haut. Consommation :
    * `size-[var(--size-glasses-cell)]`, `translate-x-[var(--size-glasses-cell)]`, et ses multiples
-   * entiers dans un `calc()` pour placer pupilles et traits. Non mappé dans `@theme inline`. Ne se
-   * remappe pas en dark. */
-  --size-glasses-cell: 3px;
+   * dans un `calc()` pour placer pupilles et traits. Non mappé dans `@theme inline`. Ne se remappe
+   * pas en dark. */
+  --size-glasses-cell: 4px;
 
   /* DELTA — la cible de pointage. Déclarés par `ThemeSelector` (2026-08-09).
    *
@@ -2160,6 +2151,19 @@
    * `prefers-reduced-motion`, le filet de `globals.css` ramène la durée à 1 ms et le nombre de tours à un :
    * le glyphe s'arrête à l'identité, donc immobile. */
   --duration-spin: 1000ms;
+
+  /* DELTA 2026-11-12 — `ToggleButton` (`docs/history/toggle-button.md`). `--duration-glyph-pop` : 240 ms, la durée du « pop » du glyphe
+   * quand le bouton change d'état — il monte de `--lift-glyph-pop` (4 px) et redescend en trois paliers
+   * (`steps(3)`, écrit dans la règle du composant), dans la famille `--lift-` de `--lift-reveal`. Passagers,
+   * liés au geste ; sous `prefers-reduced-motion` la durée tombe à 1 ms et la montée à 0 dans `globals.css`. */
+  --duration-glyph-pop: 240ms;
+  --lift-glyph-pop: 4px;
+
+  /* DELTA 2026-11-12 — `List` (`docs/history/list.md`). `--duration-list-autoplay` : 1200 ms, le pas de la lecture
+   * automatique — le temps que le fond reste sur une ligne avant de passer à la suivante. UNE ATTENTE, donc une
+   * durée, lue par `getComputedStyle` pour armer une minuterie comme `--duration-toast-visible` : elle n'est PAS
+   * dans le bloc de mouvement réduit (le composant lit la requête et ne joue pas). */
+  --duration-list-autoplay: 1200ms;
 
   /* DELTA — la distribution des photos de `PhotoStrip` (spec `2026-10-20-lot-d-home-design`
    * § 4.1). Le pas entre deux photos qui se posent, de gauche à droite : un RETARD, donc une durée.

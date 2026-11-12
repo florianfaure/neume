@@ -9,27 +9,23 @@ import { SearchField } from "@/components/ui/search-field";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 const WORD = "open";
-const ROWS: { id: string; label: string; icon: IconName; meta: string }[] = [
-  { id: "dense-file", label: "Open file", icon: "file-text-sm", meta: "⌘O" },
-  { id: "dense-link", label: "Open link", icon: "external-link-sm", meta: "⌘L" },
-  { id: "dense-message", label: "Open message", icon: "mail-sm", meta: "⌘M" },
-  { id: "dense-search", label: "Open search", icon: "search-sm", meta: "⌘F" },
+const ROWS: { label: string; icon: IconName; meta: string }[] = [
+  { label: "Open file", icon: "file-text", meta: "⌘O" },
+  { label: "Open link", icon: "external-link", meta: "⌘L" },
+  { label: "Open message", icon: "mail", meta: "⌘M" },
+  { label: "Open search", icon: "search", meta: "⌘F" },
 ];
 
-/** « Dense lists » : un champ qui tape « open », une liste de lignes de 36 px dont la ligne active avance. */
+/** « Dense lists » : un champ qui tape « open », et une liste de lignes de 36 px dont le fond avance seul. */
 export function DenseScene() {
   const reduced = useReducedMotion();
   const [touched, setTouched] = useState(false);
   const [typed, setTyped] = useState(0);
-  const [active, setActive] = useState(ROWS[0].id);
   const [text, setText] = useState("");
 
   useEffect(() => {
     if (reduced || touched) return;
-    const tick = setInterval(() => {
-      setTyped((n) => (n < WORD.length ? n + 1 : n));
-      setActive((current) => ROWS[(ROWS.findIndex((r) => r.id === current) + 1) % ROWS.length].id);
-    }, 600);
+    const tick = setInterval(() => setTyped((n) => (n < WORD.length ? n + 1 : n)), 600);
     return () => clearInterval(tick);
   }, [reduced, touched]);
 
@@ -46,26 +42,9 @@ export function DenseScene() {
           setText(next);
         }}
       />
-      <List
-        mode="listbox"
-        id="dense-list"
-        label="Commands"
-        activeId={active}
-        onActiveChange={(id) => {
-          setTouched(true);
-          setActive(id);
-        }}
-      >
+      <List label="Commands" autoplay>
         {ROWS.map((row) => (
-          <ListRow
-            key={row.id}
-            option
-            id={row.id}
-            label={row.label}
-            icon={row.icon}
-            meta={row.meta}
-            selected={row.id === active}
-          />
+          <ListRow key={row.label} label={row.label} icon={row.icon} meta={row.meta} onClick={() => {}} />
         ))}
       </List>
     </div>

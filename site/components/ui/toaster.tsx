@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { FocusEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -14,7 +14,7 @@ import {
 } from "@/lib/toast";
 import { cn } from "@/lib/cn";
 
-interface ToasterProps {
+interface ToasterBaseProps {
   /**
    * Le nom accessible de la région qui annonce les notifications. Défaut « Notifications » : un petit
    * texte système, au défaut anglais remplaçable (anonymisation pour Consort, spec
@@ -24,6 +24,16 @@ interface ToasterProps {
   /** Le nom accessible de la croix, et le mot de sa bulle. Défaut « Close ». */
   closeLabel?: string;
 }
+
+/**
+ * Où la région se pose. `window` (défaut, l'existant) : fixée en bas à droite de la fenêtre, et elle affiche les
+ * notifications sans `scope` — ou celles de la `scope` qu'on lui donne. `container` : posée dans le conteneur
+ * positionné le plus proche, en bas, sur sa largeur — la `scope` est alors REQUISE : un `Toaster` de conteneur qui
+ * affichait aussi les notifications globales les dédoublerait avec celui de la fenêtre. Le parent est `relative`
+ * (et `overflow-hidden` s'il doit rogner) ; le composant ne pose aucune largeur (loi 8).
+ */
+type ToasterProps = ToasterBaseProps &
+  ({ placement?: "window"; scope?: string } | { placement: "container"; scope: string });
 
 /** Chaque ton, son glyphe de 24 px et la couleur de retour de l'icône. Écrits en toutes lettres : Tailwind lit le source. */
 const TONES = {
@@ -168,13 +178,30 @@ function Notice({ item, closeLabel }: { item: ToastItem; closeLabel: string }) {
  * du système, atteints au clavier dans l'ordre du DOM ; la région laisse passer les clics (`pointer-events-none`),
  * seules les notifications les reçoivent.
  *
+ * UN `Toaster` PEUT JOUER DANS UN CONTENEUR (`placement="container"` et `scope`, 2026-11-12, `extend`, pour la carte
+ * « Feedback » du site de Neume, où les toasts doivent s'enchaîner dans la carte). L'API retenue est la plus
+ * petite : le même `toast()`, une option `scope`, et un `Toaster` qui en porte le nom. Sans `scope`, rien ne
+ * change — un `<Toaster />` et un `toast({ title })` font exactement ce qu'ils faisaient. Dans le conteneur, la
+ * région est `absolute`, à 16 px des bords gauche, droit et bas du conteneur positionné le plus proche, et elle
+ * prend sa largeur (`--size-toast-width` ne s'y applique pas) ; elle n'a pas de `z-index`, un élément positionné
+ * se peignant déjà par-dessus le contenu qui ne l'est pas. Les notifications sont les mêmes — geste, minuterie,
+ * survol, croix. Une séquence que la page joue elle-même est de la décoration : l'appelant choisit, il n'y a pas
+ * de mode muet — la région reste `aria-live`.
+ *
  * DÉSACTIVÉ ne s'applique pas : une notification n'est pas un contrôle qu'on peut désactiver. COMPOSANT
  * CLIENT (`runtime: "client"`) : l'abonnement au store, l'état de survol, les minuteries.
  *
  * Histoire : `docs/history/toaster.md`.
  */
-export function Toaster({ label = "Notifications", closeLabel = "Close" }: ToasterProps) {
-  const items = useSyncExternalStore(subscribeToasts, getToasts, getServerToasts);
+export function Toaster({
+  label = "Notifications",
+  closeLabel = "Close",
+  placement = "window",
+  scope,
+}: ToasterProps) {
+  const all = useSyncExternalStore(subscribeToasts, getToasts, getServerToasts);
+  /* Les siennes seulement : sans portée, celles sans portée ; sinon celles de son nom. */
+  const items = useMemo(() => all.filter((item) => item.scope === scope), [all, scope]);
 
   return (
     <div
@@ -182,8 +209,13 @@ export function Toaster({ label = "Notifications", closeLabel = "Close" }: Toast
       aria-label={label}
       aria-live="polite"
       className={cn(
-        "pointer-events-none fixed inset-x-4 bottom-4 z-[var(--z-overlay)] flex flex-col gap-2",
-        "md:inset-x-auto md:right-6 md:bottom-6 md:w-[var(--size-toast-width)]",
+        "pointer-events-none flex flex-col gap-2",
+        placement === "container"
+          ? "absolute inset-x-4 bottom-4"
+          : [
+              "fixed inset-x-4 bottom-4 z-[var(--z-overlay)]",
+              "md:inset-x-auto md:right-6 md:bottom-6 md:w-[var(--size-toast-width)]",
+            ],
       )}
     >
       {items.map((item) => (

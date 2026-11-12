@@ -1,15 +1,14 @@
-import { ToggleButton } from "@/components/ui/toggle-button";
 import type { IconName } from "@/components/ui/icon";
+import { ToggleButton } from "@/components/ui/toggle-button";
 
-// Les glyphes que `ToggleButton` accepte sont ceux du composant `Icon` des copies (voir le rapport) :
-// les six paires ci-dessous n'ont aucun glyphe en commun, dans les deux états et quel que soit le thème.
+// Les paires que Neume livre, dessinées ensemble : aucun glyphe n'apparaît deux fois, quel que soit le thème.
 const PAIRS: { label: string; icon: IconName; pressedIcon: IconName }[] = [
-  { label: "Copy", icon: "copy", pressedIcon: "check" },
-  { label: "Menu", icon: "menu", pressedIcon: "close" },
-  { label: "Status", icon: "alert-circle", pressedIcon: "check-circle" },
-  { label: "Mail", icon: "mail", pressedIcon: "inbox" },
-  { label: "Link", icon: "link", pressedIcon: "external-link" },
-  { label: "Download", icon: "arrow-down", pressedIcon: "download" },
+  { label: "Favorite", icon: "star", pressedIcon: "star-filled" },
+  { label: "Hide", icon: "eye", pressedIcon: "eye-off" },
+  { label: "Mute microphone", icon: "mic", pressedIcon: "mic-off" },
+  { label: "Mute notifications", icon: "bell", pressedIcon: "bell-off" },
+  { label: "Lock", icon: "lock", pressedIcon: "unlock" },
+  { label: "Dark mode", icon: "sun", pressedIcon: "moon" },
 ];
 
 /** « Two states » : des boutons à deux glyphes, dessinés ensemble. */

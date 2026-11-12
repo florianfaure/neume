@@ -475,12 +475,12 @@ export function ThemeSelector({
             />
             <span className="sr-only">{labels[option.value]}</span>
             <span className={cn("peer-checked:hidden group-active:hidden", option.early.hollow)}>
-              <Icon name={option.icon} />
+              <Icon name={option.icon} size={16} />
             </span>
             <span
               className={cn("hidden peer-checked:block group-active:block", option.early.filled)}
             >
-              <Icon name={option.iconFilled} />
+              <Icon name={option.iconFilled} size={16} />
             </span>
           </label>
         ))}

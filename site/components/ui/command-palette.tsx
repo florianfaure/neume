@@ -15,7 +15,7 @@ import { cn } from "@/lib/cn";
 export type CommandPaletteItem = {
   /** Le libellé, aussi le nom accessible de l'option et la base du filtre. */
   label: string;
-  /** Le glyphe avant le libellé, à la taille de son dessin. Décoratif. */
+  /** Le glyphe avant le libellé : tout nom de Neume, que `ListRow` rend à 16 px. Décoratif. */
   icon?: IconName;
   /** Une méta à droite, au tertiaire : « Page », « ⌘C ». */
   meta?: string;
@@ -347,7 +347,7 @@ function PaletteBody({
  * pour le filtre, et OÙ elle mène (`href`) OU ce qu'elle fait (`onSelect`). Le filtre est le plus simple qui serve :
  * sous-chaîne, sans casse, sur le libellé et les mots-clés ; un groupe vide disparaît. Choisie, une ligne `href`
  * navigue (`window.location.assign`, ou `window.open` en nouvel onglet), une ligne `onSelect` agit ; puis la
- * palette se ferme. Les glyphes sont ceux de `Icon`, rendus à la taille de leur dessin : la démo emploie les minis de 16 px de Neume (`-sm`) ; seul le glyphe GitHub
+ * palette se ferme. Les glyphes sont ceux de `Icon`, que `ListRow` rend à 16 px — les minis de Neume ; seul le glyphe GitHub
  * mini manque, une icône provisoire le remplace (`GAPS.md`).
  *
  * LA REQUÊTE est interne et repart de vide à chaque ouverture ; `query` + `onQueryChange` la rendent contrôlée, pour

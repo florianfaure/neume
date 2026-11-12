@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { NeumeIcon } from "@/lib/neume";
+import { Icon } from "@/components/ui/icon";
+import { ToggleButton } from "@/components/ui/toggle-button";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 const TRACKS = [
@@ -45,7 +46,7 @@ export function PlayerScene() {
     <div className="flex w-full max-w-[var(--site-scene-width)] flex-col gap-4">
       <div className="flex items-center gap-3">
         <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-surface-inverse text-text-inverse">
-          <NeumeIcon name="music" />
+          <Icon name="music" />
         </span>
         <div className="flex min-w-0 flex-col">
           <p className="truncate font-body text-body-sm font-medium text-text-primary">
@@ -62,12 +63,27 @@ export function PlayerScene() {
         </p>
       </div>
       <div className="flex items-center justify-center gap-2">
-        <Button variant="ghost" label="Previous" onClick={() => go(-1)} />
         <Button
+          variant="ghost"
+          content="icon"
+          icon="skip-back"
+          label="Previous"
+          onClick={() => go(-1)}
+        />
+        <Button
+          content="icon"
+          icon={playing ? "pause" : "play"}
           label={playing ? "Pause" : "Play"}
           onClick={() => setPlaying((p) => !p)}
         />
-        <Button variant="ghost" label="Next" onClick={() => go(1)} />
+        <Button
+          variant="ghost"
+          content="icon"
+          icon="skip-forward"
+          label="Next"
+          onClick={() => go(1)}
+        />
+        <ToggleButton label="Mute" icon="volume" pressedIcon="volume-off" />
       </div>
     </div>
   );

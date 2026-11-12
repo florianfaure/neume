@@ -9,8 +9,7 @@ interface EmptyStateProps {
   /** Une ou deux phrases qui disent quoi faire, au tertiaire. Facultative. */
   description?: string;
   /**
-   * Le glyphe, au tertiaire, à la taille de son dessin : 24 px pour presque tous, 48 px pour un élément de
-   * composition. Défaut `inbox`. Décoratif.
+   * Le glyphe, au tertiaire, à 24 px : tout nom de Neume. Défaut `inbox`. Décoratif.
    */
   icon?: IconName;
   /**
@@ -38,11 +37,9 @@ interface EmptyStateProps {
  * ou une grille vide. `compact` : 24 px de marge, le titre à `text-body`, les actions à 8 px — un panneau, un
  * menu. Même anatomie, deux échelles.
  *
- * LE GLYPHE EST À LA TAILLE DE SON DESSIN (loi 5) : le cadrage parle d'une icône de 24 ou de 48 px, et `Icon` n'a
- * pas de prop de taille — un même nom ne se rend jamais à deux tailles. Les glyphes du système sont de 24 ;
- * `glasses`, de 48, est le seul glyphe de composition à ce jour. Aucun glyphe de 48 n'existe pour `inbox`, ni pour
- * `search` : la forme `full` du prototype, qui les agrandissait, montre ici le glyphe de 24, et un glyphe de 48 s'ajoutera
- * à `Icon` — avec son nom — le jour où un appelant le demande.
+ * LE GLYPHE EST À 24 PX, dans les deux formes. Le cadrage parlait d'une icône de 24 ou de 48 px ; depuis le
+ * 2026-11-11, `Icon` rend tout nom de Neume à 12, 16, 24 ou 48, et le 48 de la forme `full` du prototype n'est plus
+ * qu'un `size` à passer — le jour où Florian le demande, c'est un `refine` de ce composant, pas un glyphe neuf.
  *
  * SANS ÉTAT : ni survol, ni focus, ni état désactivé — il n'est pas interactif, ses `Button` le sont par eux-mêmes.
  * COMPOSANT SERVEUR.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -226,7 +226,7 @@ const WAIT = "var(--duration-tooltip-delay)";
  * appliqué avant le découpage de l'élément qui le porte, donc l'ombre est dessinée autour des marches
  * — la raison des deux nœuds, qui est celle de `CursorPill`. Un `filter` fait de ce nœud le bloc
  * conteneur de ses descendants `fixed` et un contexte d'empilement : il n'en a aucun descendant
- * `fixed`, et son `z-index` (`--z-overlay`) reste effectif, porté par ce même nœud `absolute`. Le ressort
+ * `fixed`, et la bulle, depuis le 2026-11-12, est dans le top layer, où aucun `z-index` ne joue (voir plus bas). Le ressort
  * d'entrée, le fondu de sortie, le glissement de largeur et le changement de mot ne bougent pas.
  *
  * UN ÉCART CONNU, ACCEPTÉ PAR FLORIAN POUR L'INSTANT : `CursorPill` arrondit sa position au pixel
@@ -289,6 +289,23 @@ const WAIT = "var(--duration-tooltip-delay)";
  *    longueur de chaque titre — et un bloc ne pose pas la jambe d'interligne qu'une enveloppe en ligne
  *    ajouterait à son parent.
  *
+ * LA BULLE EST DANS LE TOP LAYER (2026-11-12, `refine`, retour de Florian : « les bulles des boutons icône sont
+ * coupées dans une `Dialog` »). LA CAUSE : la bulle était un `absolute` DANS le flux du contrôle, donc rognée
+ * par tout ancêtre qui coupe — le panneau d'une `Dialog` et son contenu en `overflow-hidden` (`IconSheet`,
+ * `CommandPalette`, `ShareButton`, `Exhibit`) — et un `z-index` ne passe jamais au-dessus d'un `<dialog>` modal,
+ * qui vit dans le top layer. LE CORRECTIF EST À LA SOURCE : la bulle est un `popover="manual"`, montré par
+ * `showPopover()` à chaque ouverture — donc le DERNIER entré dans le top layer, au-dessus du `<dialog>` — et sorti
+ * de tout `overflow` et de tout bloc conteneur. Elle reste montée, et son `data-state` pilote toujours l'entrée
+ * et la sortie ; `showPopover()` ne fait qu'en faire un élément du top layer, et le `display` reste celui de nos
+ * classes. Un `popover` est `position: fixed` : la position n'est donc plus celle du flux, elle est MESURÉE sur
+ * l'enveloppe du contrôle à l'ouverture, au défilement (de n'importe quel ancêtre) et au redimensionnement — le
+ * bord bas de la bulle touche le bord haut du contrôle (`top`), ou son bord gauche touche le bord droit (`right`),
+ * pour que le `pb-2` / `pl-2` transparent de l'obligation 2 tienne. Une position mesurée, comme `SegmentedTrack` et
+ * `CursorPill` : le choix à l'ancrage CSS (`anchor-name`) a été écarté, son support n'étant pas assez large aujourd'hui
+ * (la même raison que pour `SegmentedTrack`). Le reste ne bouge pas : délai, côtés, silhouette crantée, ombre,
+ * ressort, `aria-hidden` et `aria-describedby`, `Escape`, tactile et mouvement réduit. Ce qui reste est la
+ * limite de la fenêtre : la bulle ne bascule toujours pas de côté (« AUCUNE BASCULE DE POSITION »).
+ *
  * Histoire : `docs/history/tooltip.md`.
  */
 export function Tooltip({
@@ -327,6 +344,40 @@ export function Tooltip({
     setLeaving(wasVisible ? shown : null);
     setShown({ text: label, id: shown.id + 1 });
   }
+
+  const wrap = useRef<HTMLSpanElement>(null);
+  const bubble = useRef<HTMLSpanElement>(null);
+
+  /* La bulle est `fixed` dans le top layer : sa place est mesurée sur l'enveloppe du contrôle (voir la docstring).
+   * Une POSITION mesurée, écrite en `style` — l'exception « données de contenu » de la loi 1. */
+  const place = useCallback(() => {
+    const node = bubble.current;
+    const box = wrap.current?.getBoundingClientRect();
+    if (!node || !box) return;
+    if (side === "top") {
+      node.style.left = `${box.left + box.width / 2}px`;
+      node.style.bottom = `${document.documentElement.clientHeight - box.top}px`;
+    } else {
+      node.style.left = `${box.right}px`;
+      node.style.top = `${box.top + box.height / 2}px`;
+    }
+  }, [side]);
+
+  /* À chaque ouverture : la bulle (re)entre dans le top layer — la dernière entrée est la plus haute, donc
+   * au-dessus d'un `<dialog>` modal déjà ouvert — et se place ; ouverte, elle suit le défilement et la fenêtre. */
+  useLayoutEffect(() => {
+    const node = bubble.current;
+    if (!visible || !node) return;
+    if (node.matches(":popover-open")) node.hidePopover();
+    node.showPopover();
+    place();
+    window.addEventListener("scroll", place, { capture: true, passive: true });
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, { capture: true });
+      window.removeEventListener("resize", place);
+    };
+  }, [visible, place]);
 
   const pill = useRef<HTMLSpanElement>(null);
   const outgoing = useRef<HTMLSpanElement>(null);
@@ -418,6 +469,7 @@ export function Tooltip({
 
   return (
     <span
+      ref={wrap}
       className={side === "top" ? "relative inline-flex self-start" : "relative block"}
       onPointerEnter={open}
       onPointerLeave={hide}
@@ -431,15 +483,20 @@ export function Tooltip({
        * départ en `starting:`. Le centrage (`-translate-x-1/2`) et la montée (`translate-y-…`)
        * composent sur la même propriété `translate`, par les variables de Tailwind v4. */}
       <span
+        ref={bubble}
+        popover="manual"
         id={descriptionId}
         aria-hidden="true"
         data-state={visible ? "open" : "closed"}
         className={cn(
           /* Au-dessus, centrée sur la largeur ; à droite, centrée sur la hauteur. Le remplissage
            * transparent tourne avec elle : `pb-2` au-dessus, `pl-2` à droite (obligation 2). */
+          /* `fixed` dans le top layer : la place (`left` et `bottom` ou `top`) est mesurée (`place`). Les `m-0`,
+           * `p-0`, `border-0`, `overflow-visible` et `bg-transparent` défont la feuille de style d'un popover. */
+          "fixed m-0 inset-auto border-0 bg-transparent p-0 overflow-visible",
           side === "top"
-            ? "absolute bottom-full left-1/2 z-[var(--z-overlay)] -translate-x-1/2 origin-bottom pb-2"
-            : "absolute top-1/2 left-full z-[var(--z-overlay)] -translate-y-1/2 origin-left pl-2",
+            ? "-translate-x-1/2 origin-bottom pb-2"
+            : "-translate-y-1/2 origin-left pl-2",
           /* Qui décrit : la largeur de sa phrase, plafonnée sur la pastille (point 2). */
           describing && "w-max",
           /* L'ombre est portée ICI, par un filtre : le nœud découpé en dessous ne peut pas la

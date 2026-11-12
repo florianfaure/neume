@@ -1,36 +1,62 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { toast } from "@/lib/toast";
+import { useEffect, useRef } from "react";
 
-/** « Feedback » : trois gestes, trois notifications — celles du vrai `Toaster`, en bas à droite de la page. */
+import { Toaster } from "@/components/ui/toaster";
+import { toast } from "@/lib/toast";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+
+const SCOPE = "feedback";
+const TOASTS = [
+  { title: "Changes saved", description: "Your icon set is up to date.", tone: "positive" as const },
+  { title: "New message", description: "Florian sent you a file." },
+  { title: "Low storage", description: "2 GB left on this device.", tone: "negative" as const },
+  { title: "Branch merged", description: "site/home into main.", tone: "positive" as const },
+  { title: "Export ready", description: "neume-svg.zip, 214 KB." },
+];
+
+/**
+ * « Feedback » : les notifications jouent seules dans la carte, en boucle, par un vrai `Toaster` posé en
+ * conteneur. Elles ne partent que tant que la carte est à l'écran ; sous mouvement réduit, deux notifications
+ * restent posées et rien ne boucle.
+ */
 export function FeedbackScene() {
+  const reduced = useReducedMotion();
+  const host = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = host.current;
+    if (!node) return;
+    let index = 0;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    const fire = () => {
+      toast({ ...TOASTS[index % TOASTS.length], scope: SCOPE });
+      index += 1;
+    };
+    const stop = () => {
+      clearInterval(timer);
+      timer = undefined;
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      stop();
+      if (!entry.isIntersecting) return;
+      fire();
+      if (reduced) {
+        fire();
+        return;
+      }
+      timer = setInterval(fire, 2600);
+    });
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      stop();
+    };
+  }, [reduced]);
+
   return (
-    <div className="flex w-full max-w-[var(--site-scene-width)] flex-col gap-2">
-      <Button
-        variant="secondary"
-        label="Save changes"
-        onClick={() =>
-          toast({ title: "Changes saved", description: "Your icon set is up to date.", tone: "positive" })
-        }
-      />
-      <Button
-        variant="secondary"
-        label="Send message"
-        onClick={() => toast({ title: "Message sent", description: "Florian will get it shortly." })}
-      />
-      <Button
-        variant="secondary"
-        label="Delete file"
-        onClick={() =>
-          toast({
-            title: "File deleted",
-            description: "neume-svg.zip is gone.",
-            tone: "negative",
-            action: { label: "Undo", onClick: () => toast({ title: "File restored", tone: "positive" }) },
-          })
-        }
-      />
+    <div ref={host} className="relative w-full self-stretch">
+      <Toaster placement="container" scope={SCOPE} label="Sample notifications" />
     </div>
   );
 }

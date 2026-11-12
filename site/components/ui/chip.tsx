@@ -59,6 +59,12 @@ type ChipProps = ChipBaseProps &
  * paires de contraste (angle mort n° 27 de `.claude/rules/loi-07-accessibilite.md`) : le mot au tertiaire
  * y est jugé comme sur la page, et l'image dessous est à l'œil de Florian.
  *
+ * TOUJOURS SUR UNE LIGNE (2026-11-12, `refine`) : le libellé et le compteur ne passent jamais à la ligne
+ * (`whitespace-nowrap`), et la chip ne se laisse pas écraser par une rangée flex (`shrink-0`). Retour de
+ * Florian, venu du site de Neume : « Weather & nature » passait sur trois lignes dans une rangée étroite
+ * — la pilule fait 36 px de haut, elle ne sait pas en faire 60. Une rangée qui n'a pas la place défile
+ * (`ChipGroup`), elle ne casse pas ses mots.
+ *
  * Histoire : `docs/history/chip.md`.
  */
 export function Chip({
@@ -86,7 +92,8 @@ export function Chip({
       disabled={disabled}
       onClick={toggle}
       className={cn(
-        "relative inline-flex h-[var(--size-button-height)] items-center gap-1 self-start rounded-full px-3",
+        "relative inline-flex h-[var(--size-button-height)] shrink-0 items-center gap-1 self-start rounded-full px-3",
+        "whitespace-nowrap",
         "border-[length:var(--border-thin)] font-pixel text-body-sm",
         "after:absolute after:inset-x-0 after:inset-y-[var(--size-button-target-inset)] after:content-['']",
         "transition-[color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,scale] duration-[var(--duration-fast)] ease-out",

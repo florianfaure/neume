@@ -9,8 +9,8 @@ interface ListRowBaseProps {
   /** Le libellé de la ligne, qui est aussi son nom accessible. Requis. */
   label: string;
   /**
-   * L'icône, avant le libellé : un glyphe de `Icon`, rendu à la taille de son dessin — 16 px pour un glyphe
-   * dessiné pour 16, 24 px sinon. Décorative. Facultative.
+   * L'icône, avant le libellé : tout nom de Neume, rendu par `Icon` à 16 px — le mini, la taille de la ligne
+   * dense (lot 4). Décorative. Facultative.
    */
   icon?: IconName;
 }
@@ -139,7 +139,7 @@ export function ListRow({
     <>
       {icon ? (
         <span className="flex shrink-0">
-          <Icon name={icon} />
+          <Icon name={icon} size={16} />
         </span>
       ) : null}
       <span className="min-w-0 flex-1 truncate">{label}</span>

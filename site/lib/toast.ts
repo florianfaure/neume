@@ -10,6 +10,11 @@
  * et de poser sa propre région `aria-live`. La contrepartie est un état au niveau du module : un seul
  * `Toaster` par page, et il n'y a rien à rendre côté serveur — la liste est vide tant que rien n'a été appelé.
  *
+ * LA PORTÉE (2026-11-12, `extend`, pour la carte « Feedback » du site de Neume) : `toast({ …, scope })` adresse un
+ * `Toaster` nommé, posé dans un conteneur, au lieu de celui de la fenêtre. Le store reste UN : chaque notification
+ * porte sa portée, et chaque `Toaster` ne rend que les siennes — celles sans portée pour le global, celles de son
+ * nom pour un `Toaster` de conteneur. Aucune API de plus : le même `toast()`, une option.
+ *
  * Ce fichier n'est pas un composant : il ne rend rien et n'écrit aucune classe.
  */
 
@@ -25,6 +30,12 @@ export interface ToastOptions {
   tone?: ToastTone;
   /** Une action facultative, en bouton ghost : « Undo », « Retry ». Le clic l'appelle, puis ferme la notification. */
   action?: { label: string; onClick: () => void };
+  /**
+   * La portée de la notification (2026-11-12). Absente (défaut) : elle va au `Toaster` global, celui de la
+   * fenêtre. Nommée : elle ne va qu'au `Toaster` posé dans un conteneur sous le même nom (`placement="container"`),
+   * et ce `Toaster`-là n'affiche rien d'autre. Deux portées ne se voient jamais.
+   */
+  scope?: string;
 }
 
 export interface ToastItem extends ToastOptions {

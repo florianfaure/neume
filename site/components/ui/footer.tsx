@@ -38,6 +38,12 @@ interface FooterProps {
    * taille est celle de son contenu. Ignorée en `line`.
    */
   display?: ReactNode;
+  /**
+   * Un emplacement libre pour une action, un `Button` posé par l'appelant (« View on GitHub »). Facultatif, dans
+   * les deux formes. En `line`, à droite de `end`, sur la même ligne ; en `columns`, en dernier de la colonne de
+   * gauche, sous les réseaux. Le composant n'en pose que la place.
+   */
+  action?: ReactNode;
 }
 
 /**
@@ -59,7 +65,7 @@ interface FooterProps {
  * rappel de hiérarchie du pied —, puis ses liens en tertiaire, PRIMAIRES AU SURVOL, comme les `NavItem`
  * et le prototype. Le titre est un `<h2>` : un pied à colonnes est un plan de site, et ses groupes se
  * lisent au rotor comme des sections ; les liens sont une liste. Un lien en `newTab` suit la même
- * affordance que partout (`lib/new-tab.tsx`, et le glyphe `external-link-xs` après le mot).
+ * affordance que partout (`lib/new-tab.tsx`, et le glyphe `external-link` de 16 px après le mot (12 jusqu'au 2026-11-12, trop petit contre le texte)).
  *
  * LES LIENS ONT 24 PX DE HAUT (`py-1` autour d'une ligne de 16), pas 44 : ce sont des liens de texte dans
  * une liste dense, au-dessus du seuil de 24 px de WCAG 2.2 SC 2.5.8, et la loi 5 réserve les 44 px aux
@@ -76,6 +82,13 @@ interface FooterProps {
  * rangée de `Button` ghost en icône seule, la bulle de `Tooltip` portant le `label`, nouvel onglet ;
  * les cibles de 44 px débordent de 4 px, `gap-2` les empêche de se recouvrir (loi 5). La ligne du bas
  * garde `start` et `end` libres.
+ *
+ * `action` (2026-11-12, `extend`, retour de Florian sur neume.dev : le « View on GitHub » du site détournait la
+ * place `newsletter`) est un emplacement libre pour une action — un `Button` de l'appelant, aucun bouton brut ici
+ * (loi 9). OÙ IL SE POSE, DANS LES DEUX FORMES : en `line`, à droite de `end`, dans la même rangée — `end` puis
+ * l'action, 24 px entre eux, centrés l'un sur l'autre, et le groupe passe sous `start` quand la place manque ; en
+ * `columns`, dernier élément de la colonne de gauche, sous la phrase, `newsletter` et les réseaux. Absent, rien
+ * ne change dans l'une ni dans l'autre. Il n'est pas ignoré en `line`, à l'inverse de `newsletter`.
  *
  * LA PIÈCE DE FIN, `display`, EST POSÉE ET COUPÉE, JAMAIS DIMENSIONNÉE. Sa taille vient de son contenu —
  * l'appelant sait quel signe il pose, et à quelle taille. Le composant ne fait que trois choses :
@@ -108,6 +121,7 @@ export function Footer({
   newsletter,
   social,
   display,
+  action,
 }: FooterProps) {
   const line = (
     <div
@@ -118,7 +132,14 @@ export function Footer({
       )}
     >
       <div>{start}</div>
-      <div>{end}</div>
+      {action ? (
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div>{end}</div>
+          <div>{action}</div>
+        </div>
+      ) : (
+        <div>{end}</div>
+      )}
     </div>
   );
 
@@ -149,6 +170,7 @@ export function Footer({
               ))}
             </ul>
           ) : null}
+          {action ? <div>{action}</div> : null}
         </div>
         <div className="flex flex-wrap gap-x-16 gap-y-8 md:flex-1 md:justify-end">
           {groups.map((group) => (
@@ -173,7 +195,7 @@ export function Footer({
                     >
                       <span>{link.label}</span>
                       {newTabNotice(link.newTab)}
-                      {link.newTab ? <Icon name="external-link-xs" /> : null}
+                      {link.newTab ? <Icon name="external-link" size={16} /> : null}
                     </a>
                   </li>
                 ))}

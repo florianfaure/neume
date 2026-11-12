@@ -470,6 +470,38 @@
   clip-path: inset(0 0 0 0);
 }
 
+/* `chip-group-fade-left`, `-right` ET `-both` — LE FONDU DE BORD DE `ChipGroup` quand sa rangée défile
+ * (2026-11-12). Un masque sur le défileur : transparent au bord, opaque à `--size-chip-group-fade` de lui, côté
+ * caché seulement. Le masque ne lit que l'ALPHA de sa couleur : `--color-surface` est opaque, n'importe quel token
+ * opaque ferait l'affaire, et la loi 1 interdit d'y écrire `black`. Trois `@utility` et non une valeur arbitraire,
+ * pour la même raison que `clip-nav-panel-*` : un `calc()` de bords ne s'écrit pas en valeur arbitraire sans
+ * littéral. */
+@utility chip-group-fade-left {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-surface) var(--size-chip-group-fade)
+  );
+}
+
+@utility chip-group-fade-right {
+  mask-image: linear-gradient(
+    to left,
+    transparent,
+    var(--color-surface) var(--size-chip-group-fade)
+  );
+}
+
+@utility chip-group-fade-both {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-surface) var(--size-chip-group-fade),
+    var(--color-surface) calc(100% - var(--size-chip-group-fade)),
+    transparent
+  );
+}
+
 /* `progress-sweep` — LE SEGMENT DE LA BARRE INDÉTERMINÉE de `ProgressBar` (lot 3 du site de Neume, spec
  * `2026-11-11-lot-3-retours-formulaires-design.md` § 2.5). Un segment de 30 % de la piste qui la traverse de
  * gauche à droite en boucle, `--duration-progress-sweep` par passage, sur `--ease-in-out`. Les `30 %` et
@@ -1190,6 +1222,17 @@
   }
 }
 
+/* Le « pop » du glyphe de `ToggleButton` à chaque changement d'état (2026-11-12) : il monte de
+ * `--glyph-pop-lift` — que le composant règle sur `--lift-glyph-pop` — à mi-course et redescend, joué en trois paliers (`steps(3)`) sur `--duration-glyph-pop`
+ * par le composant. `translate` est la propriété individuelle : elle ne touche pas à un `transform`. Le bouton
+ * ne pose l'animation que pendant `data-pop`, que son état attribue au geste — jamais au premier rendu. Sous
+ * `prefers-reduced-motion`, `--lift-glyph-pop` est ramené à 0 : le glyphe ne bouge pas. */
+@keyframes glyph-pop {
+  50% {
+    translate: 0 calc(-1 * var(--glyph-pop-lift));
+  }
+}
+
 /* Le tour du glyphe `loader` de `SubscribeForm` pendant l'envoi (lot 3 du site de Neume, spec
  * `2026-11-11-lot-3-retours-formulaires-design` § 2.2). Seul le départ est écrit ici, avec les deux
  * `@keyframes` du plancher : `rotate` est la propriété individuelle, elle ne touche pas au `scale` du
@@ -1358,6 +1401,9 @@
     --duration-photo-deal-stagger: 0ms;
 
     --scale-stamp-thump: 1;
+
+    --duration-glyph-pop: 1ms;
+    --lift-glyph-pop: 0px;
 
     --focus-ring-offset-from: var(--focus-ring-offset);
   }

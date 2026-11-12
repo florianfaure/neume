@@ -56,9 +56,9 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * LA LARGEUR EST CELLE DU PARENT (loi 8).
  *
  * QUATRE MOMENTS. REPOS : l'aide, `arrow-right` et « Subscribe ». ENVOI : « Sending », le glyphe `loader` qui
- * tourne (`globals.css`, en huit paliers), le bouton désactivé. RÉUSSITE : `check-circle-sm` et le message en
+ * tourne (`globals.css`, en huit paliers), le bouton désactivé. RÉUSSITE : `check-circle` à 16 px et le message en
  * vert, le bouton dit « Subscribed » — son `check` arrive sur le ressort de `Button`, après un clic —, désactivé.
- * ERREUR : `alert-circle-sm` et le message en rouge, le bouton revient. Une adresse invalide est une erreur dite
+ * ERREUR : `alert-circle` à 16 px et le message en rouge, le bouton revient. Une adresse invalide est une erreur dite
  * AVANT tout envoi, et le focus revient au champ. Taper dans le champ efface l'erreur. LA COULEUR NE VA JAMAIS
  * SEULE (loi 7) : l'icône et le mot sont toujours là ; la zone du message est une région `aria-live` polie.
  *
@@ -212,8 +212,8 @@ export function SubscribeForm({
               : "text-text-tertiary",
         )}
       >
-        {text && failed ? <Icon name="alert-circle-sm" /> : null}
-        {text && phase === "done" ? <Icon name="check-circle-sm" /> : null}
+        {text && failed ? <Icon name="alert-circle" size={16} /> : null}
+        {text && phase === "done" ? <Icon name="check-circle" size={16} /> : null}
         {text ? <span>{text}</span> : null}
       </p>
     </form>

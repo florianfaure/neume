@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
@@ -30,14 +30,28 @@ interface NavBarProps {
   menuLabel?: string;
   /** Le nom accessible du même bouton, panneau ouvert. */
   closeLabel?: string;
+  /**
+   * `window` (défaut) : la rangée va d'un bord de la fenêtre à l'autre, à la gouttière près. `content` : elle
+   * s'aligne sur la largeur du contenu de la page — centrée, au plus `--size-nav-bar-content-width` (1440 px) —,
+   * pour une page dont le contenu est plus étroit que la fenêtre. Le fond et le filet de la barre, eux,
+   * restent d'un bord à l'autre.
+   */
+  align?: "window" | "content";
 }
+
+/**
+ * L'HYSTÉRÉSIS du masquage, en pixels : la barre ne change d'état qu'une fois la page défilée de cette
+ * distance DEPUIS LE DERNIER EXTRÊME dans le sens courant. Un geste, pas une valeur de design — comme les 4 px
+ * qu'elle remplace, elle vit ici ; 24 px est celui de la barre du catalogue du site de Neume.
+ */
+const HYSTERESIS = 24;
 
 /**
  * NavBar — l'en-tête de site : le lien d'accueil à gauche, les liens de navigation, les actions à
  * droite. Créée le 2026-11-11 (lot 2 du site de Neume, spec `docs/specs/2026-11-11-lot-2-navigation-design.md`
  * § 2.2), `create`, sans benchmark Mobbin (en pause) ; le prototype validé est `protos/lot2`, cadre de
- * droite — celui avec le filet. COPIÉE SUR `Announcement` pour le défilement (le même seuil de 4 px, le
- * même `requestAnimationFrame`), sur `Dialog` pour le clavier du panneau (Échap, focus qui part et revient).
+ * droite — celui avec le filet. COPIÉE SUR `Announcement` pour le défilement (le même `requestAnimationFrame`, un seuil de
+ * 4 px alors — voir l'hystérésis plus bas), sur `Dialog` pour le clavier du panneau (Échap, focus qui part et revient).
  *
  * UN `<header>` ET UN `<nav>` NOMMÉ. Le `<header>` porte la barre ; le `<nav aria-label={label}>` ne porte
  * que les `NavItem`, et les actions sont à côté de lui, pas dedans : un `ThemeSelector` n'est pas un lien
@@ -58,8 +72,14 @@ interface NavBarProps {
  * (transparent aussi, pour que la hauteur ne bouge pas d'un pixel). `static` reste transparente.
  *
  * LE DÉFILEMENT, EN `auto-hide`. Collante (`sticky`, en haut). Elle part (`-translate-y-full`, en
- * `--duration-base` et `--ease-out`) quand on descend de plus de 4 px au-delà de sa propre hauteur,
- * revient dès qu'on remonte de plus de 4 px, et reste en place tant qu'on est dans sa hauteur du haut.
+ * `--duration-base` et `--ease-out`) quand on descend de plus de 24 px au-delà de sa propre hauteur,
+ * revient dès qu'on remonte de plus de 24 px, et reste en place tant qu'on est dans sa hauteur du haut.
+ * L'HYSTÉRÉSIS EST DU 2026-11-12 (`refine`, retour de Florian sur neume.dev) : le seuil était de 4 px, mesuré
+ * depuis la dernière BASCULE, et la barre clignotait sur un défilement saccadé — un recul de quelques pixels la
+ * rendait, la reprise la cachait. Il est de 24 px (`HYSTERESIS`, la valeur de la barre du catalogue du site) et
+ * se mesure depuis le DERNIER EXTRÊME du sens courant : le point le plus bas atteint quand elle est partie, le
+ * plus haut quand elle est là. Un va-et-vient de moins de 24 px ne la fait plus bouger. Le fond et le filet de
+ * « la page a défilé » gardent leur seuil de 4 px : ce sont un état, pas un mouvement de la barre.
  * Elle ne part JAMAIS panneau ouvert, et elle revient quand le focus y entre — un lien caché mais
  * tabulable serait un focus sur du vide. Sous `prefers-reduced-motion`, `globals.css` ramène les durées
  * à 1 ms : elle saute au lieu de glisser. Elle n'enveloppe que son propre mouvement : aucune largeur,
@@ -87,6 +107,14 @@ interface NavBarProps {
  * panneaux de `Tab` — et la loi 4 interdit de le faire taire. Le premier lien est le premier arrêt de
  * tabulation que le panneau aurait donné de toute façon.
  *
+ * LA RANGÉE PEUT S'ALIGNER SUR LE CONTENU (`align`, 2026-11-12, `extend`, retour de Florian : sur neume.dev le
+ * contenu est centré à 1440 px au plus et la barre restait collée aux bords de la fenêtre). `window` (défaut) :
+ * la rangée prend la fenêtre, comme avant. `content` : elle est centrée et plafonnée à
+ * `--size-nav-bar-content-width` (1440 px), la gouttière restant la sienne. Une variante fermée et un token,
+ * pas une largeur libre (loi 8, loi 11). Seule la rangée est plafonnée : le `<header>` — son fond et son filet
+ * — va toujours d'un bord à l'autre, sans quoi le contenu qui défile apparaîtrait de part et d'autre de la
+ * barre. Le panneau mobile (sous `md`) reste pleine largeur, le plafond n'y est jamais atteint.
+ *
  * COMPOSANT CLIENT (`runtime: "client"`) : état propre (ouvert, défilé, caché), effets (le défilement, la
  * touche Échap, la requête de largeur), refs (le focus du bouton et du panneau), et l'écriture d'une
  * propriété sur `<html>`.
@@ -103,6 +131,7 @@ export function NavBar({
   behavior = "static",
   menuLabel = "Menu",
   closeLabel = "Close",
+  align = "window",
 }: NavBarProps) {
   const header = useRef<HTMLElement>(null);
   const menu = useRef<HTMLDivElement>(null);
@@ -110,6 +139,12 @@ export function NavBar({
   const [open, setOpen] = useState(false);
   const [over, setOver] = useState(false);
   const [hidden, setHidden] = useState(false);
+  /* Le miroir de `hidden`, lu par l'écouteur de défilement sans qu'il se réarme à chaque changement. */
+  const hiddenNow = useRef(false);
+  const setAway = useCallback((value: boolean) => {
+    hiddenNow.current = value;
+    setHidden(value);
+  }, []);
 
   const autoHide = behavior === "auto-hide";
   /* Jamais cachée panneau ouvert : le panneau est posé sous la barre, et une barre partie le laisserait sans ancre. */
@@ -120,7 +155,11 @@ export function NavBar({
   useEffect(() => {
     if (!autoHide) return;
 
-    let last = window.scrollY;
+    /* Le dernier extrême du défilement dans le sens courant : le point le plus bas atteint quand la barre est
+     * partie, le plus haut quand elle est là. Elle ne bascule qu'à `HYSTERESIS` px de lui, et ce n'est pas la
+     * dernière bascule qui compte : un défilement saccadé, qui recule de quelques pixels, ne la fait plus
+     * clignoter. */
+    let extreme = window.scrollY;
     let frame = 0;
 
     const update = () => {
@@ -130,14 +169,19 @@ export function NavBar({
 
       setOver(y > 4);
       if (y <= height) {
-        setHidden(false);
-        last = y;
-      } else if (y > last + 4) {
-        setHidden(true);
-        last = y;
-      } else if (y < last - 4) {
-        setHidden(false);
-        last = y;
+        setAway(false);
+        extreme = y;
+      } else if (hiddenNow.current) {
+        if (y > extreme) extreme = y;
+        else if (y < extreme - HYSTERESIS) {
+          setAway(false);
+          extreme = y;
+        }
+      } else if (y < extreme) {
+        extreme = y;
+      } else if (y > extreme + HYSTERESIS) {
+        setAway(true);
+        extreme = y;
       }
     };
 
@@ -151,7 +195,7 @@ export function NavBar({
       window.removeEventListener("scroll", onScroll);
       if (frame !== 0) cancelAnimationFrame(frame);
     };
-  }, [autoHide]);
+  }, [autoHide, setAway]);
 
   /* LA PROPRIÉTÉ QUE LIT `Announcement` (voir la docstring) : la hauteur de la barre tant qu'elle est
    * visible, `0px` sinon. Une position mesurée, comme les `--segmented-*` de `SegmentedTrack`. */
@@ -219,7 +263,7 @@ export function NavBar({
       if (event.target instanceof Element && event.target.closest("a")) setOpen(false);
     };
     const onFocusIn = () => {
-      if (autoHide) setHidden(false);
+      if (autoHide) setAway(false);
     };
 
     bar.addEventListener("keydown", onKeyDown);
@@ -245,7 +289,12 @@ export function NavBar({
         ruled ? "border-border-subtle" : "border-transparent",
       )}
     >
-      <div className="flex h-full items-center gap-4 px-[var(--layout-gutter)]">
+      <div
+        className={cn(
+          "flex h-full items-center gap-4 px-[var(--layout-gutter)]",
+          align === "content" && "mx-auto max-w-[var(--size-nav-bar-content-width)]",
+        )}
+      >
         <a
           href={brandHref}
           aria-label={brandLabel}

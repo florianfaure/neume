@@ -86,7 +86,7 @@ interface SearchFieldProps {
  * SEUL LE MOMENT CHANGE : couleur, épaisseur, décalage et arrivée sur le ressort sont ceux du plancher
  * de `globals.css`, écrits comme `ThemeSelector` les écrit sur son `<label>`.
  *
- * LA CROIX, UN VRAI PETIT BOUTON. Un rond de 24 px, le `close-sm` de Neume à 16 px, au secondaire ; au
+ * LA CROIX, UN VRAI PETIT BOUTON. Un rond de 24 px, le `close` de Neume à 16 px, au secondaire ; au
  * survol, le fond de la page et le texte primaire, pour se détacher du gris du champ survolé — au
  * lieu du gris un cran plus sombre que Florian a écarté ; à l'appui, un cran plus sombre
  * (`--color-surface-subtle`, le cran du prototype). SA CIBLE FAIT 44 × 44 PAR UN CALQUE centré sur le
@@ -246,7 +246,7 @@ export function SearchField({
               "focus-visible:outline-[length:var(--border-thick)] focus-visible:outline-focus-ring",
             )}
           >
-            <Icon name="close-sm" />
+            <Icon name="close" size={16} />
           </button>
         </span>
       ) : null}

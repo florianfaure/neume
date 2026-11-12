@@ -96,14 +96,15 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
     };
   }, [themes]);
 
-  // La puce du thème courant reste visible dans sa rangée. On fait défiler la rangée elle-même, jamais la
-  // page : `scrollIntoView` aurait tiré la fenêtre vers la barre à chaque changement de thème.
+  // La puce du thème courant reste visible dans la rangée : on fait défiler le défileur de `ChipGroup`
+  // lui-même, jamais la page (`scrollIntoView` aurait tiré la fenêtre vers la barre).
   useEffect(() => {
-    const row = chips.current;
-    const label = row?.querySelector<HTMLInputElement>(`input[value="${active}"]`)?.closest("label");
-    if (!row || !label) return;
-    const left = label.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft;
-    row.scrollTo({ left: left - row.clientWidth / 4, behavior: "smooth" });
+    const label = chips.current?.querySelector<HTMLInputElement>(`input[value="${active}"]`)?.closest("label");
+    let scroller = label?.parentElement ?? null;
+    while (scroller && scroller.scrollWidth <= scroller.clientWidth) scroller = scroller.parentElement;
+    if (!label || !scroller || scroller === document.body) return;
+    const left = label.getBoundingClientRect().left - scroller.getBoundingClientRect().left + scroller.scrollLeft;
+    scroller.scrollTo({ left: left - scroller.clientWidth / 4, behavior: "smooth" });
   }, [active]);
 
   const goTo = (value: string) => {
@@ -174,12 +175,17 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
               compact && "pointer-events-none -translate-y-2 opacity-0",
             )}
           >
-            <div ref={chips} className="overflow-x-auto py-2 [scrollbar-width:none]">
+            <div ref={chips} className="py-1">
               <ChipGroup
                 label="Themes"
                 items={[
                   { value: "all", label: "All", count: shown },
-                  ...visible.map((t) => ({ value: t.id, label: t.label, count: t.icons.length })),
+                  ...themes.map((t) => ({
+                    value: t.id,
+                    label: t.label,
+                    count: t.icons.length,
+                    disabled: t.icons.length === 0,
+                  })),
                 ]}
                 value={visible.some((t) => t.id === active) ? active : "all"}
                 onValueChange={goTo}

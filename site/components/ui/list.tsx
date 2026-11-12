@@ -13,6 +13,12 @@ type ListProps = {
   | {
       /** `list` (défaut) : le fond suit le pointeur et le focus clavier. */
       mode?: "list";
+      /**
+       * La lecture automatique, facultative (défaut : éteinte) : le fond gris avance seul de ligne en ligne, au
+       * pas de `--duration-list-autoplay`, et revient en haut en boucle. Le pointeur dans la liste et le focus
+       * clavier la suspendent ; rien ne bouge sous `prefers-reduced-motion`. Mode `list` seulement.
+       */
+      autoplay?: boolean;
       id?: never;
       activeId?: never;
       onActiveChange?: never;
@@ -23,6 +29,7 @@ type ListProps = {
        * motif combobox + listbox, où le focus reste dans un champ. Le fond ne suit plus le focus.
        */
       mode: "listbox";
+      autoplay?: never;
       /** L'`id` de la liste : le `aria-controls` du champ qui la pilote. Requis. */
       id: string;
       /** L'`id` de la ligne active : le fond se pose dessus. Absent : pas de fond. */
@@ -32,14 +39,20 @@ type ListProps = {
     }
 );
 
-/** `--duration-base` lu sur le document, en millisecondes : le temps que le fond s'efface avant de reparaître ailleurs. */
-function fadeDuration() {
-  const value = getComputedStyle(document.documentElement)
-    .getPropertyValue("--duration-base")
-    .trim();
+/** Un token de durée lu sur le document, en millisecondes — secondes comprises : le minifieur réécrit `1200ms` en `1.2s`. */
+function tokenMs(name: string) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const amount = Number.parseFloat(value);
   if (Number.isNaN(amount)) return 0;
   return value.endsWith("ms") ? amount : amount * 1000;
+}
+
+/** Le token du pas de la lecture, sous sa forme `var()` : c'est ce qui le fait compter comme consommé (loi 10), comme `VISIBLE` de `Toaster`. */
+const AUTOPLAY = "var(--duration-list-autoplay)";
+
+/** `--duration-base` : le temps que le fond s'efface avant de reparaître ailleurs. */
+function fadeDuration() {
+  return tokenMs("--duration-base");
 }
 
 /**
@@ -81,13 +94,25 @@ function fadeDuration() {
  * `--duration-base` où il est, puis reparaît en fondu sur la ligne visée ; il ne glisse qu'entre deux lignes d'un même
  * groupe, pour ne jamais passer par-dessus un titre de groupe.
  *
+ * LA LECTURE AUTOMATIQUE (`autoplay`, 2026-11-12, `extend`, pour les cartes « Navigation » et « Dense lists » du site
+ * de Neume). Le fond gris avance SEUL, d'une ligne à la suivante, toutes les `--duration-list-autoplay`
+ * (1200 ms, une attente lue par `getComputedStyle` et non un `transition-delay`, comme `--duration-toast-visible`),
+ * saute les lignes désactivées et revient en haut après la dernière : c'est la même mécanique que le survol — il glisse
+ * d'une ligne à l'autre, paraît sans glisser au premier placement. LE POINTEUR A LA PRIORITÉ : dès qu'il entre dans la
+ * liste, la lecture se suspend et le fond le suit comme toujours ; en sortant, elle reprend de la dernière ligne qu'il a
+ * visée, au pas plein. Elle est suspendue aussi au focus clavier (`:focus-visible` dans la liste) : celui qui tabule
+ * ne voit pas le fond lui échapper. SOUS `prefers-reduced-motion`, RIEN NE JOUE : le fond reste éteint jusqu'au survol ou
+ * au focus — comme sans la prop. Le fond est décoratif (`aria-hidden`) et ne déplace jamais le focus ; la lecture
+ * s'arrête dès qu'on s'en approche, c'est le moyen de la suspendre (WCAG 2.2.2). Mode `list` seulement : le mode
+ * `listbox` tient sa ligne active de l'appelant.
+ *
  * SA SÉMANTIQUE EST CELLE D'UN `<ul>` (angle mort n° 20 de `.claude/rules/loi-07-accessibilite.md` : WebKit retire
  * le rôle de liste quand le style supprime ses puces, ici comme partout). COMPOSANT CLIENT (`runtime: "client"`) :
  * refs, écouteurs et mesure du DOM.
  *
  * Histoire : `docs/history/list.md`.
  */
-export function List({ children, label, mode, id, activeId, onActiveChange }: ListProps) {
+export function List({ children, label, mode, autoplay, id, activeId, onActiveChange }: ListProps) {
   const box = useRef<HTMLDivElement>(null);
   const mark = useRef<HTMLSpanElement>(null);
   const listbox = mode === "listbox";
@@ -220,6 +245,93 @@ export function List({ children, label, mode, id, activeId, onActiveChange }: Li
       root.removeEventListener("focusout", onFocusOut);
     };
   }, [listbox, place]);
+
+  /* La lecture automatique (voir la docstring). Un effet à part, déclaré APRÈS celui des écouteurs du survol : à la
+   * sortie du pointeur et du focus, c'est son écouteur qui passe en dernier, et c'est lui qui rend le fond à la lecture. */
+  useEffect(() => {
+    const root = box.current;
+    if (listbox || !autoplay || !root) return;
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (calm.matches) return;
+
+    const rows = () =>
+      Array.from(root.querySelectorAll<HTMLElement>("li")).filter(
+        (row) => !row.hasAttribute("data-disabled"),
+      );
+    const rowOf = (target: EventTarget | null) => {
+      const row = target instanceof Element ? target.closest<HTMLElement>("li") : null;
+      return row && root.contains(row) && !row.hasAttribute("data-disabled") ? row : null;
+    };
+
+    let index = -1;
+    let pointerInside = false;
+    let focusInside = false;
+    let timer = 0;
+
+    const paused = () => pointerInside || focusInside;
+    const show = () => {
+      const all = rows();
+      if (all.length === 0) return;
+      index = ((index % all.length) + all.length) % all.length;
+      place(all[index]);
+    };
+    const tick = () => {
+      if (paused()) return;
+      index += 1;
+      show();
+    };
+    const start = () => {
+      window.clearInterval(timer);
+      timer = window.setInterval(tick, tokenMs(AUTOPLAY.slice(4, -1)) || 1200);
+    };
+
+    const onPointerOver = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      pointerInside = true;
+      const row = rowOf(event.target);
+      if (row) index = rows().indexOf(row);
+    };
+    const onPointerLeave = () => {
+      if (!pointerInside) return;
+      pointerInside = false;
+      if (focusInside) return;
+      show();
+      start();
+    };
+    const onFocusIn = () => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active.matches(":focus-visible")) {
+        focusInside = true;
+        const row = rowOf(active);
+        if (row) index = rows().indexOf(row);
+      }
+    };
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget;
+      if (next instanceof Node && root.contains(next)) return;
+      if (!focusInside) return;
+      focusInside = false;
+      if (pointerInside) return;
+      show();
+      start();
+    };
+
+    root.addEventListener("pointerover", onPointerOver);
+    root.addEventListener("pointerleave", onPointerLeave);
+    root.addEventListener("focusin", onFocusIn);
+    root.addEventListener("focusout", onFocusOut);
+    index = 0;
+    show();
+    start();
+    return () => {
+      window.clearInterval(timer);
+      root.removeEventListener("pointerover", onPointerOver);
+      root.removeEventListener("pointerleave", onPointerLeave);
+      root.removeEventListener("focusin", onFocusIn);
+      root.removeEventListener("focusout", onFocusOut);
+      place(null);
+    };
+  }, [listbox, autoplay, place]);
 
   return (
     <div ref={box} className="relative">
