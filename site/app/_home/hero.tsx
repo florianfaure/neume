@@ -6,6 +6,7 @@ import { Announcement } from "@/components/ui/announcement";
 import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
 import { Reveal } from "@/components/ui/reveal";
+import { version } from "@neume-icons/svg/package.json";
 import { Wall } from "./wall";
 
 export const INSTALL_COMMAND = "npm i @neume-icons/react";
@@ -25,7 +26,7 @@ export function Hero({ total }: { total: number }) {
         <Reveal timing="load">
           <div className="flex justify-center">
             <Announcement
-              tag="v0.1"
+              tag={`v${version.split(".").slice(0, 2).join(".")}`}
               label={`${total} icons, free and open source`}
               href="/changelog"
             />
