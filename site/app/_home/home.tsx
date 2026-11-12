@@ -9,6 +9,7 @@ import { CommandPalette } from "@/components/ui/command-palette";
 import type { CommandPaletteGroup } from "@/components/ui/command-palette";
 import { Footer } from "@/components/ui/footer";
 import { IconSheet } from "@/components/ui/icon-sheet";
+import { Icon } from "@/components/ui/icon";
 import type { IconName } from "@/components/ui/icon";
 import { NavBar } from "@/components/ui/nav-bar";
 import { NavItem } from "@/components/ui/nav-item";
@@ -188,7 +189,6 @@ export function Home() {
               variant="columns"
               brand={<BrandLockup />}
               lead="A pixel icon set drawn square by square, for React and plain SVG."
-              social={[{ label: "GitHub", href: REPO_URL, icon: "github" }]}
               groups={[
                 {
                   title: "Neume",
@@ -202,11 +202,18 @@ export function Home() {
                   title: "Elsewhere",
                   links: [
                     { label: "npm", href: NPM_URL, newTab: true },
+                    { label: "GitHub", href: REPO_URL, newTab: true },
                   ],
                 },
               ]}
+              social={[{ label: "GitHub", href: REPO_URL, icon: "github" }]}
               start="MIT licence"
-              end="Drawn by Florian Faure"
+              end={
+                <span className="inline-flex items-center gap-2">
+                  <Icon name="edit" size={16} />
+                  Drawn by Florian Faure
+                </span>
+              }
               display={
                 <BrandMark className="size-[var(--site-footer-mark-size)] text-list-highlight" />
               }

@@ -53,7 +53,7 @@ export function FeedbackScene() {
         fire();
         return;
       }
-      timer = setInterval(fire, 2600);
+      timer = setInterval(fire, 1300);
     });
     observer.observe(node);
     return () => {

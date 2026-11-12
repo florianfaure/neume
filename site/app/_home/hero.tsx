@@ -48,7 +48,7 @@ export function Hero({ total }: { total: number }) {
         <Reveal timing="load">
           <div className="flex flex-wrap items-center justify-center gap-2">
             <CodeBlock code={INSTALL_COMMAND} label="Copy command" />
-            <Button label="Browse icons" href="#icons" />
+            <Button size="large" label="Browse icons" href="#icons" />
           </div>
         </Reveal>
       </div>
