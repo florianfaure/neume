@@ -73,7 +73,7 @@
   }
 }
 
-/* Le semis de points derrière l'icône de la scène « Crisp at every size » : un point par demi-case de 8. */
+/* Le semis de points derrière l'icône de la scène « One size prop » : un point par demi-case de 8. */
 .site-dots {
   background-image: radial-gradient(var(--color-slider-tick) 1px, transparent 1px);
   background-size: var(--site-dot-pitch) var(--site-dot-pitch);

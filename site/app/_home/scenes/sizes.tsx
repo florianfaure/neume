@@ -9,7 +9,7 @@ import { pick, SIZES } from "@neume-icons/svg/render";
 
 const NAME = "sparkles";
 
-/** « Crisp at every size » : le curseur de taille, et la version du dessin qui tient à cette taille. */
+/** « One size prop » : le curseur de taille, et le dessin 12 × 12 agrandi à cette taille. */
 export function SizesScene() {
   const reduced = useReducedMotion();
   const [size, setSize] = useState(24);
