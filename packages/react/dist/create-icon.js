@@ -1,5 +1,5 @@
 // Fabrique d'icône, partagée par tous les modules générés. Reçoit la grille compacte de l'icône
-// ([ox, oy, hex], grand et éventuellement petit) ; le tracé se calcule au rendu, avec la règle de
+// ([ox, oy, hex], grand ; un petit éventuel est ignoré) ; le tracé se calcule au rendu, avec la règle de
 // calage du cœur (@neume-icons/svg) — rien n'est précalculé par taille.
 
 import { createElement, forwardRef, useId } from "react";
@@ -23,13 +23,12 @@ function warnSize(name, size, snapped) {
   console.warn(`[neume] ${name} : size={${size}} n'est pas une taille valide (multiple de 4 entre 12 et 64), affichée à ${snapped}.`);
 }
 
-export function createIcon(name, grand, petit) {
+export function createIcon(name, grand, _petit) {
   const paths = new Map(); // taille → tracé, calculé une fois par taille et par icône
   const draw = (size) => {
     let d = paths.get(size);
     if (d === undefined) {
-      const { set, k } = pick(size, Boolean(petit));
-      d = path(decode(set === "petit" ? petit : grand), k, size);
+      d = path(decode(grand), pick(size).k, size);
       paths.set(size, d);
     }
     return d;
@@ -46,7 +45,7 @@ export function createIcon(name, grand, petit) {
       {
         xmlns: "http://www.w3.org/2000/svg",
         fill: "currentColor",
-        shapeRendering: "crispEdges",
+        shapeRendering: Number.isInteger(s / 12) ? "crispEdges" : "geometricPrecision",
         ...(labelled ? { role: "img", "aria-labelledby": `${id}-title` } : { "aria-hidden": "true", focusable: "false" }),
         ...rest,
         ref,
