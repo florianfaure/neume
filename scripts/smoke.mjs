@@ -1,5 +1,5 @@
 // node scripts/smoke.mjs — chaque icône React à chaque taille, rendue côté serveur.
-// Vérifie le tracé (entiers, dans la boîte), son égalité avec le cœur et avec icons/*.json, le calage
+// Vérifie le tracé (dans la boîte, entiers aux multiples de 12), son égalité avec le cœur et avec icons/*.json, le calage
 // des tailles non valides et l'accessibilité.
 import { readFileSync } from "node:fs";
 import { createElement } from "react";
@@ -29,15 +29,19 @@ for (const name of names) {
     const d = grab(html, D);
     count++;
     if (d === undefined) { fail(`${at} : pas de <path>`); continue; }
-    if (!/^(M\d+ \d+h\d+v\d+h-\d+z)+$/.test(d)) { fail(`${at} : le tracé n'est pas fait que d'entiers`); continue; }
-    for (const [, x, y, w, k] of d.matchAll(/M(\d+) (\d+)h(\d+)v(\d+)h/g)) {
-      if (+x < 0 || +y < 0 || +x + +w > size || +y + +k > size) { fail(`${at} : rectangle hors de [0, ${size}]`); break; }
+    const whole = Number.isInteger(size / 12);
+    if (!/^(M\d+(\.\d{1,3})? \d+(\.\d{1,3})?h\d+(\.\d{1,3})?v\d+(\.\d{1,3})?h-\d+(\.\d{1,3})?z)+$/.test(d)) { fail(`${at} : tracé mal formé (3 décimales au plus)`); continue; }
+    if (whole && /\./.test(d)) { fail(`${at} : le tracé n'est pas fait que d'entiers`); continue; }
+    for (const [, x, y, w, k] of d.matchAll(/M([\d.]+) ([\d.]+)h([\d.]+)v([\d.]+)h/g)) {
+      if (+x < -1e-9 || +y < -1e-9 || +x + +w > size + 1e-9 || +y + +k > size + 1e-9) { fail(`${at} : rectangle hors de [0, ${size}]`); break; }
     }
     // Égalité avec le cœur (données compactes) et avec les lignes du JSON source (chemin indépendant).
     if (d !== grab(svg(name, size), D)) fail(`${at} : le rendu React diffère de svg() du cœur`);
-    const p = pick(size, Boolean(json.petit[name]));
-    if (d !== path(json[p.set][name], p.k, size)) fail(`${at} : le rendu diffère du tracé calculé depuis icons/${p.set}.json`);
-    for (const a of ['width="' + size + '"', 'height="' + size + '"', 'viewBox="0 0 ' + size + " " + size + '"', 'fill="currentColor"', 'shape-rendering="crispEdges"'])
+    const p = pick(size);
+    if (d !== path(json.grand[name], p.k, size)) fail(`${at} : le rendu diffère du tracé calculé depuis icons/grand.json`);
+    const sr = whole ? "crispEdges" : "geometricPrecision";
+    if (!grab(svg(name, size), /shape-rendering="([^"]*)"/)?.includes(sr)) fail(`${at} : svg() doit porter shape-rendering="${sr}"`);
+    for (const a of ['width="' + size + '"', 'height="' + size + '"', 'viewBox="0 0 ' + size + " " + size + '"', 'fill="currentColor"', `shape-rendering="${sr}"`])
       if (!html.includes(a)) fail(`${at} : attribut ${a} manquant`);
   }
   // Les SVG livrés dans dist/ sont ceux du cœur.
@@ -71,4 +75,4 @@ if (!named.includes('role="img"') || !id || !named.includes(`<title id="${id}">C
 if (!named.includes('class="c"') || !named.includes("color:red") || !named.includes('data-x="1"')) fail("className, style et props SVG doivent passer");
 
 if (errors.length) { for (const e of errors.slice(0, 40)) console.error(`✗ ${e}`); console.error(`\n${errors.length} erreur(s) au smoke test.`); process.exit(1); }
-console.log(`✓ smoke : ${names.length} icônes × ${SIZES.length} tailles (${count} rendus React) — entiers, dans la boîte, identiques au cœur.`);
+console.log(`✓ smoke : ${names.length} icônes × ${SIZES.length} tailles (${count} rendus React) — dans la boîte, entiers aux multiples de 12, identiques au cœur.`);

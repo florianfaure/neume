@@ -56,7 +56,7 @@ export function generate() {
     `${HEADER}\n/** Icônes 12 × 12 : [ox, oy, lignes de cases en hex]. */\nexport const grand = ${table("grand")};\n\n` +
     `/** Icônes 8 × 8. */\nexport const petit = ${table("petit")};\n\n/** Les noms, dans l'ordre de Figma. */\nexport const names = Object.keys(grand);\n`);
 
-  // Les SVG prêts à l'emploi : 12, 16 (petit s'il existe, sinon le 12 × 12 centré à 1 px par case) et 24.
+  // Les SVG prêts à l'emploi : 12, 16 et 24, tous tirés du dessin 12 × 12.
   for (const size of [12, 16, 24]) {
     if (!SIZES.includes(size)) throw new Error(`taille ${size} absente de SIZES`);
     for (const n of names) put(`packages/svg/dist/${size}/${n}.svg`, svg(n, size, sets) + "\n");
@@ -67,10 +67,9 @@ export function generate() {
   put("packages/react/dist/create-icon.d.ts", text("packages/react/src/create-icon.d.ts"));
   const tuple = (c) => JSON.stringify(c).replace(/,/g, ", ");
   for (const [C, n] of components) {
-    const petit = compact.petit[n];
     put(`packages/react/dist/icons/${C}.js`,
       `${HEADER}import { createIcon } from "../create-icon.js";\n\n` +
-      `export const ${C} = /*#__PURE__*/ createIcon(${JSON.stringify(C)}, ${tuple(compact.grand[n])}${petit ? `, ${tuple(petit)}` : ""});\n`);
+      `export const ${C} = /*#__PURE__*/ createIcon(${JSON.stringify(C)}, ${tuple(compact.grand[n])});\n`);
     put(`packages/react/dist/icons/${C}.d.ts`,
       `${HEADER}import type { Icon } from "../create-icon.js";\n\nexport declare const ${C}: Icon;\n`);
   }

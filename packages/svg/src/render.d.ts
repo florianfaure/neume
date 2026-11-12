@@ -13,8 +13,8 @@ export interface Sets {
 export const SIZES: readonly number[];
 /** Taille valide inférieure : multiple de 4, bornée à 12–64. */
 export function snap(size: number): number;
-/** La version affichée pour une taille valide : quel set, combien de pixels par case. */
-export function pick(size: number, hasPetit: boolean): { set: "grand" | "petit"; k: number };
+/** La version affichée pour une taille valide : toujours le grand dessin, à `k = size / 12` pixels par case (fractionnaire hors des multiples de 12). `hasPetit` est ignoré. */
+export function pick(size: number, hasPetit?: boolean): { set: "grand"; k: number };
 export function unhex(hex: string, n: number): string[];
 export function decode(compact: Compact): Icon;
 /** Le tracé SVG (`d`) d'une icône à `k` px par case, posée dans une boîte de `size` px. */

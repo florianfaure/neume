@@ -1,6 +1,6 @@
 {
   "name": "@neume-icons/svg",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Neume — a pixel icon set. Framework-agnostic core: sizing rule, SVG paths, icon data and prebuilt SVG files.",
   "keywords": ["icons", "pixel", "pixel-art", "svg", "neume"],
   "license": "MIT",
