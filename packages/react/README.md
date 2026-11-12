@@ -1,6 +1,6 @@
 # @neume-icons/react
 
-Neume is a pixel icon set: 251 icons on a 12 × 12 grid, 228 of them also on an 8 × 8 grid for dense UIs.
+Neume is a pixel icon set: 251 icons on a 12 × 12 grid.
 Each icon is a React component in its own module, so bundlers keep only the ones you import.
 
 ```sh
@@ -30,17 +30,13 @@ Requires React 18 or later. ESM only.
 
 ## How sizes work
 
-A cell must always be a whole number of pixels, or the icon blurs. The largest crisp version that fits
-the requested size is shown, centred:
+One 12 × 12 drawing serves every size, scaled by exactly `size / 12`. The stroke keeps the same
+proportion to the icon at every size.
 
-| Requested | Shown |
-|---|---|
-| 12 | 12 × 12, 1 px per cell |
-| 16–20 | 8 × 8, 2 px per cell (12 × 12 at 1 px when there is no 8 × 8) |
-| 24–32 | 12 × 12, 2 px per cell |
-| 36–44 | 12 × 12, 3 px per cell |
-| 48–56 | 12 × 12, 4 px per cell |
-| 60–64 | 12 × 12, 5 px per cell |
+| Requested | Pixels per cell | Rendering |
+|---|---|---|
+| 12, 24, 36, 48, 60 | 1, 2, 3, 4, 5 | crisp: whole pixels per cell |
+| 16, 20, 28, 32, 40, 44, 52, 56, 64 | 1.33 to 5.33 | smoothed: edges fall between pixels |
 
 ## License
 

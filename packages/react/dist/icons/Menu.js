@@ -1,4 +1,4 @@
 // Généré par scripts/build.mjs depuis icons/*.json — ne pas modifier à la main.
 import { createIcon } from "../create-icon.js";
 
-export const Menu = /*#__PURE__*/ createIcon("Menu", [0, 1, "0000003fc0000003fc0000003fc000000000"], [1, 1, "007c007c007c0000"]);
+export const Menu = /*#__PURE__*/ createIcon("Menu", [0, 1, "0000003fc0000003fc0000003fc000000000"]);

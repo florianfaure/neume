@@ -60,8 +60,8 @@ for (const name of names) {
     const icon = DATA[p.set][name];
     if (!icon) { head += '<td class="none">—</td>'; continue; }
     head += '<td><span class="cell" style="width:' + s + "px;height:" + s + 'px">' +
-      '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + " " + s + '" fill="currentColor" shape-rendering="crispEdges"><path d="' + path(icon, p.k, s) + '"/></svg></span>' +
-      '<span class="tag" hidden>' + (p.set === "petit" ? "8" : "12") + "×" + p.k + "</span></td>";
+      '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + " " + s + '" fill="currentColor" shape-rendering="' + (Number.isInteger(p.k) ? "crispEdges" : "geometricPrecision") + '"><path d="' + path(icon, p.k, s) + '"/></svg></span>' +
+      '<span class="tag" hidden>' + (p.set === "petit" ? "8" : "12") + "×" + +p.k.toFixed(2) + "</span></td>";
   }
   head += "</tr>";
 }

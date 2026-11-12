@@ -1,6 +1,9 @@
 # Publication sur npm, déclenchée par une release GitHub (tag vX.Y.Z) — et par rien d'autre.
 # Aucun jeton : npm reconnaît ce workflow comme « trusted publisher » (OIDC), réglage fait une fois
 # par paquet sur npmjs.com. Le nom de fichier `release.yml` fait partie de ce réglage : ne pas le renommer.
+# Publication PAR ÉTAPES : le trusted publisher n'autorise que `npm stage publish` (le défaut de npm, et le
+# choix de Florian). Le workflow dépose les deux versions en attente ; Florian les approuve sur npmjs.com,
+# avec sa 2FA, svg d'abord. Un `npm publish` direct est refusé (403 « OIDC permission denied »).
 name: release
 on:
   release:
@@ -17,12 +20,12 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-      # La publication de confiance demande npm ≥ 11.5.1.
-      - run: npm install -g npm@^11.5.1
+      # `npm stage publish` demande npm ≥ 11.15.0.
+      - run: npm install -g npm@^11.15.0
       - run: npm ci
       - name: Le tag et les paquets disent la même version
         run: node scripts/version.mjs --assert "${GITHUB_REF_NAME#v}"
       - run: npm run check
-      # Le cœur d'abord : @neume-icons/react en dépend.
-      - run: npm publish -w @neume-icons/svg --access public
-      - run: npm publish -w @neume-icons/react --access public
+      # Le cœur d'abord : @neume-icons/react en dépend (à l'approbation aussi, svg avant react).
+      - run: npm stage publish -w @neume-icons/svg --access public
+      - run: npm stage publish -w @neume-icons/react --access public

@@ -40,8 +40,11 @@ un tracé modifié = correctif, une icône retirée ou renommée = majeure).
 1. Sur une branche : `npm run version <x.y.z>` (met les deux `package.json`, la dépendance et le lock
    à jour, relance le build), commit, PR, fusion par Florian.
 2. Florian crée une release GitHub au tag `v<x.y.z>`. `.github/workflows/release.yml` vérifie que le
-   tag et les paquets disent la même version, relance `npm run check`, puis publie svg puis react.
-   Aucun jeton : npm reconnaît ce workflow comme « trusted publisher ». Ne renomme pas le fichier.
+   tag et les paquets disent la même version, relance `npm run check`, puis dépose svg puis react en
+   attente (`npm stage publish`). Aucun jeton : npm reconnaît ce workflow comme « trusted publisher »,
+   réglé pour la seule publication par étapes. Ne renomme pas le fichier.
+3. Florian approuve les deux versions sur npmjs.com (ou `npm stage approve <id>`), avec sa 2FA, svg
+   d'abord : c'est l'approbation qui les publie.
 
 `.github/workflows/check.yml` rejoue `npm run check` sur chaque PR.
 

@@ -5,7 +5,7 @@
 <h1 align="center">Neume</h1>
 
 <p align="center">
-  A pixel icon set that stays crisp at every size, from 12 to 64 px.<br>
+  A pixel icon set, from 12 to 64 px, with one drawing for every size.<br>
   <a href="https://neume.dev">neume.dev</a> ·
   <a href="https://www.npmjs.com/package/@neume-icons/react">npm</a> ·
   <a href="LICENSE">MIT</a>
@@ -17,14 +17,12 @@
 
 ## Why Neume
 
-- **Drawn on a pixel grid, not scaled onto one.** Every icon is drawn cell by cell on a 12 × 12 grid. A
-  cell always lands on whole pixels, so edges never blur.
+- **Drawn on a pixel grid.** Every icon is drawn cell by cell on a 12 × 12 grid. At 12, 24, 36, 48 and 60 px a
+  cell lands on whole pixels, so edges are crisp.
 - **One-pixel strokes, centred.** An arrow keeps a stem one cell wide and still sits in the middle of its
   box (see [Centring](#centring)).
-- **Any size from 12 to 64, in steps of 4.** The component shows the largest crisp version that fits, and
-  centres it. No setting to tune.
-- **A second, smaller drawing for dense UIs.** Every icon except cursors and brands also exists on an 8 × 8
-  grid, used at 12, 16 and 20 px, where a shrunken 12 × 12 would be too busy.
+- **Any size from 12 to 64, in steps of 4.** One drawing, scaled by exactly size / 12. Between the crisp
+  sizes the edges are smoothed, and the stroke keeps the same proportion to the icon.
 
 ## Install
 
@@ -57,14 +55,13 @@ svg("arrow-up", 32); // '<svg … width="32" height="32" …>'
 
 ## Sizes
 
-| You ask for | You get |
-|---|---|
-| 12 | the 8 × 8 drawing, 1 px per cell (the 12 × 12 if there is no 8 × 8) |
-| 16, 20 | the 8 × 8 drawing, 2 px per cell (the 12 × 12 at 1 px if there is no 8 × 8) |
-| 24, 28, 32 | the 12 × 12 drawing, 2 px per cell |
-| 36, 40, 44 | 3 px per cell |
-| 48, 52, 56 | 4 px per cell |
-| 60, 64 | 5 px per cell |
+One 12 × 12 drawing serves every size, scaled by exactly `size / 12`. The stroke keeps the same
+proportion to the icon at every size.
+
+| Requested | Pixels per cell | Rendering |
+|---|---|---|
+| 12, 24, 36, 48, 60 | 1, 2, 3, 4, 5 | crisp: whole pixels per cell |
+| 16, 20, 28, 32, 40, 44, 52, 56, 64 | 1.33 to 5.33 | smoothed: edges fall between pixels |
 
 Any other number is snapped down to the nearest of these (30 → 28, 70 → 64), with a warning in
 development.
@@ -93,7 +90,7 @@ everything else is generated from it.
 
 ```sh
 npm run build   # generate packages/svg and packages/react from icons/*.json
-npm run check   # every icon at every size: whole pixels only, generated files up to date
+npm run check   # every icon at every size: inside the box, whole pixels at multiples of 12, generated files up to date
 npm run sheet   # a local control sheet, every icon at every size
 ```
 
