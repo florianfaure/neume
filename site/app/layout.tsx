@@ -104,7 +104,7 @@ const REVEAL_SCRIPT = `!function(){var d=document.documentElement,n=0;if(!("Inte
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://neume.dev"),
-  title: "Neume — pixel icons, crisp at every size",
+  title: "Neume — pixel icons for real interfaces",
   description: "A pixel icon set, drawn on two grids and shipped as SVG and React.",
 };
 

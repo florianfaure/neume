@@ -4,15 +4,23 @@ import { useEffect, useRef } from "react";
 
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/lib/toast";
+import type { ToastOptions } from "@/lib/toast";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 const SCOPE = "feedback";
-const TOASTS = [
-  { title: "Changes saved", description: "Your icon set is up to date.", tone: "positive" as const },
+const noop = () => {};
+const TOASTS: ToastOptions[] = [
+  { title: "Changes saved", description: "Your icon set is up to date.", tone: "positive" },
   { title: "New message", description: "Florian sent you a file." },
-  { title: "Low storage", description: "2 GB left on this device.", tone: "negative" as const },
-  { title: "Branch merged", description: "site/home into main.", tone: "positive" as const },
-  { title: "Export ready", description: "neume-svg.zip, 214 KB." },
+  { title: "Low storage", description: "2 GB left on this device.", tone: "negative" },
+  { title: "Branch merged", description: "site/home into main.", tone: "positive", action: { label: "View", onClick: noop } },
+  { title: "Export ready", description: "neume-svg.zip, 214 KB.", action: { label: "Download", onClick: noop } },
+  { title: "Copied to clipboard", tone: "positive" },
+  { title: "Upload failed", description: "The connection dropped.", tone: "negative", action: { label: "Retry", onClick: noop } },
+  { title: "Reminder", description: "Review the icon set at 3 pm." },
+  { title: "Invite sent", description: "Ana will get an email.", tone: "positive" },
+  { title: "File deleted", tone: "negative", action: { label: "Undo", onClick: noop } },
+  { title: "Sync paused", description: "You are offline." },
 ];
 
 /**

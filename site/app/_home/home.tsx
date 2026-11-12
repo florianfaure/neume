@@ -10,7 +10,6 @@ import type { CommandPaletteGroup } from "@/components/ui/command-palette";
 import { Footer } from "@/components/ui/footer";
 import { IconSheet } from "@/components/ui/icon-sheet";
 import type { IconName } from "@/components/ui/icon";
-import { Kbd } from "@/components/ui/kbd";
 import { NavBar } from "@/components/ui/nav-bar";
 import { NavItem } from "@/components/ui/nav-item";
 import { ThemeSelector } from "@/components/ui/theme-selector";
@@ -133,16 +132,13 @@ export function Home() {
               href={REPO_URL}
               newTab
             />
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                content="icon-label"
-                icon="search"
-                label="Search"
-                onClick={() => setPaletteOpen(true)}
-              />
-              <Kbd keys="mod+k" onTrigger={() => setPaletteOpen(true)} />
-            </div>
+            <Button
+              variant="ghost"
+              content="icon-label"
+              icon="search"
+              label="Search"
+              onClick={() => setPaletteOpen(true)}
+            />
             <ThemeSelector />
           </>
         }
@@ -191,16 +187,7 @@ export function Home() {
               variant="columns"
               brand={<BrandLockup />}
               lead="A pixel icon set drawn square by square, for React and plain SVG."
-              action={
-                <Button
-                  variant="secondary"
-                  content="icon-label"
-                  icon="github"
-                  label="View on GitHub"
-                  href={REPO_URL}
-                  newTab
-                />
-              }
+              social={[{ label: "GitHub", href: REPO_URL, icon: "github" }]}
               groups={[
                 {
                   title: "Neume",
@@ -214,7 +201,6 @@ export function Home() {
                   title: "Elsewhere",
                   links: [
                     { label: "npm", href: NPM_URL, newTab: true },
-                    { label: "GitHub", href: REPO_URL, newTab: true },
                   ],
                 },
               ]}
