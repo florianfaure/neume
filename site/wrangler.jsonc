@@ -5,6 +5,11 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "neume-dev",
   "compatibility_date": "2026-08-11",
+
+  // Le domaine est branché ici, en Custom Domain : au déploiement, Cloudflare crée lui-même
+  // l'enregistrement DNS et le certificat de neume.dev (zone déjà sur Cloudflare, aucun
+  // enregistrement à la racine au 12 nov. 2026). Pas encore de www.
+  "routes": [{ "pattern": "neume.dev", "custom_domain": true }],
   "assets": {
     "directory": "./out",
     "html_handling": "auto-trailing-slash",
