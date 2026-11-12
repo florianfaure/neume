@@ -59,15 +59,16 @@ type ToggleButtonProps = ToggleButtonBaseProps &
  * ajoute un second signal quand l'appelant a deux glyphes. La paire du fond portant le glyphe est dans
  * `scripts/contrast-pairs.json`.
  *
- * LE GLYPHE FAIT UN « POP » À CHAQUE BASCULE (2026-11-12, `refine`, retour de Florian sur neume.dev, pris du
- * prototype de l'accueil, `.tg.pop`) : il monte de 4 px (`--lift-glyph-pop`) et redescend, en trois paliers
- * (`steps(3)`) sur 240 ms (`--duration-glyph-pop`) — des tokens neufs, aucun existant n'avait cette durée ni
- * cette amplitude. Passager et LIÉ AU GESTE : il part au clic, jamais au premier rendu ni à un changement de
- * `pressed` venu du parent seul, et il revient à l'identité (`translate` individuel, qui ne touche ni au
- * `scale` du clic ni à un `transform`). Un glyphe en mouvement n'est pas jugé à l'échelle entière (loi 6,
- * exception « le mouvement ») ; il ne joue pas sous `prefers-reduced-motion`, où `globals.css` ramène la montée
- * à 0. Le glyphe est enveloppé d'un `<span>` dont la `key` suit le nombre de clics, pour rejouer l'animation à
- * chaque bascule, y compris deux de suite.
+ * LE GLYPHE NAÎT SUR LE RESSORT À CHAQUE BASCULE (2026-11-12, `refine`, retour de Florian sur neume.dev) : le geste de
+ * `CopyButton` quand son glyphe `copy` devient `check` — celui du `Glyph` de `Button` : le glyphe d'arrivée est un nœud
+ * neuf (la `key`) qui part de `--scale-glyph-enter` et se pose à l'échelle 1 sur `--ease-spring-pop`, en
+ * `--duration-base`, par `starting:`. Florian avait d'abord vu un « pop » qui montait de 4 px, sur le prototype de
+ * l'accueil ; il l'a retiré le jour même au profit de celui-ci, qui est celui du système. Comme dans `Button`, la
+ * condition est qu'AUCUN glyphe ne naisse ainsi au chargement — un `starting:` joue au montage du nœud : l'animation
+ * n'est posée qu'après le PREMIER CLIC (`pops > 0`), et la `key` suit le nombre de clics, pour la rejouer à chaque
+ * bascule, y compris quand le glyphe ne change pas (sans `pressedIcon`). Un changement de `pressed` venu du parent
+ * seul ne la joue pas : elle est liée au geste. Sous `prefers-reduced-motion`, `globals.css` ramène
+ * `--scale-glyph-enter` à 1 : le glyphe change d'un coup.
  *
  * CLIENT : il porte l'état de la forme non contrôlée. Contrôlé, il ne le garde pas : la valeur
  * affichée est `pressed`, et un clic ne fait qu'appeler `onPressedChange`.
@@ -122,8 +123,10 @@ export function ToggleButton({
         key={pops}
         className={cn(
           "inline-flex",
-          pops > 0 &&
-            "[--glyph-pop-lift:var(--lift-glyph-pop)] [animation:glyph-pop_var(--duration-glyph-pop)_steps(3)]",
+          pops > 0 && [
+            "transition-[scale] duration-[var(--duration-base)] ease-spring-pop",
+            "starting:scale-[var(--scale-glyph-enter)]",
+          ],
         )}
       >
         <Icon name={on && pressedIcon ? pressedIcon : icon} />

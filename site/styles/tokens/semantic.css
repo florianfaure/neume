@@ -2158,13 +2158,6 @@
    * le glyphe s'arrête à l'identité, donc immobile. */
   --duration-spin: 1000ms;
 
-  /* DELTA 2026-11-12 — `ToggleButton` (`docs/history/toggle-button.md`). `--duration-glyph-pop` : 240 ms, la durée du « pop » du glyphe
-   * quand le bouton change d'état — il monte de `--lift-glyph-pop` (4 px) et redescend en trois paliers
-   * (`steps(3)`, écrit dans la règle du composant), dans la famille `--lift-` de `--lift-reveal`. Passagers,
-   * liés au geste ; sous `prefers-reduced-motion` la durée tombe à 1 ms et la montée à 0 dans `globals.css`. */
-  --duration-glyph-pop: 240ms;
-  --lift-glyph-pop: 4px;
-
   /* DELTA 2026-11-12 — `List` (`docs/history/list.md`). `--duration-list-autoplay` : 1200 ms, le pas de la lecture
    * automatique — le temps que le fond reste sur une ligne avant de passer à la suivante. UNE ATTENTE, donc une
    * durée, lue par `getComputedStyle` pour armer une minuterie comme `--duration-toast-visible` : elle n'est PAS

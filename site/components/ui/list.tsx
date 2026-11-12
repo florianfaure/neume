@@ -221,7 +221,22 @@ export function List({ children, label, mode, autoplay, id, activeId, onActiveCh
 
     const onPointerOver = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
-      place(rowOf(event.target));
+      /* L'ÉCART DE 4 PX ENTRE DEUX LIGNES N'ÉTEINT PAS LE FOND (2026-11-12) : sous le pointeur qui le traverse, la
+       * cible est le `<ul>`, pas une ligne, et le fond s'éteignait pour reparaître sur la suivante — il « dépopait »
+       * au lieu de glisser. Seule une ligne désactivée l'éteint. */
+      const inRow = event.target instanceof Element && event.target.closest("li") !== null;
+      if (inRow) place(rowOf(event.target));
+    };
+    /* Le mouvement vaut un survol : une ligne que `pointerover` n'a pas annoncée — l'événement manqué, la liste
+     * apparue sous le pointeur — reçoit quand même le fond. Il ne bouge que si la ligne visée n'est pas déjà celle
+     * du fond. */
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      const row = rowOf(event.target);
+      const fond = mark.current;
+      if (!row || !fond) return;
+      const shown = fond.dataset.state === "on" || fond.dataset.state === "jump";
+      if (!shown || fond.style.getPropertyValue("--list-y") !== `${row.offsetTop}px`) place(row);
     };
     const onPointerLeave = () => place(focusedRow());
     const onFocusIn = (event: FocusEvent) => {
@@ -235,11 +250,13 @@ export function List({ children, label, mode, autoplay, id, activeId, onActiveCh
     };
 
     root.addEventListener("pointerover", onPointerOver);
+    root.addEventListener("pointermove", onPointerMove);
     root.addEventListener("pointerleave", onPointerLeave);
     root.addEventListener("focusin", onFocusIn);
     root.addEventListener("focusout", onFocusOut);
     return () => {
       root.removeEventListener("pointerover", onPointerOver);
+      root.removeEventListener("pointermove", onPointerMove);
       root.removeEventListener("pointerleave", onPointerLeave);
       root.removeEventListener("focusin", onFocusIn);
       root.removeEventListener("focusout", onFocusOut);
@@ -287,7 +304,18 @@ export function List({ children, label, mode, autoplay, id, activeId, onActiveCh
       place(all[index]);
     };
     const tick = () => {
-      if (paused()) return;
+      if (pointerInside()) {
+        /* Le pointeur a la priorité, et le fond est SOUS LUI : si un `pointerover` ne l'y a pas posé (une liste qui
+         * apparaît ou défile sous un pointeur immobile, un survol sans événement), le pas le ramène sur la ligne
+         * survolée au lieu de le laisser où la lecture l'avait mis. */
+        const hovered = rows().find((row) => row.matches(":hover"));
+        if (hovered) {
+          index = rows().indexOf(hovered);
+          place(hovered);
+        }
+        return;
+      }
+      if (keyboardInside()) return;
       index += 1;
       show();
     };

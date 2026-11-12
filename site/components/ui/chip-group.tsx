@@ -149,7 +149,7 @@ export function ChipGroup({
     // Un bloc autour de la piste : elle est `inline-flex` et épouse ses options ; posée seule dans
     // une colonne flex, elle s'étirerait sur toute la largeur (même parade que le `<fieldset>` de
     // ThemeSelector, loi 8). `relative` : les deux flèches y sont posées sur les bords.
-    <div className="relative">
+    <div className="relative flex">
       <div
         ref={startArrow}
         className={cn(
@@ -168,7 +168,7 @@ export function ChipGroup({
       <div
         ref={scroller}
         className={cn(
-          "-mx-2 -my-2 flex overflow-x-auto px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          "-mx-2 -my-2 flex min-w-0 flex-1 overflow-x-auto px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           fade,
         )}
       >
