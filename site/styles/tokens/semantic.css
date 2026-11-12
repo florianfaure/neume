@@ -902,6 +902,12 @@
    * ------------------------------------------------------------------------------------ */
 
   --size-button-height: 36px; /* 20 d'interligne + 8 + 8 */
+
+  /* DELTA 2026-11-12 — `Button size="large"` (`docs/history/button.md`). `--size-button-height-large` : 46 px, la
+   * hauteur de `CodeBlock` — le bouton de copie de `--size-button-height` plus son `p-1` et le filet de 1 px de
+   * chaque côté. Il ne vient d'aucune dérivation : c'est le nombre qui met un bouton et une commande à la même
+   * hauteur. Au-dessus de `--size-touch-target`, donc la cible de 44 px est native. Ne se remappe pas en dark. */
+  --size-button-height-large: 46px;
   --size-button-target-inset: -4px; /* (44 − 36) / 2 — la cible de la loi 5, par le calque */
 
   /* ------------------------------------------------------------------------------------

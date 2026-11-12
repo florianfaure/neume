@@ -257,6 +257,7 @@ export function IconSheet({
                 variant="ghost"
                 content="icon"
                 icon="arrow-left"
+                tooltip="none"
                 onClick={onPrevious}
               />
             ) : null}
@@ -266,6 +267,7 @@ export function IconSheet({
                 variant="ghost"
                 content="icon"
                 icon="arrow-right"
+                tooltip="none"
                 onClick={onNext}
               />
             ) : null}
@@ -274,6 +276,7 @@ export function IconSheet({
               variant="ghost"
               content="icon"
               icon="close"
+              tooltip="none"
               onClick={() => onOpenChange(false)}
             />
           </div>

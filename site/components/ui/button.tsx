@@ -31,6 +31,13 @@ interface ButtonBaseProps {
    * Elle est écrite en `sr-only`, comme cette mention, et reçoit son espace de tête dans l'expression.
    */
   assistiveSuffix?: string;
+  /**
+   * La hauteur du bouton. `default` : 36 px, `--size-button-height`. `large` (2026-11-12) : 46 px,
+   * `--size-button-height-large` — la hauteur de `CodeBlock` (le bouton de copie de 36 px, son `p-1` et son
+   * filet), pour poser un bouton et une commande côte à côte sans écart. Les trois variantes, les états et les
+   * formes sont les mêmes ; à 46 px la cible de 44 px est native, sans calque.
+   */
+  size?: "default" | "large";
 }
 
 /**
@@ -62,7 +69,7 @@ interface ButtonBaseProps {
  * règle ne se déclenche pas du tout. `variant`, écrit en union sur une ligne, reste vérifié.
  */
 type ButtonContentProps =
-  | { content?: "label"; icon?: never; forceTooltip?: never }
+  | { content?: "label"; icon?: never; forceTooltip?: never; tooltip?: never }
   | {
       content: "icon";
       icon: IconName;
@@ -73,8 +80,14 @@ type ButtonContentProps =
        * bouton eux-mêmes, donc d'afficher deux bulles (lot 1, 2026-11-11). Ne ferme jamais.
        */
       forceTooltip?: boolean;
+      /**
+       * La bulle automatique de la forme icône seule. `auto` (défaut) : `Tooltip` enveloppe le bouton, le `label`
+       * pour texte. `none` (2026-11-12) : pas de bulle — le nom accessible reste porté par `label`, en `sr-only`.
+       * Pour les contrôles des couches (précédent, suivant, fermer), dont le sens se lit sans bulle.
+       */
+      tooltip?: "auto" | "none";
     }
-  | { content: "icon-label"; icon: IconName; forceTooltip?: never };
+  | { content: "icon-label"; icon: IconName; forceTooltip?: never; tooltip?: never };
 
 /**
  * La balise rendue, inférée depuis `href` — et les deux exclusions que ce choix impose.
@@ -259,15 +272,26 @@ function Glyph({ name }: { name: IconName }) {
  * `ghost` n'a pas de fond au repos : le contrôle s'identifie par son contenu (condition 2 de
  * l'exception « changement de fond » de la loi 7).
  *
+ * DEUX AJOUTS DU 2026-11-12 (`extend`, retours de Florian sur neume.dev). `tooltip` (`"auto"` par défaut, ou
+ * `"none"`, forme icône seule seulement) retire la bulle automatique : les boutons Précédent, Suivant et Fermer des
+ * couches n'en ont pas, décision de Florian — leur sens se lit sans bulle, et une bulle de plus dans une couche était
+ * une couche de bruit. Le nom accessible reste porté par `label`, en `sr-only` : rien ne change pour l'assistance.
+ * `size` (`"default"`, ou `"large"`) donne une hauteur de 46 px (`--size-button-height-large`), celle de
+ * `CodeBlock` — 36 px de bouton de copie, `p-1` de chaque côté, filet de 1 px de chaque côté, mesuré dans le
+ * navigateur — pour que « Star on GitHub » et la commande npm se posent côte à côte sans écart. La cible de 44 px
+ * est alors native : le calque de pointage prend la boîte et ne la déborde plus.
+ *
  * Histoire : `docs/history/button.md`.
  */
 export function Button({
   label,
   variant = "primary",
   assistiveSuffix,
+  size = "default",
   content = "label",
   icon,
   forceTooltip,
+  tooltip = "auto",
   href,
   newTab,
   disabled,
@@ -277,15 +301,23 @@ export function Button({
   const classes = cn(
     "relative inline-flex items-center justify-center self-start rounded-full",
     "font-pixel text-body-sm font-medium",
-    "after:absolute after:inset-y-[var(--size-button-target-inset)] after:content-['']",
+    "after:absolute after:content-['']",
+    /* `large` : 46 px, la cible de 44 est native, le calque prend la boîte (`inset-0`) au lieu de la déborder. */
+    size === "large" ? "after:inset-0" : "after:inset-y-[var(--size-button-target-inset)]",
     content === "icon"
       ? [
-          "size-[var(--size-button-height)]",
-          "after:left-[var(--size-button-target-inset)] after:w-[var(--size-touch-target)]",
+          size === "large"
+            ? "size-[var(--size-button-height-large)]"
+            : [
+                "size-[var(--size-button-height)]",
+                "after:left-[var(--size-button-target-inset)] after:w-[var(--size-touch-target)]",
+              ],
         ]
       : [
-          "h-[var(--size-button-height)] px-4",
-          "after:inset-x-0",
+          size === "large"
+            ? "h-[var(--size-button-height-large)] px-4"
+            : "h-[var(--size-button-height)] px-4",
+          size === "large" ? undefined : "after:inset-x-0",
           content === "icon-label" && "gap-2",
         ],
     "transition-[color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,scale] duration-[var(--duration-fast)] ease-out",
@@ -356,7 +388,7 @@ export function Button({
    * DÉSACTIVÉ, PAS DE BULLE (Florian, 2026-11-11) : la bulle est un état de survol, et un contrôle
    * désactivé n'en a plus — `Tooltip` n'enveloppe donc pas un bouton `disabled`. Le nom accessible
    * reste porté par le libellé `sr-only`. */
-  return content === "icon" && !disabled ? (
+  return content === "icon" && !disabled && tooltip === "auto" ? (
     <Tooltip label={label} forceVisible={forceTooltip}>
       {control}
     </Tooltip>

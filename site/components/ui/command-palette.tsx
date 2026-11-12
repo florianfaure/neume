@@ -2,11 +2,11 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { IconName } from "@/components/ui/icon";
 import { Icon } from "@/components/ui/icon";
-import { Kbd } from "@/components/ui/kbd";
 import { List } from "@/components/ui/list";
 import { ListRow } from "@/components/ui/list-row";
 import { cn } from "@/lib/cn";
@@ -70,8 +70,8 @@ interface CommandPaletteProps {
   emptyTitle?: string;
   /** La phrase de l'état sans résultat. Défaut « Try a different search. » */
   emptyDescription?: string;
-  /** Les mots du pied, à côté des touches : défauts « navigate », « select », « close ». */
-  hints?: { navigate?: string; select?: string; close?: string };
+  /** Le nom accessible du bouton qui ferme la palette, sans bulle. Défaut « Close ». */
+  closeLabel?: string;
 }
 
 /** La palette ne filtre que sur le libellé et les mots-clés : sous-chaîne, sans casse. */
@@ -100,13 +100,12 @@ interface BodyProps {
   label: string;
   emptyTitle: string;
   emptyDescription: string;
-  hints: { navigate: string; select: string; close: string };
+  closeLabel: string;
 }
 
 /**
  * Le contenu de la palette, monté À L'OUVERTURE et démonté après la sortie : son état — la ligne active — repart
- * de zéro à chaque ouverture, et les `Kbd` du pied, qui écoutent le document, ne prennent aucune touche de la
- * page tant que la palette est fermée. Code interne du fichier : l'appelant n'y a pas accès.
+ * de zéro à chaque ouverture. Code interne du fichier : l'appelant n'y a pas accès.
  */
 function PaletteBody({
   groups,
@@ -117,7 +116,7 @@ function PaletteBody({
   label,
   emptyTitle,
   emptyDescription,
-  hints,
+  closeLabel,
 }: BodyProps) {
   const listId = useId();
   const scroller = useRef<HTMLDivElement>(null);
@@ -239,7 +238,14 @@ function PaletteBody({
           onBlur={() => setTabbed(false)}
           className="min-w-0 flex-1 appearance-none rounded-md bg-transparent font-body text-body text-text-primary outline-none placeholder:text-text-tertiary"
         />
-        <Kbd keys="escape" onTrigger={close} />
+        <Button
+          variant="ghost"
+          content="icon"
+          icon="close"
+          label={closeLabel}
+          tooltip="none"
+          onClick={close}
+        />
       </div>
 
       <div
@@ -292,34 +298,18 @@ function PaletteBody({
           />
         )}
       </div>
-
-      <div className="flex items-center gap-4 border-t-[length:var(--border-thin)] border-border-subtle px-4 py-3 font-body text-caption text-text-tertiary [@media(hover:none)_and_(pointer:coarse)]:hidden">
-        <span className="flex items-center gap-2">
-          <Kbd keys="up" onTrigger={() => move(-1)} />
-          <Kbd keys="down" onTrigger={() => move(1)} />
-          {hints.navigate}
-        </span>
-        <span className="flex items-center gap-2">
-          <Kbd keys="enter" onTrigger={() => current && choose(current.id)} />
-          {hints.select}
-        </span>
-        <span className="flex items-center gap-2">
-          <Kbd keys="escape" onTrigger={close} />
-          {hints.close}
-        </span>
-      </div>
     </div>
   );
 }
 
 /**
  * CommandPalette — la palette de commandes : une couche en haut de l'écran, sur un voile, avec un champ de
- * recherche, des résultats en groupes et les raccourcis en pied. ⌘K / Ctrl+K l'ouvre. Pour le site de Neume,
+ * recherche, des résultats en groupes et un bouton qui ferme. ⌘K / Ctrl+K l'ouvre. Pour le site de Neume,
  * Consort et le portfolio. Spec : `docs/specs/2026-11-11-lot-4-composites-design.md` § 2.1, `create`, sans benchmark
  * Mobbin (en pause) ; cadrée avec Florian sur le prototype « Nickel » (trois versions, en localhost).
  *
  * LES DÉCISIONS DE FLORIAN (spec § 1). La palette « Nickel » telle que prototypée : un voile, le champ en haut, des
- * groupes de résultats, un fond gris qui glisse au clavier et à la souris, les raccourcis en `Kbd` en pied, un
+ * groupes de résultats, un fond gris qui glisse au clavier et à la souris, les raccourcis en `Kbd` en pied (retirés le 2026-11-12), un
  * `EmptyState` compact sans résultat. SON DÉCLENCHEUR N'EST PAS DANS LE COMPOSANT : le faux champ du premier
  * prototype est retiré (« il n'est pas bon ») ; la page ouvre la palette par un `Button` du système (« Search »,
  * loupe), OU par le `SearchField` (« ça peut être une barre de recherche aussi »), OU par ⌘K. L'icône GitHub mini
@@ -381,6 +371,13 @@ function PaletteBody({
  * active à l'écran, le focus rendu au déclencheur, le geste d'entrée, la lecture au lecteur d'écran, ⌘K selon la
  * plateforme. Ils se jugent sur `/design-system`.
  *
+ * SANS RACCOURCI VISIBLE (2026-11-12, `break`, décision de Florian) : plus de pied ↑ ↓ / ↵ / esc en `Kbd`, plus de
+ * `Kbd` « esc » dans l'en-tête, et la prop `hints`, qui n'avait plus d'objet, est retirée (aucun appelant ne la
+ * passait). LE CLAVIER NE CHANGE PAS : ↑ ↓ et Entrée sont lus par le champ (`onKeyDown`, qui les avait déjà),
+ * Échap par `Dialog` (l'événement `cancel` natif), ⌘K / Ctrl+K par l'écoute du document. À droite du champ, un
+ * `Button` ghost icône `close`, `tooltip="none"` — pas de bulle dans une couche, décision du même jour —, ferme la
+ * palette ; son nom accessible est `closeLabel` (défaut « Close »).
+ *
  * Histoire : `docs/history/command-palette.md`.
  */
 export function CommandPalette({
@@ -394,7 +391,7 @@ export function CommandPalette({
   onQueryChange,
   emptyTitle = "No results",
   emptyDescription = "Try a different search.",
-  hints,
+  closeLabel = "Close",
 }: CommandPaletteProps) {
   /* Monté de l'ouverture à la fin de la sortie : la bascule se règle PENDANT le rendu, avant le `Dialog`. */
   const [mounted, setMounted] = useState(false);
@@ -448,11 +445,7 @@ export function CommandPalette({
           label={label}
           emptyTitle={emptyTitle}
           emptyDescription={emptyDescription}
-          hints={{
-            navigate: hints?.navigate ?? "navigate",
-            select: hints?.select ?? "select",
-            close: hints?.close ?? "close",
-          }}
+          closeLabel={closeLabel}
         />
       ) : null}
     </Dialog>

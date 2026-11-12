@@ -264,11 +264,22 @@ export function List({ children, label, mode, autoplay, id, activeId, onActiveCh
     };
 
     let index = -1;
-    let pointerInside = false;
-    let focusInside = false;
     let timer = 0;
+    /* Le dernier pointeur vu : un doigt ne survole rien, son `:hover` reste collé après le toucher. */
+    let touched = false;
 
-    const paused = () => pointerInside || focusInside;
+    /* L'ÉTAT EST LU, JAMAIS TENU : le pointeur est dans la liste si `:hover` le dit, le clavier si le focus de la
+     * liste est `:focus-visible`. Un drapeau posé par des événements pouvait se désaccorder du pointeur réel (un
+     * `pointerleave` manqué ou venu trop tôt) et laisser la lecture reprendre sous le pointeur. */
+    const pointerInside = () => !touched && root.matches(":hover");
+    const keyboardInside = () => {
+      const active = document.activeElement;
+      return (
+        active instanceof HTMLElement && root.contains(active) && active.matches(":focus-visible")
+      );
+    };
+    const paused = () => pointerInside() || keyboardInside();
+
     const show = () => {
       const all = rows();
       if (all.length === 0) return;
@@ -284,40 +295,32 @@ export function List({ children, label, mode, autoplay, id, activeId, onActiveCh
       window.clearInterval(timer);
       timer = window.setInterval(tick, tokenMs(AUTOPLAY.slice(4, -1)) || 1200);
     };
-
-    const onPointerOver = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return;
-      pointerInside = true;
-      const row = rowOf(event.target);
-      if (row) index = rows().indexOf(row);
-    };
-    const onPointerLeave = () => {
-      if (!pointerInside) return;
-      pointerInside = false;
-      if (focusInside) return;
+    /* La reprise : du dernier endroit visé, au pas plein. */
+    const resume = () => {
+      if (paused()) return;
       show();
       start();
     };
+
+    const onPointerOver = (event: PointerEvent) => {
+      touched = event.pointerType === "touch";
+      if (touched) return;
+      const row = rowOf(event.target);
+      if (row) index = rows().indexOf(row);
+    };
     const onFocusIn = () => {
-      const active = document.activeElement;
-      if (active instanceof HTMLElement && active.matches(":focus-visible")) {
-        focusInside = true;
-        const row = rowOf(active);
-        if (row) index = rows().indexOf(row);
-      }
+      if (!keyboardInside()) return;
+      const row = rowOf(document.activeElement);
+      if (row) index = rows().indexOf(row);
     };
     const onFocusOut = (event: FocusEvent) => {
       const next = event.relatedTarget;
       if (next instanceof Node && root.contains(next)) return;
-      if (!focusInside) return;
-      focusInside = false;
-      if (pointerInside) return;
-      show();
-      start();
+      resume();
     };
 
     root.addEventListener("pointerover", onPointerOver);
-    root.addEventListener("pointerleave", onPointerLeave);
+    root.addEventListener("pointerleave", resume);
     root.addEventListener("focusin", onFocusIn);
     root.addEventListener("focusout", onFocusOut);
     index = 0;
@@ -326,7 +329,7 @@ export function List({ children, label, mode, autoplay, id, activeId, onActiveCh
     return () => {
       window.clearInterval(timer);
       root.removeEventListener("pointerover", onPointerOver);
-      root.removeEventListener("pointerleave", onPointerLeave);
+      root.removeEventListener("pointerleave", resume);
       root.removeEventListener("focusin", onFocusIn);
       root.removeEventListener("focusout", onFocusOut);
       place(null);

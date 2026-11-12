@@ -289,6 +289,12 @@ const WAIT = "var(--duration-tooltip-delay)";
  *    longueur de chaque titre — et un bloc ne pose pas la jambe d'interligne qu'une enveloppe en ligne
  *    ajouterait à son parent.
  *
+ * AU FOCUS, SEULEMENT SI LE FOCUS EST VISIBLE (2026-11-12, `refine`, retour de Florian) : à l'ouverture d'une
+ * `Dialog`, la couche donne le focus à son premier contrôle, et la bulle « Previous icon » d'`IconSheet` était déjà
+ * ouverte sans que personne ait rien survolé ni tabulé. La bulle ne s'ouvre plus au `focus` que si la cible est
+ * `:focus-visible` — le navigateur le dit vrai au clavier, faux pour un focus posé par script après un clic ou un
+ * geste du pointeur. Le survol, `forceVisible` et le délai ne changent pas ; le focus clavier garde sa bulle.
+ *
  * LA BULLE EST DANS LE TOP LAYER (2026-11-12, `refine`, retour de Florian : « les bulles des boutons icône sont
  * coupées dans une `Dialog` »). LA CAUSE : la bulle était un `absolute` DANS le flux du contrôle, donc rognée
  * par tout ancêtre qui coupe — le panneau d'une `Dialog` et son contenu en `overflow-hidden` (`IconSheet`,
@@ -473,7 +479,11 @@ export function Tooltip({
       className={side === "top" ? "relative inline-flex self-start" : "relative block"}
       onPointerEnter={open}
       onPointerLeave={hide}
-      onFocus={show}
+      onFocus={(event) => {
+        /* Un focus POSÉ PAR SCRIPT — la couche qui s'ouvre et donne le focus à son premier contrôle, après un clic — n'ouvre
+         * pas la bulle : seul un focus visible au clavier le fait (2026-11-12). */
+        if (event.target instanceof Element && event.target.matches(":focus-visible")) show();
+      }}
       onBlur={hide}
     >
       {children}

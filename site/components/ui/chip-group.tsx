@@ -152,7 +152,10 @@ export function ChipGroup({
     <div className="relative">
       <div
         ref={startArrow}
-        className={cn("absolute inset-y-0 left-0 z-[var(--z-raised)] flex items-center", !more.start && "invisible")}
+        className={cn(
+          "absolute inset-y-0 left-0 z-[var(--z-raised)] flex items-center",
+          !more.start && "invisible",
+        )}
       >
         <Button
           variant="ghost"
@@ -165,7 +168,7 @@ export function ChipGroup({
       <div
         ref={scroller}
         className={cn(
-          "-mx-2 -my-2 overflow-x-auto px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          "-mx-2 -my-2 flex overflow-x-auto px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           fade,
         )}
       >
@@ -207,7 +210,10 @@ export function ChipGroup({
       </div>
       <div
         ref={endArrow}
-        className={cn("absolute inset-y-0 right-0 z-[var(--z-raised)] flex items-center", !more.end && "invisible")}
+        className={cn(
+          "absolute inset-y-0 right-0 z-[var(--z-raised)] flex items-center",
+          !more.end && "invisible",
+        )}
       >
         <Button
           variant="ghost"

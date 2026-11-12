@@ -11,7 +11,7 @@ Ce qui n'est pas une copie et qui est donc du site : `app/` (layout, pages), `da
 
 ## Source
 
-Commit du portfolio d'où viennent les copies : `98129414ae9895a0bd11088f2ce64ae556e5bc75`
+Commit du portfolio d'où viennent les copies : `3614713f9603b333b8eefbef49febaa40efced19`
 
 ## Commandes
 

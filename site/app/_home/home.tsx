@@ -68,21 +68,6 @@ export function Home() {
   const groups = useMemo<CommandPaletteGroup[]>(
     () => [
       {
-        label: "Icons",
-        items: THEMES.flatMap((t) =>
-          t.icons.map((name) => ({
-            label: name,
-            icon: name as IconName,
-            meta: t.label,
-            keywords: (KEYWORDS[name] ?? "").split(" ").filter(Boolean),
-            onSelect: () => {
-              setCurrent(name);
-              setSheetOpen(true);
-            },
-          })),
-        ),
-      },
-      {
         label: "Pages",
         items: [
           { label: "Docs", icon: "file-text" as const, href: "/docs" },
@@ -102,6 +87,21 @@ export function Home() {
           },
           { label: "Open GitHub", icon: "external-link" as const, href: REPO_URL, newTab: true },
         ],
+      },
+      {
+        label: "Icons",
+        items: THEMES.flatMap((t) =>
+          t.icons.map((name) => ({
+            label: name,
+            icon: name as IconName,
+            meta: t.label,
+            keywords: (KEYWORDS[name] ?? "").split(" ").filter(Boolean),
+            onSelect: () => {
+              setCurrent(name);
+              setSheetOpen(true);
+            },
+          })),
+        ),
       },
     ],
     [],
@@ -176,6 +176,7 @@ export function Home() {
                 variant="secondary"
                 content="icon-label"
                 icon="github"
+                size="large"
                 label="Star on GitHub"
                 href={REPO_URL}
                 newTab
