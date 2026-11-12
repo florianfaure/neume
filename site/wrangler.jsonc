@@ -1,0 +1,18 @@
+{
+  // neume.dev est servi en ASSETS STATIQUES, comme le portfolio : aucun `main`, le Worker n'exécute
+  // aucun code, il sert le dossier `out/` produit par `next build`. Rien ici ne touche le compte
+  // Cloudflare tant que Florian ne lance pas lui-même `wrangler deploy`.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "neume-dev",
+  "compatibility_date": "2026-08-11",
+
+  // Le domaine est branché ici, en Custom Domain : au déploiement, Cloudflare crée lui-même
+  // l'enregistrement DNS et le certificat de neume.dev (zone déjà sur Cloudflare, aucun
+  // enregistrement à la racine au 12 nov. 2026). Pas encore de www.
+  "routes": [{ "pattern": "neume.dev", "custom_domain": true }],
+  "assets": {
+    "directory": "./out",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

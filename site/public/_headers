@@ -1,0 +1,13 @@
+# Cache immuable sur les fichiers hachés de Next : leur nom contient un hash de contenu, ils ne changent
+# jamais sans changer de nom, donc les revalider est du gaspillage pur. C'est ce qui rend la deuxième
+# visite gratuite, polices comprises.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Trois portes qui n'ont aucune raison d'être ouvertes sur un site sans formulaire, sans tiers et sans
+# entrée utilisateur. Pas de CSP : le script anti-flash du <head> est inline, et une CSP correcte
+# imposerait de recalculer son hash à chaque build.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY

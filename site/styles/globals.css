@@ -1,0 +1,1407 @@
+@import "tailwindcss";
+@import "./tokens/primitives.css";
+@import "./tokens/semantic.css";
+
+/*
+ * globals.css — mapping des tokens vers Tailwind, puis reset et styles de base.
+ *
+ * Aucun `tailwind.config` : la source de vérité est le CSS de `styles/tokens/`, lisible
+ * par le navigateur, par le designer, et exportable vers Figma (spec § 3).
+ */
+
+/* La détection de sources de Tailwind lit aussi le Markdown. Sans cette exclusion, elle
+ * compile les CONTRE-EXEMPLES du manifeste : `bg-[#fff]`, `p-[13px]`,
+ * `text-[color:var(--neutral-700)]`, `font-[550]`, `outline-none`, `leading-tight`,
+ * `font-serif`… — la constitution alimentant le CSS avec les classes qu'elle interdit.
+ * Deux dégâts : des règles mortes dans le bundle de production, et surtout un CSS compilé
+ * qui ne reflète plus ce que le code utilise vraiment, donc inutilisable comme surface
+ * d'audit. La documentation ne fait pas partie du code.
+ *
+ * Le motif est relatif à CE fichier, donc à `styles/` : `../` remonte à la racine du
+ * projet, où vivent `MANIFEST.md`, `CLAUDE.md`, `README.md` et `docs/specs/`. */
+@source not "../**/*.md";
+
+/* ======================================================================================
+ * Mapping — `@theme inline reference`
+ *
+ * `inline` : l'utilitaire généré RÉFÉRENCE la variable au lieu d'en copier la valeur.
+ * `bg-surface` compile en `background-color: var(--color-surface)`, pas en
+ * `background-color: oklch(1 0 0)`. C'est ce qui rend l'aliasing sémantique réel : le
+ * jour où le dark mode est décidé, un `--color-surface: var(--neutral-1000)` sous un
+ * sélecteur de thème suffit, sans recompiler un seul utilitaire.
+ *
+ * `reference` : les clés de ce bloc ne sont pas ré-émises dans `:root`. Nos tokens portent
+ * volontairement les mêmes noms que les namespaces Tailwind (`--color-surface`,
+ * `--radius-md`) parce que ce sont ces noms que le manifeste et le spec désignent ; sans
+ * `reference`, Tailwind écrirait `--color-surface: var(--color-surface)` dans la couche
+ * `theme` — une auto-référence morte. Les tokens existent déjà, déclarés une seule fois
+ * dans `styles/tokens/`.
+ *
+ * Les `*: initial` FERMENT les portes des échelles par défaut de Tailwind. Tant qu'elles
+ * sont ouvertes, les lois 1 et 2 reposent sur la bonne volonté : `bg-red-500`, `p-7` et
+ * `rounded-3xl` compilent. Après annulation, ces classes ne produisent AUCUNE règle —
+ * elles deviennent une erreur visible et non une tolérance.
+ *
+ * Le namespace typographique est fermé ici, en tâche 1.3 : `--font-*: initial` fait
+ * disparaître `font-sans`, `font-serif` et `font-mono` (conséquence mécanique n° 3 de `.claude/rules/loi-10-croissance-tokens.md`),
+ * `--leading-*` et `--tracking-*: initial` font disparaître les classes qui pourraient
+ * désaccorder un token d'échelle, et chaque `--text-*` est déclaré avec son compagnon
+ * `--text-*--line-height` pour qu'un seul utilitaire porte la taille ET l'interligne
+ * (conséquence mécanique n° 4 de `.claude/rules/loi-10-croissance-tokens.md`).
+ * ====================================================================================== */
+
+@theme inline reference {
+  /* --- portes fermées ---------------------------------------------------------------- */
+  --color-*: initial; /* toute la palette par défaut, y compris black et white */
+  --spacing: initial; /* l'échelle d'espacement dynamique : p-7, gap-13, mt-[3px] */
+  --radius-*: initial; /* rounded-xs … rounded-4xl */
+  --shadow-*: initial; /* shadow-2xs … shadow-2xl */
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --ease-*: initial; /* ease-in, ease-out, ease-in-out par défaut */
+
+  /* Typographie (tâche 1.3). Les quatre annulations sont indissociables : garder une
+   * seule des quatre portes ouvertes suffit à contourner la loi 3 en une classe.
+   *   --font-*        → font-sans, font-serif, font-mono
+   *   --font-weight-* → font-thin, font-light, font-extrabold, font-black…
+   *   --text-*        → text-xs … text-9xl, et leurs interlignes par défaut
+   *   --leading-*     → leading-none, leading-tight … leading-loose
+   *   --tracking-*    → tracking-tighter … tracking-widest
+   * `--font-*` annule aussi `--font-weight-*` par préfixe ; les deux sont écrites parce
+   * qu'une annulation implicite n'est pas une intention lisible. */
+  --font-*: initial;
+  --font-weight-*: initial;
+  --text-*: initial;
+  --leading-*: initial;
+  --tracking-*: initial;
+
+  /* --- couleur : seule la couche sémantique est exposée ------------------------------ */
+  /* La rampe `--neutral-*` n'est PAS mappée : si `--neutral-700` générait
+   * `text-neutral-700`, la loi 1 serait contournable en une classe et le remap dark
+   * court-circuité (conséquence mécanique n° 2 de `.claude/rules/loi-10-croissance-tokens.md`). */
+  --color-surface: var(--color-surface);
+  --color-surface-subtle: var(--color-surface-subtle);
+  --color-surface-inverse: var(--color-surface-inverse);
+  --color-selection-surface: var(
+    --color-selection-surface
+  ); /* delta 2026-10-29 — lu par `::selection`, pas en utilitaire */
+  --color-surface-media: var(--color-surface-media); /* delta 2.1 — ProjectCard */
+  --color-surface-media-dither: var(
+    --color-surface-media-dither
+  ); /* delta 2026-10-28 — lu par `@utility media-dither`, pas en utilitaire */
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
+  --color-text-inverse: var(--color-text-inverse);
+
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-default: var(--color-border-default);
+  --color-border-strong: var(--color-border-strong);
+  --color-border-media: var(--color-border-media); /* delta 2026-08-28 — ProjectCard */
+  --color-licence-guilloche: var(--color-licence-guilloche); /* delta 2026-10-06 — DesignLicence */
+
+  /* delta 2026-10-06 — ScratchCard : la couverture, le texte sur le voile, les reflets, l'ombre.
+   * Le canvas lit les crans de la couverture au moment de peindre ; les autres se consomment en
+   * utilitaire ou en valeur arbitraire. Une ligne par token, sans exception (loi 10, sens exposé). */
+  --color-scratch-cover: var(--color-scratch-cover);
+  --color-scratch-cover-dither: var(--color-scratch-cover-dither);
+  --color-scratch-cover-edge: var(--color-scratch-cover-edge);
+  --color-scratch-cover-text: var(--color-scratch-cover-text);
+  --color-text-on-scrim: var(--color-text-on-scrim);
+  --color-text-on-scrim-hover: var(--color-text-on-scrim-hover);
+  --color-focus-ring-on-scrim: var(--color-focus-ring-on-scrim);
+  --color-sheen-strong: var(--color-sheen-strong);
+  --color-sheen-soft: var(--color-sheen-soft);
+
+  --color-focus-ring: var(--color-focus-ring);
+  --color-focus-ring-inverse: var(--color-focus-ring-inverse);
+
+  /* 2026-11-11 — les couleurs de retour, les premières couleurs chromatiques du système (spec
+   * `2026-11-11-lot-3-retours-formulaires-design` § 1). `text-text-negative`, `border-border-negative`,
+   * `outline-focus-ring-negative`, et leurs sœurs : semées pour `TextField`, `SubscribeForm` et `Toast`. */
+  --color-text-negative: var(--color-text-negative);
+  --color-text-positive: var(--color-text-positive);
+  --color-text-warning: var(--color-text-warning);
+  --color-border-negative: var(--color-border-negative);
+  --color-border-positive: var(--color-border-positive);
+  --color-border-warning: var(--color-border-warning);
+  --color-focus-ring-negative: var(--color-focus-ring-negative);
+  --color-focus-ring-positive: var(--color-focus-ring-positive);
+  --color-focus-ring-warning: var(--color-focus-ring-warning);
+
+  /* delta 2.1 — les trois crans de bordure d'état de ProjectCard, et les deux surfaces
+   * d'étiquette de Tag. `--zoom-*` n'est pas mappé : `scale` n'a pas de namespace de thème
+   * dans Tailwind v4, il se consomme en `scale-[var(--zoom-media-sm)]`. */
+  --color-interactive-border: var(--color-interactive-border);
+  --color-interactive-border-hover: var(--color-interactive-border-hover);
+  --color-interactive-border-active: var(--color-interactive-border-active);
+
+  --color-tag-surface: var(--color-tag-surface);
+
+  /* delta 3.4 — le fond du curseur en pill, consommé par `CursorPill` en `bg-cursor-surface`. */
+  --color-cursor-surface: var(--color-cursor-surface);
+
+  /* delta 3.9 — le fond du tooltip, consommé par `Tooltip` en `bg-tooltip-surface`. */
+  --color-tooltip-surface: var(--color-tooltip-surface);
+
+  /* delta 2026-10-16 — la puce de code, consommée par `InlineCode` en `bg-code-surface` et
+   * `border-code-border`. */
+  --color-code-surface: var(--color-code-surface);
+  --color-code-border: var(--color-code-border);
+
+  /* delta 2026-11-07 — le bloc de code, consommé par `CodeBlock` en `bg-code-block-surface` et
+   * `border-code-block-border`. */
+  --color-code-block-surface: var(--color-code-block-surface);
+  --color-code-block-border: var(--color-code-block-border);
+
+  /* delta 2026-11-06 — la touche de raccourci, consommée par `Kbd` en `bg-kbd-surface`,
+   * `bg-kbd-surface-pressed`, `border-kbd-border` et `border-kbd-border-pressed`. */
+  --color-kbd-surface: var(--color-kbd-surface);
+  --color-kbd-surface-pressed: var(--color-kbd-surface-pressed);
+  --color-kbd-border: var(--color-kbd-border);
+  --color-kbd-border-pressed: var(--color-kbd-border-pressed);
+
+  /* delta 2026-10-16 — le contour du cadre à variantes, consommé par `Exhibit` en
+   * `border-exhibit-frame`, et rien d'autre : l'avant / après n'a plus de bande grise depuis le
+   * 2026-10-17, ses onglets étant hors du contour. */
+  --color-exhibit-frame: var(--color-exhibit-frame);
+
+  /* delta 2026-10-19 — le filet du panneau de partage, consommé par `ShareButton` en
+   * `border-share-border`. Transparent en light, `--neutral-800` en dark. Ses deux dimensions ne sont
+   * pas mappées, pour la raison des dimensions de `NoteRow` : elles se consomment en valeur
+   * arbitraire typée pointant le token. */
+  --color-share-border: var(--color-share-border);
+
+  /* delta 2026-10-06 — le trait des liens, consommé en `decoration-link-underline` par
+   * `StandaloneLink` et en dégradé `from-link-underline` par `TextLink`. */
+  --color-link-underline: var(--color-link-underline);
+
+  /* delta popin — le voile, consommé en `bg-scrim` sur `::backdrop`, par la variante du même nom :
+   * par `Popin` jusqu'à son retrait du système le 2026-10-12, par `ScratchCard` depuis le
+   * 2026-10-06. Le fond du panneau, `bg-popin-surface`, est parti avec la popin. */
+  --color-scrim: var(--color-scrim);
+
+  /* delta 3.6 — la piste et la pill sélectionnée de `Tab`, consommées en `bg-segmented-track` et
+   * `bg-segmented-surface-selected`. Les deux DIMENSIONS du même delta ne sont pas mappées :
+   * Tailwind v4 n'expose pas de namespace de thème pour une hauteur hors échelle
+   * d'espacement, elles se consomment donc en valeur arbitraire typée pointant le token,
+   * exactement comme les deux dimensions de `Portrait` (loi 1, exception « propriétés que
+   * Tailwind v4 n'expose pas comme namespace de thème »). */
+  --color-segmented-track: var(--color-segmented-track);
+  --color-segmented-surface-selected: var(--color-segmented-surface-selected);
+
+  /* delta 2026-11-06 — la pastille du champ de recherche, consommée par `SearchField` en
+   * `bg-search-field-surface` et `hover:bg-search-field-surface-hover`. */
+  --color-search-field-surface: var(--color-search-field-surface);
+  --color-search-field-surface-hover: var(--color-search-field-surface-hover);
+
+  /* delta 2026-11-06 — la piste du curseur et ses crans, consommés par `Slider` en
+   * `bg-slider-track`, `hover:bg-slider-track-hover` et `bg-slider-tick`. */
+  --color-slider-track: var(--color-slider-track);
+  --color-slider-track-hover: var(--color-slider-track-hover);
+  --color-slider-tick: var(--color-slider-tick);
+
+  /* delta 2026-11-06 — le fond de la tuile d'icône, consommé par `Tile` en
+   * `hover:bg-icon-tile-surface-hover` et `active:bg-icon-tile-surface-active`. */
+  --color-icon-tile-surface-hover: var(--color-icon-tile-surface-hover);
+  --color-icon-tile-surface-active: var(--color-icon-tile-surface-active);
+
+  /* delta 2026-11-11 — les petits contrôles du lot 1 : `Button` ghost (`hover:bg-button-surface-ghost-*`),
+   * `ToggleButton`, `Chip` et leurs groupes (`bg-toggle-*`), la pastille sans piste de `SegmentedTrack`,
+   * `Announcement` (`bg-announcement-surface*`) et la chip à filet (`bg-chip-outlined-surface*`). */
+  --color-button-surface-ghost-hover: var(--color-button-surface-ghost-hover);
+  --color-button-surface-ghost-active: var(--color-button-surface-ghost-active);
+  --color-toggle-surface-pressed: var(--color-toggle-surface-pressed);
+  --color-segmented-surface-selected-bare: var(--color-segmented-surface-selected-bare);
+  --color-announcement-surface: var(--color-announcement-surface);
+  --color-announcement-surface-hover: var(--color-announcement-surface-hover);
+  --color-announcement-surface-active: var(--color-announcement-surface-active);
+  --color-toast-surface: var(--color-toast-surface); /* delta 2026-11-11 — Toaster */
+  --color-list-highlight: var(--color-list-highlight); /* delta 2026-11-11 — List */
+  --color-progress-track: var(--color-progress-track); /* delta 2026-11-11 — ProgressBar */
+  --color-progress-fill: var(--color-progress-fill);
+  --color-chip-outlined-surface: var(--color-chip-outlined-surface);
+
+  /* delta 2026-11-06 — le damier de l'aperçu pixel, consommé par `PixelPreview` en
+   * `var(--color-pixel-preview-check)`, dans le fond de sa boîte. Sa boîte, `--size-pixel-preview-box`, n'est pas mappée : elle se consomme
+   * en valeur arbitraire typée pointant le token, comme les dimensions de `Portrait`. */
+  --color-pixel-preview-check: var(--color-pixel-preview-check);
+
+  /* delta 3.8 — les six fonds de `Button`, consommés en `bg-button-surface-*`. Sa HAUTEUR et son
+   * OPACITÉ de désactivé ne sont pas mappées, pour la raison des dimensions de `Tab` et de
+   * `Portrait` juste au-dessus : Tailwind v4 n'expose de namespace de thème ni pour l'une ni pour
+   * l'autre, elles se consomment en valeur arbitraire typée pointant le token. */
+  --color-button-surface-primary: var(--color-button-surface-primary);
+  --color-button-surface-primary-hover: var(--color-button-surface-primary-hover);
+  --color-button-surface-primary-active: var(--color-button-surface-primary-active);
+  --color-button-surface-secondary: var(--color-button-surface-secondary);
+  --color-button-surface-secondary-hover: var(--color-button-surface-secondary-hover);
+  --color-button-surface-secondary-active: var(--color-button-surface-secondary-active);
+
+  /* delta 3.2 — les couleurs de marque et le blanc du glyphe, consommés par `Logo` en
+   * `bg-logo-<marque>` et `fill-logo-mark`. Les dix dernières sont les outils du bloc `Stack`
+   * du panneau `About`, delta du 2026-09-21. UNE LIGNE PAR TOKEN, sans exception : c'est ce
+   * bloc, et lui seul, qui fabrique l'utilitaire — un `--color-logo-*` oublié ici peint un
+   * carré blanc sur blanc en silence, ce qui est arrivé à `--color-logo-en-solo` le
+   * 2026-08-30 et a fait naître le troisième sens de la loi 10. */
+  --color-logo-modeo: var(--color-logo-modeo);
+  --color-logo-habitat: var(--color-logo-habitat);
+  --color-logo-vente-unique: var(--color-logo-vente-unique);
+  --color-logo-mask: var(--color-logo-mask);
+  --color-logo-fullphysio: var(--color-logo-fullphysio);
+  --color-logo-en-solo: var(--color-logo-en-solo);
+  --color-logo-figma: var(--color-logo-figma);
+  --color-logo-paper: var(--color-logo-paper);
+  --color-logo-claude: var(--color-logo-claude);
+  --color-logo-codex: var(--color-logo-codex);
+  --color-logo-warp: var(--color-logo-warp);
+  --color-logo-react: var(--color-logo-react);
+  --color-logo-vue: var(--color-logo-vue);
+  --color-logo-flutter: var(--color-logo-flutter);
+  --color-logo-linear: var(--color-logo-linear);
+  --color-logo-github: var(--color-logo-github);
+  --color-logo-mark: var(--color-logo-mark);
+
+  /* delta 5 — la frontière du carré, ajoutée avec le dark mode (spec § 9), consommée par
+   * `Logo` en `border-logo-border`. */
+  --color-logo-border: var(--color-logo-border);
+
+  /* --- espacement : les pas du système, un par un ------------------------------------ */
+  /* Déclarés nommément, donc `p-4` existe et `p-7` n'existe pas (loi 2).
+   *
+   * Le cran 0 est ce qui rend réels les « zéros structurels » que la loi 1 déclare tolérés —
+   * `p-0`, `inset-0`, `top-0`. Il manquait, donc ces classes ne compilaient en rien : voir la
+   * note du cran zéro dans `primitives.css`. Ce n'est pas un pas d'espacement, c'est son
+   * annulation, et la règle mécanique de la loi 2 saute déjà le 0. */
+  --spacing-0: var(--space-0);
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-5: var(--space-5);
+  --spacing-6: var(--space-6);
+  --spacing-8: var(--space-8);
+  --spacing-10: var(--space-10);
+  --spacing-12: var(--space-12);
+  --spacing-16: var(--space-16);
+  --spacing-20: var(--space-20);
+  --spacing-24: var(--space-24);
+  --spacing-32: var(--space-32);
+  --spacing-40: var(--space-40);
+
+  /* --- typographie : les trois familles, et rien d'autre ----------------------------- */
+  /* `font-display` n'existe plus depuis la tâche 3.1 : Geist porte tout le texte, Pixelify Sans
+   * porte l'accent. La troisième famille revient le 2026-10-16 avec un autre rôle : `font-code`,
+   * Geist Mono, pour le code et rien d'autre, sans hiérarchie (loi 3, amendée). */
+  --font-body: var(--font-body);
+  --font-pixel: var(--font-pixel);
+  --font-code: var(--font-code); /* delta 2026-10-16 — InlineCode */
+
+  /* --- typographie : les quatre graisses nommées de la loi 3 ------------------------- */
+  --font-weight-normal: var(--font-weight-normal);
+  --font-weight-medium: var(--font-weight-medium);
+  --font-weight-semibold: var(--font-weight-semibold);
+  --font-weight-bold: var(--font-weight-bold);
+
+  /* --- typographie : les neuf crans, taille + interligne indissociables -------------- */
+  /* Tailwind v4 attache une interligne à un token de taille par la clé compagnon
+   * `--text-<cran>--line-height`. `text-h2` compile donc en `font-size` + `line-height`
+   * dans la MÊME règle : le nœud de texte porte un seul utilitaire, et il n'existe plus
+   * aucun `leading-*` pour venir le contredire (loi 3). `--letter-spacing` suit la même
+   * mécanique, et n'est posé que sur les deux crans où il est justifié. */
+  --text-caption: var(--text-caption);
+  --text-caption--line-height: var(--text-caption--line-height);
+
+  --text-body-sm: var(--text-body-sm);
+  --text-body-sm--line-height: var(--text-body-sm--line-height);
+
+  --text-body: var(--text-body);
+  --text-body--line-height: var(--text-body--line-height);
+
+  --text-body-lg: var(--text-body-lg);
+  --text-body-lg--line-height: var(--text-body-lg--line-height);
+
+  --text-h4: var(--text-h4);
+  --text-h4--line-height: var(--text-h4--line-height);
+
+  --text-h3: var(--text-h3);
+  --text-h3--line-height: var(--text-h3--line-height);
+
+  --text-h2: var(--text-h2);
+  --text-h2--line-height: var(--text-h2--line-height);
+
+  --text-h1: var(--text-h1);
+  --text-h1--line-height: var(--text-h1--line-height);
+  --text-h1--letter-spacing: var(--text-h1--letter-spacing);
+
+  --text-display: var(--text-display);
+  --text-display--line-height: var(--text-display--line-height);
+  --text-display--letter-spacing: var(--text-display--letter-spacing);
+
+  /* --- rayons ----------------------------------------------------------------------- */
+  /* `rounded-none` est un utilitaire statique de Tailwind : le cran 0 est déjà couvert. */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl); /* delta 3.3 — SideProjectCard */
+  --radius-2xl: var(
+    --radius-2xl
+  ); /* delta 2026-08-26 — cran de rampe ; Tile, PixelPreview et CodeBlock depuis le 2026-11-06 */
+  --radius-3xl: var(--radius-3xl); /* delta 2026-08-28 — ProjectCard */
+  --radius-full: var(--radius-full);
+
+  /* --- élévation -------------------------------------------------------------------- */
+  /* `shadow-none` est un utilitaire statique de Tailwind. */
+  /* L'échelle d'élévation du 2026-11-06, toutes centrées : `-sm` sans consommateur (exception datée
+   * de la loi 10), `-md` la chrome de lecture, `-lg` les couches flottantes. */
+  --shadow-elevation-sm: var(--shadow-elevation-sm);
+  --shadow-elevation-md: var(--shadow-elevation-md);
+  --shadow-elevation-lg: var(--shadow-elevation-lg);
+
+  /* --- mouvement -------------------------------------------------------------------- */
+  /* Les durées n'ont pas de namespace de thème dans Tailwind v4 : elles se consomment en
+   * `duration-[var(--duration-base)]` (exception tolérée de la loi 1). Les courbes, si. */
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+  --ease-steps-4: var(
+    --ease-steps-4
+  ); /* delta 2026-10-28 — le changement de thème en quatre images */
+  /* delta 2026-10-06 — le ressort du ticket de ScratchCard. Consommées en `var()` dans une
+   * transition à deux propriétés (montée et rotation n'ont pas la même courbe), donc les
+   * utilitaires générés ne servent pas ; la ligne est là pour le sens exposé de la loi 10. */
+  --ease-spring-rise: var(--ease-spring-rise);
+  --ease-spring-turn: var(--ease-spring-turn);
+  --ease-spring-settle-rise: var(--ease-spring-settle-rise);
+  --ease-spring-settle-turn: var(--ease-spring-settle-turn);
+  /* delta 2026-10-07 — le ressort des micro-animations, consommé en utilitaire `ease-spring-pop`. */
+  --ease-spring-pop: var(--ease-spring-pop);
+}
+
+/* ======================================================================================
+ * Utilitaires du projet
+ *
+ * DEUX `@utility` DANS LE DÉPÔT : `pixelated`, juste en dessous, et `media-dither`, qui la suit.
+ *
+ * `pixelated` est la première, posée le 2026-08-13 avec `SideProjectCard`
+ * (`docs/specs/2026-08-13-page-side-projects-design.md` § 7). Avant elle, le mot
+ * `image-rendering` n'apparaissait nulle part dans `styles/`, `app/` ni `components/`.
+ *
+ * POURQUOI ICI ET PAS DANS LE COMPOSANT. La loi 6 impose `image-rendering: pixelated` à tout
+ * visuel pixel art, et la loi 1 nomme elle-même l'`@utility` comme la parade quand Tailwind
+ * n'expose pas de namespace de thème pour une propriété. Un mode de rendu se pose une fois pour
+ * tout le système ; l'écrire dans chaque composant qui sert du pixel en ferait une décision
+ * locale, donc une décision qui peut diverger.
+ *
+ * ELLE N'EST PAS UNE VALEUR DE DESIGN — ni couleur, ni dimension, ni durée —, donc la loi 1 n'a
+ * rien à y redire et aucune règle de `npm run check` ne la vise. Ne lui ajoute pas de variante :
+ * `pixelated` est le seul mode dont le projet a besoin, `crisp-edges` étant interprété
+ * différemment d'un moteur à l'autre.
+ * ====================================================================================== */
+
+@utility pixelated {
+  image-rendering: pixelated;
+}
+
+/* `media-dither` — LA TRAME DU CADRE DE MÉDIA, LA SECONDE `@utility` DU DÉPÔT. Lot K du 2026-10-28,
+ * spec `docs/specs/2026-10-28-lot-k-arrivee-design.md` § 3 (PIX-04, `rapports/02-pixel-art.md`).
+ * Sous une image pas encore chargée, ou en échec, le cadre n'est plus un aplat : une cellule de 2 × 2
+ * px allumée dans `--color-surface-media-dither`, un cran plus loin de la page que le fond, tous les
+ * 8 px, comme une page quadrillée. STATIQUE : aucune dissolution au chargement, rien qui bouge.
+ *
+ * ELLE SE POSE À CÔTÉ DE `bg-surface-media`, JAMAIS SEULE. Elle ne peint que `background-image` ; la
+ * couleur du fond reste celle de l'utilitaire de `@theme`, sur le même nœud. Une image transparente
+ * laisse voir la trame : un cadre qui porte un visuel à canal alpha reste sur l'aplat (`DESIGN.md`,
+ * ligne de `--color-surface-media`).
+ *
+ * POURQUOI UNE `@utility` ET NON UN TOKEN D'IMAGE DE FOND. Un token qui porterait le dégradé entier
+ * porterait aussi la tuile et la cellule, c'est-à-dire des LONGUEURS DE FORME écrites dans
+ * `semantic.css` comme une intention ; et un composant ne peut pas écrire la tuile lui-même, la loi 1
+ * refusant toute dimension littérale dans une valeur arbitraire. La loi 1 nomme l'`@utility` comme la
+ * parade quand une propriété n'a pas de namespace de thème : c'est le cas de `background-image`.
+ * Décision de l'orchestrateur, au cadrage du lot K.
+ *
+ * `8px` ET `2px` SONT LA FORME DE LA TRAME, PAS DES VALEURS DE DESIGN À TOKENISER — comme le rayon du
+ * point d'une bordure `dotted` ou la longueur du tiret d'un `dashed`, que personne n'écrit en token.
+ * Ils ne vivent qu'ici, et ils sont liés : la cellule de 2 px est la cellule de la loi 6, posée sur
+ * des coordonnées entières ; la tuile de 8 est le pas de la grille de la loi 2. Changer l'un sans
+ * l'autre change de motif, pas de réglage. La seule couleur est le token : aucun littéral.
+ *
+ * LA CELLULE, VÉRIFIÉE AUX ARRÊTS. Le `conic-gradient` est centré à (2 px, 2 px) dans la tuile et part
+ * de 270deg, l'ouest ; le premier quart, de l'ouest au nord dans le sens horaire, est le quadrant haut
+ * gauche du centre, soit exactement [0, 2[ × [0, 2[ — la cellule. `transparent 0` ramène le second
+ * arrêt sur le premier, donc le bord est dur, sans fondu. Les deux bords tombent sur les lignes x = 2
+ * et y = 2, entières ; aucun centre de pixel — à 1× (x,5) comme à 2× (x,25 et x,75) — ne tombe dessus,
+ * donc aucun pixel n'est à moitié peint. Pas de `radial-gradient` : un disque n'a pas de bords nets.
+ *
+ * LA TUILE EST ANCRÉE AU COIN HAUT GAUCHE DE LA BOÎTE DE PADDING (`background-position: 0 0`, origine
+ * par défaut) : sur un cadre sans bordure c'est son coin, sur le passe-partout de `Portrait` c'est 4 px
+ * dedans — entier dans les deux cas. Ce qui la fait baver, et que rien ne mesure : un cadre posé sur
+ * une coordonnée fractionnaire, un écran à 125 %, le permis réduit d'un bloc par `scale` (angle mort
+ * n° 28 de `.claude/rules/loi-08-layout.md`), et les gestes passagers — le zoom et la bascule de
+ * `Portrait` au survol —, que l'exception « le mouvement » de la loi 6 tolère. Un cadre PENCHÉ AU
+ * REPOS ne la prend pas : la loi 6 le rouvrirait (`PhotoStrip`, resté sur l'aplat).
+ *
+ * Le token se lit en `var()` ici, et `npm run check` le compte au composant qui pose la classe : la
+ * troisième voie de `tokensUsedIn` (`scripts/lib/tokens.mjs`) lit le corps de chaque `@utility`. */
+@utility media-dither {
+  background-image: conic-gradient(
+    from 270deg at 2px 2px,
+    var(--color-surface-media-dither) 25%,
+    transparent 0
+  );
+  background-size: 8px 8px;
+  background-position: 0 0;
+}
+
+/* `clip-nav-panel-closed` ET `clip-nav-panel-open` — LE PANNEAU MOBILE DE `NavBar` (lot 2 du site de
+ * Neume, spec `2026-11-11-lot-2-navigation-design.md` § 2.2). Deux découpes du MÊME `clip-path:
+ * inset()` : fermée, le bord bas est rabattu sur le haut (100 % de la hauteur) et rien ne se voit ;
+ * ouverte, la découpe ne rogne rien et le panneau se déroule vers le bas, le geste du prototype. Le
+ * composant transitionne de l'une à l'autre en `--duration-base` et `--ease-out`. Aucune valeur de
+ * design : des pourcentages de la boîte, la forme de la découpe, comme les autres découpes de `clip-*` — et la
+ * même raison d'être une `@utility`, la loi 1 refusant un littéral dans une valeur arbitraire. */
+@utility clip-nav-panel-closed {
+  clip-path: inset(0 0 100% 0);
+}
+
+@utility clip-nav-panel-open {
+  clip-path: inset(0 0 0 0);
+}
+
+/* `chip-group-fade-left`, `-right` ET `-both` — LE FONDU DE BORD DE `ChipGroup` quand sa rangée défile
+ * (2026-11-12). Un masque sur le défileur : transparent au bord, opaque à `--size-chip-group-fade` de lui, côté
+ * caché seulement. Le masque ne lit que l'ALPHA de sa couleur : `--color-surface` est opaque, n'importe quel token
+ * opaque ferait l'affaire, et la loi 1 interdit d'y écrire `black`. Trois `@utility` et non une valeur arbitraire,
+ * pour la même raison que `clip-nav-panel-*` : un `calc()` de bords ne s'écrit pas en valeur arbitraire sans
+ * littéral. */
+@utility chip-group-fade-left {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-surface) var(--size-chip-group-fade)
+  );
+}
+
+@utility chip-group-fade-right {
+  mask-image: linear-gradient(
+    to left,
+    transparent,
+    var(--color-surface) var(--size-chip-group-fade)
+  );
+}
+
+@utility chip-group-fade-both {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-surface) var(--size-chip-group-fade),
+    var(--color-surface) calc(100% - var(--size-chip-group-fade)),
+    transparent
+  );
+}
+
+/* `progress-sweep` — LE SEGMENT DE LA BARRE INDÉTERMINÉE de `ProgressBar` (lot 3 du site de Neume, spec
+ * `2026-11-11-lot-3-retours-formulaires-design.md` § 2.5). Un segment de 30 % de la piste qui la traverse de
+ * gauche à droite en boucle, `--duration-progress-sweep` par passage, sur `--ease-in-out`. Les `30 %` et
+ * les `-100 %` / `340 %` de la course — de tout à gauche de la piste à tout à droite, en parts du segment — sont
+ * la FORME du mouvement, des parts de la boîte comme les découpes de `clip-*` : pas des valeurs de design à
+ * tokeniser, et la loi 1 refuse un littéral dans une valeur arbitraire. SOUS `prefers-reduced-motion`, le
+ * segment est IMMOBILE à gauche : le filet de mouvement réduit ramènerait la boucle à une milliseconde et à un
+ * tour, ce qui le laisserait à la fin de sa course, hors de la piste ; l'`@utility` coupe donc l'animation. */
+@utility progress-sweep {
+  width: 30%;
+  animation: progress-sweep var(--duration-progress-sweep) var(--ease-in-out) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes progress-sweep {
+  from {
+    translate: -100% 0;
+  }
+
+  to {
+    translate: 340% 0;
+  }
+}
+
+/* `footer-display-zone` ET `footer-display-rise` — LA PIÈCE DE FIN DE `Footer` QUI MONTE QUAND ON ARRIVE
+ * EN BAS (lot 2 du site de Neume, spec `2026-11-11-lot-2-navigation-design.md` § 4). La zone déclare une
+ * ligne de temps de vue nommée, `--footer-display` : sa progression est celle de son entrée dans la
+ * fenêtre. La pièce, enveloppée dans un bloc de la hauteur de la zone, la lit et glisse de
+ * `translate: 0 100%` (toute sous la zone, donc rognée par son `overflow-hidden`) à sa place. Le
+ * nom de la ligne de temps est visible des descendants de la zone, ce qui évite de lire la `view()`
+ * de la pièce elle-même, qui bougerait avec elle.
+ *
+ * LE REPLI EST DANS LA GARDE : `animation` n'est posée que sous `@supports (animation-timeline:
+ * view())` — un navigateur qui ne connaît pas les animations liées au défilement montre la pièce
+ * posée —, et sous `prefers-reduced-motion: no-preference`, parce que le mouvement réduit ramène les
+ * DURÉES du système à 1 ms (`@layer base`) et que celle-ci n'en a pas : sans cette garde, elle
+ * jouerait quand même. Aucun token : une interpolation linéaire liée au défilement n'a ni durée ni
+ * courbe, et les `100 %` sont des parts de la boîte, comme les découpes de `clip-*`. `animation-timeline`
+ * s'écrit APRÈS le raccourci `animation`, qui le remettrait à `auto`. */
+@utility footer-display-zone {
+  view-timeline: --footer-display block;
+}
+
+@utility footer-display-rise {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: footer-display-rise linear both;
+      animation-timeline: --footer-display;
+      animation-range: entry 0% entry 100%;
+    }
+  }
+}
+
+@keyframes footer-display-rise {
+  from {
+    translate: 0 100%;
+  }
+}
+
+/* LE PREMIER `@custom-variant` DU DÉPÔT (le second, `over-prose`, suit), posé le 2026-10-20 avec le geste du ticket de `ScratchCard`
+ * (`docs/specs/2026-10-20-lot-b-signature-design.md` § 4). `ticket-up:` est le survol du ticket
+ * OU l'état `peek` que le moteur pose une fois quand le footer arrive : le CSS du survol est écrit
+ * une fois et l'état le REJOINT, il n'est pas recopié. Les deux branches ne sont pas symétriques,
+ * et c'est ce qui la justifie. Le survol reste enfermé sous `(hover: hover)`, comme le `hover:` de
+ * Tailwind : iOS garde un `:hover` collé après le toucher, et le ticket resterait sorti. `peek`,
+ * lui, est un attribut posé par le script, donc n'a pas besoin de cette garde, et c'est ce qui le
+ * rend jouable au doigt. Aucune valeur de design ici : un sélecteur, rien d'autre. */
+@custom-variant ticket-up {
+  @media (hover: hover) {
+    &:hover {
+      @slot;
+    }
+  }
+  &[data-state="peek"] {
+    @slot;
+  }
+}
+
+/* `over-prose:` — LE MOMENT OÙ LE BOUTON BACK RECOUVRE LA COLONNE DE TEXTE, posé le 2026-10-20 avec
+ * `--shadow-chrome`, devenue `--shadow-elevation-md` le 2026-11-06
+ * (`docs/specs/2026-10-20-lot-c-lecture-design.md` § 10). Florian : le Back ne porte d'ombre
+ * que quand il recouvre la prose ; dans la marge, plus large que lui, elle ne détache rien. UN `@custom-variant` ET NON `max-[58rem]:` à la main, parce que la loi 1 interdit
+ * toute dimension littérale dans une valeur arbitraire de `app/` : le seuil s'écrit ici, une fois,
+ * avec son calcul, comme le régime de la gouttière réplique `--breakpoint-md` plus bas.
+ *
+ * LE CALCUL. Au-dessus de 768 px la gouttière vaut 24 px. Le Back est fixé à `left: 24 px` et fait
+ * 97 px de large (padding 16 + glyphe 24 + écart 8 + « Back » en Pixelify 16 px ≈ 33 + padding 16 ;
+ * 97 relevé par l'agent typo) : son bord droit est à 121 px. Le texte de la colonne commence à
+ * (largeur − 688) / 2 + 24 (la colonne de 688 px est centrée et porte la gouttière en padding). Il
+ * reste 24 px d'air entre le bouton et le texte tant que 121 + 24 ≤ (largeur − 688) / 2 + 24, soit
+ * largeur ≥ 688 + 2 × 121 = 930 px. 58rem (928 px) arrondit ce 930 de 2 px, au-dessous du seuil de
+ * 912 px que la spec écrivait en mélangeant une gouttière de 16 px et une de 24 px : à cette
+ * largeur elle est de 24 des deux côtés. Sous 58rem le bouton recouvre la colonne ou la frôle, et
+ * l'ombre entre ; au-dessus, il est dans la marge et n'en porte aucune. Si la largeur du Back,
+ * `--layout-max-width` ou la gouttière changent, ce seuil se refait avec eux. */
+@custom-variant over-prose (@media (width < 58rem));
+
+/* `lens-labels:`, `lens-twin:`, `lens-outline:` — LES TROIS BASCULES DE LA LENTILLE QUI SE LISENT EN CSS,
+ * posées le 2026-10-22 avec `ShowcaseLens` (`docs/specs/2026-10-22-lot-h-hygiene-ds-design.md` § 3).
+ * La lentille, derrière `?lens` sur `/design-system`, écrit les mots actifs dans `data-lens` sur
+ * `<html>` ; ces variantes les lisent, et rien d'autre. Elles ne s'appliquent donc jamais sur le site
+ * public, qui n'a pas d'attribut `data-lens`, et jamais sur la vitrine sans `?lens`. UN
+ * `@custom-variant` ET NON `[html[data-lens~=labels]_&]:` à la main, huit fois par cadre : le
+ * sélecteur s'écrit ici, une fois, et `components/showcase/showcase-frame.tsx` se lit comme une phrase.
+ * Aucune valeur de design : un sélecteur, rien d'autre. */
+@custom-variant lens-labels (html[data-lens~="labels"] &);
+@custom-variant lens-twin (html[data-lens~="twin"] &);
+@custom-variant lens-outline (html[data-lens~="outline"] &);
+
+/* ======================================================================================
+ * Reset et styles de base
+ *
+ * Le preflight de Tailwind fait déjà l'essentiel (box-sizing, marges à zéro, images en
+ * block, héritage de police sur les contrôles). Ne restent que les décisions du projet.
+ * ====================================================================================== */
+
+@layer base {
+  :root {
+    /* Le déclarer empêche l'agent utilisateur d'assombrir de sa propre initiative les
+     * contrôles natifs et les barres de défilement, ce qui produirait des gris hors rampe.
+     *
+     * IL EST RESTÉ SEUL JUSQU'AU 2026-08-11, où le commentaire d'origine annonçait ce moment :
+     * « le dark mode est reporté, pas exclu — il ajoutera une valeur ici et remappera la couche
+     * sémantique ». C'est fait, et c'est exactement ce que ça a coûté : une valeur ici, un bloc
+     * dans `semantic.css`.
+     *
+     * CE N'EST PAS UNE REDONDANCE avec le remap des tokens. `color-scheme` ne peint rien de ce
+     * que nous dessinons ; il dit au NAVIGATEUR quelle polarité adopter pour ce qu'il dessine
+     * lui-même — barres de défilement, surface de rebond, contrôles de formulaire, et la couleur
+     * de fond du canvas avant que la moindre règle ne s'applique. Sans lui, une page dark garde
+     * des barres de défilement claires et une surface de rebond blanche. */
+    color-scheme: light;
+
+    /* LA GOUTTIÈRE DE BARRE DE DÉFILEMENT EST RÉSERVÉE EN PERMANENCE — 2026-08-14, avec le verrou de
+     * défilement de `Popin` (`docs/specs/2026-08-14-popin-design.md` § 13, corrigé). `Popin` est
+     * retirée du système depuis le 2026-10-12 ; `ScratchCard` pose le même verrou depuis le
+     * 2026-10-06, et la gouttière reste pour lui.
+     *
+     * POURQUOI ELLE EST ICI ET PAS DANS LE COMPOSANT. Une couche modale pose un `overflow: hidden` sur
+     * cette racine à l'ouverture, parce qu'un `<dialog>` modal rend le document inerte mais NE
+     * L'EMPÊCHE PAS DE DÉFILER — mesuré sur `Popin`, la page derrière passait de 1063 à 1663 sous la
+     * molette. Sur un moteur dont
+     * la barre de défilement PREND DE LA LARGEUR, retirer le débordement retire la barre, donc rend
+     * ~15 px au document : la colonne du site étant centrée, elle sauterait de la moitié à chaque
+     * ouverture. `stable` réserve la gouttière tout le temps, y compris quand le débordement est caché,
+     * donc rien ne bouge. C'est une décision de DOCUMENT et pas de composant : une couche ne décide
+     * pas de la métrique de la page qu'elle recouvre, et elle n'a rien à écrire ici.
+     *
+     * CE QUE LA MESURE DIT, ET CE QU'ELLE NE DIT PAS. Relevé au navigateur, le saut est de 0 px : la
+     * position et la largeur d'un élément de la page sont identiques avant et après ouverture. Mais le
+     * navigateur du relevé peint des barres EN SURIMPRESSION — `clientWidth` et `innerWidth` y valent
+     * tous les deux 1440, avant comme après —, donc il n'y avait aucune gouttière à perdre et le
+     * contrôle ne POUVAIT pas échouer. La déclaration reste pour les moteurs où elle échouerait, et
+     * elle est gratuite là où elle ne sert pas : sans barre qui prend de la largeur, `stable` ne
+     * réserve rien. */
+    scrollbar-gutter: stable;
+
+    /* Le bouton Back des pages de lecture est fixé en haut à gauche : sa hauteur, sa gouttière et une
+     * marge sous lui sont réservés en haut de la fenêtre, pour qu'un lien focalisé n'y passe jamais
+     * dessous (WCAG 2.4.11). Tokens seuls : `--layout-gutter` et `--size-button-height` sont ceux du
+     * bouton, `--space-4` la marge. Sous `xl` seulement : au-dessus, le bouton vit dans la marge
+     * gauche de la page et ne recouvre plus la colonne. Le seuil réplique `--breakpoint-xl`
+     * (80rem / 1280 px), comme le régime de la gouttière réplique `--breakpoint-md` plus bas : si
+     * `--breakpoint-xl` change, changer ce seuil avec lui. Cette réserve s'ajoute à la
+     * `scroll-margin-top` d'une section visée par une ancre (`/work/stash#id`) ; le sommaire, lui,
+     * défile par script et n'en tient pas compte. */
+    @media (width < 80rem) {
+      scroll-padding-top: calc(var(--layout-gutter) + var(--size-button-height) + var(--space-4));
+    }
+
+    /* iOS Safari gonfle la taille du texte quand un bloc devient étroit en paysage
+     * (« text autosizing »), ce qui casse l'échelle sans qu'aucune classe le demande.
+     * `100 %` l'annule sans toucher au zoom manuel : la valeur `none` bloquerait le zoom
+     * sur certains moteurs et échouerait WCAG 2.2 SC 1.4.4. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* Ni Geist ni Pixelify Sans ne porte d'axe `opsz` : cette déclaration est aujourd'hui
+     * sans effet sur le rendu. Elle est conservée parce que ce qu'elle garantit n'est pas
+     * l'axe optique mais l'ABSENCE de `font-variation-settings` écrit à la main, dont la
+     * simple présence désactiverait tout axe optique d'une fonte future. Inter, qui portait
+     * un `opsz` de 14 à 32, est sortie du projet en tâche 3.1. */
+    font-optical-sizing: auto;
+
+    /* DELTA 3.7 — le curseur du site. Sur `:root` et non sur `body` : `cursor` s'hérite, et
+     * `:root` couvre en plus la zone que le `body` ne peint pas — la surface de rebond du
+     * défilement, les marges quand le document est plus court que la fenêtre.
+     *
+     * CONSÉQUENCE ACCEPTÉE : le curseur en I disparaît des paragraphes, où le navigateur le
+     * posait pour signaler que le texte est sélectionnable. Le texte le reste ; seul le signal
+     * s'en va. Décision de Florian du 2026-08-09, spec § 9 — qui donne aussi le correctif d'une
+     * ligne si elle est révisée. */
+    cursor: var(--cursor-default);
+  }
+
+  /* LA SÉLECTION EN GRIS — 2026-10-29. Spec du lot J, `2026-10-28-lot-j-petits-restes-design` § 2
+   * (PIX-11) : la veille, la sélection était « en négatif », fond `--color-surface-inverse` sous
+   * `--color-text-inverse`, le surlignage d'un Macintosh de 1984. Florian la rouvre le lendemain, à
+   * sa demande, sans autre raison que son œil : « le surlignage est en inverse actuellement,
+   * j'aimerais qu'on le change en gris clair du DS et donc garder le texte en sombre comme
+   * actuellement. Et faire la même chose sur le dark mode. »
+   *
+   * CE QUE ÇA DONNE : un gris du système sous le texte primaire. Gris clair sur blanc, texte noir ;
+   * gris sombre sur noir, texte clair — le fond est `--color-selection-surface` (`neutral-200` en
+   * clair, `neutral-900` en sombre), et le texte passe au primaire le temps de la sélection, y compris
+   * un texte secondaire ou tertiaire, pour rester net sur le gris. Le remap dark de `semantic.css` fait
+   * suivre la polarité aux deux tokens sans qu'on les redéclare ici.
+   *
+   * LES CONTRASTES : le texte primaire sur le fond de la sélection tient 15.11:1 en clair et 15.99:1 en
+   * sombre ; les deux paires sont dans `scripts/contrast-pairs.json` (loi 7). Le fond lui-même se
+   * détache de la page de 1.29:1 en clair et de 1.16:1 en sombre : le texte porte le sens, le gris ne
+   * fait que marquer l'étendue. Ce qui n'est pas couvert : un texte sélectionné dans une image ou un
+   * SVG garde le rendu du navigateur, et l'anneau de focus n'est pas concerné. */
+  ::selection {
+    background-color: var(--color-selection-surface);
+    color: var(--color-text-primary);
+  }
+
+  /* La seconde polarité — 2026-08-11. Spec : `docs/specs/2026-08-11-dark-mode-design.md`.
+   *
+   * UNE SEULE DÉCLARATION, et c'est tout ce que la couche de base a à dire du dark. Le reste vit
+   * dans `semantic.css`, sous le même sélecteur, parce que ce sont des TOKENS et que cette
+   * couche-ci n'en déclare pas.
+   *
+   * LE CURSEUR N'EST PAS REDÉCLARÉ ICI, et ce n'est pas un oubli : `--cursor-default` référence
+   * `--cursor-image-default`, que le bloc dark de `semantic.css` redéclare sous le même nom. Un
+   * `var()` est substitué avec la valeur calculée SUR LE MÊME ÉLÉMENT, et `:root` est
+   * précisément l'élément qui porte `data-theme` — les deux règles de curseur de cette couche
+   * suivent donc la polarité sans qu'on les touche. Même chose pour la main, plus bas. */
+  [data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  /* LA PAGE IMPRIMABLE — lot F du 2026-10-21, spec `2026-10-21-lot-f-clins-design` § 5 (CON-06,
+   * `rapports/03-concepts.md`). Papier blanc, encre noire, quel que soit le thème de l'écran.
+   *
+   * LE CLAIR, EN DEUX GESTES. Les tokens : le bloc `[data-theme="dark"]` de `semantic.css` est
+   * enveloppé dans `@media not print`, donc à l'impression `:root` seul parle. Le navigateur :
+   * `color-scheme: light` ici, sous `:root` ET sous `[data-theme="dark"]`, parce que la règle sombre
+   * juste au-dessus a la même spécificité et que ce bloc la suit — sans le second sélecteur, un
+   * navigateur qui applique `color-scheme` au papier le repeindrait en sombre.
+   *
+   * LES CADRES NE SE COUPENT PAS : un `figure` (visuel, `Exhibit`) et une `section` d'article
+   * (une section de case study) vont entières sur la page suivante plutôt que de se casser en deux.
+   * Un cadre plus haut que la page se coupe quand même, c'est le comportement du navigateur.
+   * `print-color-adjust: exact` sur `img` : sans lui, certains moteurs allègent les fonds et
+   * dégradent la trame d'une illustration — les visuels gardent leurs couleurs.
+   *
+   * CE QUI N'EST PAS ICI, ET C'EST VOULU. La chrome (Back, rail, pastille, rangée d'actions,
+   * footer, sélecteur de thème) disparaît par `print:hidden` sur les enveloppes de câblage de
+   * `app/`, jamais sur un composant (loi 11). Pas d'URL écrite après les liens, pas d'adresse en
+   * clair : ce serait du wording. L'avant / après d'`Exhibit` imprime son seul état ouvert : les
+   * panneaux masqués restent masqués, parce que les atteindre d'ici serait restyler le composant
+   * de l'extérieur. Aucun littéral de design : `avoid`, `exact` et `light` sont des mots-clés. */
+  @media print {
+    :root,
+    [data-theme="dark"] {
+      color-scheme: light;
+    }
+
+    figure,
+    article > section {
+      break-inside: avoid;
+    }
+
+    img {
+      print-color-adjust: exact;
+    }
+  }
+
+  /* LE FONDU DU CHANGEMENT DE THÈME — spec `2026-10-07-micro-animations-design` § 7.2.
+   * `ThemeSelector` enveloppe l'écriture de `data-theme` dans `document.startViewTransition` ; le
+   * navigateur fait alors fondre l'ancienne page en la nouvelle, et c'est ici qu'on règle ce
+   * fondu. Ces deux pseudo-éléments n'appartiennent à aucun composant : c'est le SYSTÈME, pas un
+   * composant, qui décide du passage de thème, comme le `color-scheme` juste au-dessus. Ils
+   * consomment les tokens de mouvement existants — le fondu est un « déplacement, morphing » au
+   * sens de `semantic.css` —, donc sous `prefers-reduced-motion` la durée tombe déjà à 1 ms ;
+   * `ThemeSelector` ne demande de toute façon pas la transition dans ce cas. Les pseudo-éléments
+   * héritent de `:root`, où vivent les tokens.
+   *
+   * LA COURBE EST `--ease-steps-4`, DEPUIS LE 2026-10-28 (lot J, FIL-06) : le fondu garde ses 200 ms
+   * mais joue en QUATRE PALIERS nets (`steps(4)`) au lieu d'une courbe continue, ce qui le lit pixel
+   * art sans rien déplacer. Il avait `--ease-in-out`, le « déplacement, morphing » de `semantic.css` ;
+   * ce n'en est plus un, c'est un fondu à paliers. À juger à l'œil sur la vitrine : le retour à la
+   * courbe continue est une ligne, et `--ease-steps-4` n'aurait alors plus de consommateur. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--duration-base);
+    animation-timing-function: var(--ease-steps-4);
+  }
+
+  /* LES TRANSITIONS ENTRE LA CARTE ET LA PAGE PROJET — spec `2026-10-12-transition-sommaire-partage-design`
+   * § 2, retouchée au § 7. Ouvrir un projet, ou en revenir, est une vraie navigation : la règle
+   * `@view-transition`, plus bas et HORS de cette couche, fait participer les deux documents, et le
+   * navigateur fait voyager l'image dont les deux pages portent le même `view-transition-name`
+   * (`cover-<slug>`).
+   *
+   * TOUT EST SOUS L'UN DES DEUX TYPES, que seul le script `pagereveal` de `app/layout.tsx` pose :
+   * `project-open`, de la home vers `/work/*`, et `project-close`, de `/work/*` vers la home. C'est
+   * ce qui isole ces règles du fondu de thème juste au-dessus : `ThemeSelector` règle `root` à
+   * `--duration-base` sans type, et n'hérite rien d'ici. Les règles sont DANS `@layer base`, à côté
+   * de lui et pour la même raison — c'est le système, pas un composant, qui décide d'un passage de
+   * page —, et le sélecteur de type les fait gagner sur lui sans `!important`.
+   *
+   * L'IMAGE VA EN LIGNE DROITE, dans les deux sens : c'est le trajet natif du navigateur, que rien
+   * ne réécrit. Le REBOND est ici : les groupes de classe `cover` — le `view-transition-class` que
+   * `ProjectCard` et `renderProjectContent` posent à côté du nom, parce que le nom, lui, change à
+   * chaque projet — prennent `--ease-spring-pop`, qui dépasse sa cible avant de se poser. `root` et
+   * `reading-body` n'ont pas la classe : ils gardent leur courbe. La classe est supportée par
+   * Chrome 125 et Safari 18.2, comme les types.
+   *
+   * `group(*)` règle la durée du trajet, `old(root)` et `new(root)` celle du fondu croisé des deux
+   * pages, Back et rail compris.
+   *
+   * À L'OUVERTURE, `reading-body` — l'en-tête et les sections de l'article, qui n'existent que
+   * dans le nouveau document — monte une fois l'image presque posée : le geste de `Reveal`, sans
+   * son flou, qu'une capture rendrait mal. Le retard et la course sont des MESURES DÉRIVÉES du
+   * token, 40 % et 60 %, pas des valeurs de design : leur somme est la durée.
+   *
+   * AU RETOUR, c'est l'inverse : `reading-body` n'existe que dans l'ANCIEN document — la home n'en
+   * a pas —, donc seul `old(reading-body)` joue, et il s'efface vite, en `--duration-fast`, sans
+   * montée : le texte n'a pas de place où aller, l'image revient dans sa carte et le texte s'efface
+   * derrière elle. La durée est celle du token qui sert déjà aux sorties courtes. */
+  :active-view-transition-type(project-open, project-close)::view-transition-group(*) {
+    animation-duration: var(--duration-page-transition);
+  }
+
+  :active-view-transition-type(project-open, project-close)::view-transition-group(*.cover) {
+    animation-timing-function: var(--ease-spring-pop);
+  }
+
+  :active-view-transition-type(project-open, project-close)::view-transition-old(root),
+  :active-view-transition-type(project-open, project-close)::view-transition-new(root) {
+    animation-duration: var(--duration-page-transition);
+    /* La courbe est REDITE ici : la règle du fondu de thème, plus haut, porte `--ease-steps-4` depuis
+     * le 2026-10-28, et ces deux pseudo-éléments en héritaient. Sans cette ligne, le fondu croisé de
+     * la navigation entre la carte et la page projet jouerait en quatre paliers sur 500 ms — le geste
+     * du thème, passé dans une navigation qui n'en a jamais voulu. */
+    animation-timing-function: var(--ease-in-out);
+  }
+
+  :active-view-transition-type(project-open)::view-transition-new(reading-body) {
+    animation: page-rise calc(var(--duration-page-transition) * 0.6) var(--ease-out)
+      calc(var(--duration-page-transition) * 0.4) both;
+  }
+
+  :active-view-transition-type(project-close)::view-transition-old(reading-body) {
+    animation-duration: var(--duration-fast);
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+
+    /* Loi 3 : la famille de corps et la métrique de base du document sont posées ICI, une
+     * seule fois, dans la couche de tokens — c'est ce qui rend inutile toute déclaration
+     * de police dans un composant. Un nœud de texte qui a besoin d'autre chose porte un
+     * token d'échelle, jamais un `font-size`. */
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  /* LE VOILE DU BAS DE FENÊTRE — 2026-10-29, décision de Florian, validée à l'œil sur le site en
+   * ligne après quatre essais. Une bande fixe de `--size-veil-height` collée au bas de la fenêtre :
+   * le contenu qui défile dessous se floute à peine et s'efface dans la couleur de la page. Un
+   * comportement du SYSTÈME et pas un composant, comme le fondu de thème ou la transition de page :
+   * ni entrée de manifeste, ni bloc de vitrine (`.claude/rules/comportements-systeme.md`).
+   *
+   * UN PSEUDO-ÉLÉMENT ET PAS UN NŒUD. `body::after` est le dernier enfant du `<body>`, rendu par le
+   * CSS seul : rien à écrire dans les coques, rien à hydrater, rien que l'assistance puisse lire. Un
+   * seul calque : le flou et le voile y montent ENSEMBLE, par le même masque. Le rendu est celui de la
+   * version à huit couches empilées qui a été validée d'abord, pour un huitième du calcul.
+   *
+   * OÙ IL EST POSÉ : sur la home et les pages de lecture, et nulle part ailleurs. C'est un OPT-IN des
+   * deux coques, l'attribut `data-veil` de leur `<main>` (`app/page.tsx`, `app/(reading)/layout.tsx`),
+   * lu ici par `:has()`. La vitrine ne le porte pas — Florian y valide les composants au survol, et
+   * un bas d'écran voilé l'y gênerait —, ni la 404. Un opt-in plutôt qu'une exclusion de la vitrine :
+   * une route de plus n'hérite pas du voile sans l'avoir demandé. Une navigation côté client qui
+   * quitte une coque emporte son `<main>`, et `:has()` retire le voile avec lui.
+   *
+   * L'EMPILEMENT : `--z-raised`, LE PALIER DU CONTENU, et c'est l'ordre du document qui le met
+   * dessus. À z-index égal, le navigateur peint dans l'ordre de l'arbre, et `::after` vient après
+   * tout ce que le `<body>` contient : le voile passe sur la photo de `PhotoStrip` levée au survol et
+   * sur le calque de capture de `CursorPill`, les deux seuls contenus à `--z-raised`, et sur tout le
+   * reste du flux. Il passe SOUS la chrome à `--z-sticky` — le bouton Back, le rail, la pastille du
+   * sommaire de `ReadingPill`, posée dans la bande —, sous les couches flottantes à `--z-overlay`
+   * (`Tooltip`, `CursorPill`, le logo de `TextLink`, `SkipLink`) et sous les dialogues, qui sont dans
+   * la couche supérieure du navigateur. Aucun palier n'est inséré : aucun contenu ne dépasse
+   * `--z-raised`, donc l'ordre est celui d'un z-index posé juste sous `--z-sticky`. Le jour où un
+   * contenu prend un palier entre les deux, c'est ici qu'un palier se discute. `pointer-events: none` :
+   * la bande ne prend aucun clic, ce qui est dessous reste cliquable à travers.
+   *
+   * LE VOILE EST LA PAGE : `--color-surface` à `--opacity-veil`. Pas de token de couleur à lui —
+   * il suit le thème parce que `--color-surface` le suit, le bloc sombre de `semantic.css` étant posé
+   * sur `<html>`, dont le pseudo-élément hérite. Blanc à 55 % en clair, noir à 55 % en sombre.
+   *
+   * LE MASQUE EST LA FORME DU MOTIF : une rampe en t², rien au bord haut, plein au bout de la rampe,
+   * en neuf arrêts tous les huitièmes de `--size-veil-height`, comptés en LONGUEURS depuis le haut de
+   * la bande, chacun à (k / 8)² — 0, 1,5625 %, 6,25 %, 14,0625 %, 25 %, 39,0625 %, 56,25 %,
+   * 76,5625 %, 100 % —, puis un dixième arrêt, plein, à 100 % de la bande. Ces nombres vivent ici et
+   * pas dans un token, comme la tuile et la cellule de `media-dither` : changer l'un sans les autres
+   * change de courbe, pas de réglage. Un masque ne lit que l'ALPHA de ses couleurs ; chaque arrêt
+   * est donc `--color-surface` mélangée à `transparent` dans la proportion voulue, opaque partout,
+   * pour qu'AUCUN LITTÉRAL DE COULEUR n'entre dans ce fichier (loi 1 : seul `primitives.css` en
+   * porte). La couleur de la page n'y joue aucun rôle, seule la proportion compte. Le même masque
+   * porte le flou et le voile : au bout de la rampe, `--blur-veil` et 55 % ; au quart haut de la
+   * rampe, presque rien de l'un et de l'autre.
+   *
+   * SOUS LA BARRE DE SAFARI — 2026-10-30. Sur iPhone, Safari 26 pose sa barre d'adresse en bas,
+   * flottante, et le bas du viewport de mise en page, celui de `bottom: 0`, s'arrête AU-DESSUS
+   * d'elle : la bande finissait là, et le texte qui défile sous la barre n'était pas voilé. La bande
+   * descend donc de l'écart entre le grand viewport et le viewport dynamique,
+   * `bottom: min(0px, 100dvh - 100lvh)`, et grandit d'autant vers le bas, en y ajoutant
+   * `max(0px, 100lvh - 100dvh)` : son bord haut ne bouge pas, son bord bas va jusqu'au bord physique
+   * de l'écran. C'est pour cela que le masque est écrit en LONGUEURS et non en pourcentages : en
+   * pourcentages la rampe s'étirerait avec la bande, et le voile commencerait plus haut ; en
+   * longueurs elle occupe toujours les `--size-veil-height` premiers pixels du haut de la bande,
+   * soit exactement ce qu'elle était, et seul le prolongement, dessous, est voilé à plein. Rien ne
+   * change ailleurs : sur ordinateur `100dvh` et `100lvh` sont égaux, l'écart est nul et la règle se
+   * réduit, au pixel près, à ce qu'elle était ; là où la barre est en haut (Chrome sur Android,
+   * Safari sur iPhone réglé « barre en haut »), l'écart tombe sous le bord bas de l'écran, hors de
+   * vue, et la partie visible reste la rampe. NON VÉRIFIÉ SUR APPAREIL au moment du commit :
+   * Florian le contrôle sur son iPhone une fois le site en ligne.
+   *
+   * LE CLAVIER : `scroll-padding-bottom` réserve la hauteur de la bande en bas de la fenêtre, là où
+   * le voile est posé et nulle part ailleurs, pour qu'un élément focalisé près du bas remonte
+   * au-dessus d'elle au lieu d'y rester dessous (WCAG 2.4.11). C'est un longhand : la réserve
+   * `scroll-padding-top` du bouton Back, posée plus haut sur la même racine, n'est pas touchée.
+   *
+   * LA FIN DE PAGE N'EST PAS RETOUCHÉE. Les footers des deux coques finissent sur `pb-12`, 48 px : au
+   * bout du défilement, la ligne du footer est au-dessus des 48 px du bas, et les 16 px de bande qui
+   * l'atteignent ne portent qu'un voile de moins de 4 %. Elle reste nette.
+   *
+   * RETIRÉ dans trois cas, par le bloc `@media` qui suit la règle : à l'impression (le papier n'a pas de bas de
+   * fenêtre), sous `prefers-reduced-transparency: reduce` (une transparence demandée en moins, un
+   * voile translucide en moins) et sous `forced-colors: active` (le navigateur y repeint les fonds,
+   * et une bande de couleur système masquée n'aurait plus de sens). Il n'est PAS retiré sous
+   * `prefers-reduced-motion` : rien n'y bouge, le contenu défile sous un calque immobile. Le retrait
+   * se fait par une requête POSITIVE dans une liste : un moteur qui ne connaît pas
+   * `prefers-reduced-transparency` — Firefox et Safari aujourd'hui — l'évalue fausse et garde le
+   * voile, quand une requête `not (…)` l'aurait retiré à tout le monde.
+   *
+   * SOUS `@supports`, ET C'EST POUR ÉVITER UN REPLI FAUX. Lightning CSS, qui compile ce fichier,
+   * double chaque `color-mix()` d'un repli pour les moteurs qui ne le connaissent pas, en ne gardant
+   * que la couleur : ici `--color-surface` PLEINE, au fond comme à chaque arrêt du masque, soit une
+   * bande opaque de la couleur de la page posée sur les 56 derniers pixels du contenu. Un repli faux
+   * est pire qu'un repli absent (`primitives.css` le dit des ombres) : la règle entière, réserve du
+   * clavier comprise, ne vaut que là où `color-mix()` existe, et un moteur qui ne le connaît pas n'a
+   * pas de voile du tout. La condition s'écrit avec le seul mot-clé `transparent`, pour qu'aucune
+   * couleur littérale n'entre ici. Les préfixes `-webkit-` de `backdrop-filter` et de `mask-image`,
+   * que Safari et les Chrome d'avant la 120 demandent, sont posés par la même compilation : ne les
+   * écris pas à la main. */
+  @supports (color: color-mix(in oklch, transparent, transparent)) {
+    :root:has(main[data-veil]) {
+      scroll-padding-bottom: var(--size-veil-height);
+    }
+
+    body:has(main[data-veil])::after {
+      content: "";
+      position: fixed;
+      right: 0;
+      bottom: min(0px, 100dvh - 100lvh);
+      left: 0;
+      z-index: var(--z-raised);
+      height: calc(var(--size-veil-height) + max(0px, 100lvh - 100dvh));
+      pointer-events: none;
+      background-color: color-mix(in oklch, var(--color-surface) var(--opacity-veil), transparent);
+      backdrop-filter: blur(var(--blur-veil));
+      mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        color-mix(in oklch, var(--color-surface) 1.5625%, transparent)
+          calc(var(--size-veil-height) * 0.125),
+        color-mix(in oklch, var(--color-surface) 6.25%, transparent)
+          calc(var(--size-veil-height) * 0.25),
+        color-mix(in oklch, var(--color-surface) 14.0625%, transparent)
+          calc(var(--size-veil-height) * 0.375),
+        color-mix(in oklch, var(--color-surface) 25%, transparent)
+          calc(var(--size-veil-height) * 0.5),
+        color-mix(in oklch, var(--color-surface) 39.0625%, transparent)
+          calc(var(--size-veil-height) * 0.625),
+        color-mix(in oklch, var(--color-surface) 56.25%, transparent)
+          calc(var(--size-veil-height) * 0.75),
+        color-mix(in oklch, var(--color-surface) 76.5625%, transparent)
+          calc(var(--size-veil-height) * 0.875),
+        var(--color-surface) var(--size-veil-height),
+        var(--color-surface) 100%
+      );
+    }
+  }
+
+  @media print, (prefers-reduced-transparency: reduce), (forced-colors: active) {
+    :root:has(main[data-veil]) {
+      scroll-padding-bottom: auto;
+    }
+
+    body:has(main[data-veil])::after {
+      content: none;
+    }
+  }
+
+  /* Les titres sont courts et cassent donc sur peu de lignes : `balance` répartit ces
+   * lignes au lieu de laisser un mot seul sur la dernière. Le préréglage vit sur
+   * l'élément et non dans un composant, parce qu'il décrit un comportement de flux et pas
+   * une métrique (loi 3, exception « utilitaires de mise en ligne ») — un composant reste
+   * libre de le remplacer par `text-pretty`.
+   *
+   * Le préréglage pesait davantage quand les titres étaient en Geist Mono : à 56 px dans une
+   * colonne de 688 px, une mono ne tient que 21 caractères par ligne, donc un titre passait
+   * à deux lignes bien plus tôt. Avec Manrope, proportionnelle, un titre casse plus tard et
+   * `balance` sert moins souvent. La règle reste : elle ne coûte rien et continue d'empêcher
+   * un mot orphelin. */
+  :is(h1, h2, h3, h4, h5, h6) {
+    text-wrap: balance;
+  }
+
+  /* `pretty` n'agit que sur les dernières lignes d'un paragraphe : il supprime le mot
+   * orphelin sans redistribuer tout le bloc, ce que `balance` ferait à tort ici. */
+  :is(p, li) {
+    text-wrap: pretty;
+  }
+
+  /* Loi 4 — plancher de focus, jamais un substitut. Chaque composant interactif style et
+   * démontre son propre `:focus-visible` ; cette règle garantit qu'un élément focusable
+   * qui n'a pas encore été traité reste atteignable au clavier au lieu d'hériter de
+   * l'anneau du navigateur. Sur une surface inversée, un composant remappe vers
+   * `--color-focus-ring-inverse` : l'anneau noir y ferait 1.00:1. */
+  :focus-visible {
+    outline: var(--border-thick) solid var(--color-focus-ring);
+
+    /* `--focus-ring-offset` et non `--space-1` depuis le 2026-08-09 : `ThemeSelector` a dû
+     * réécrire ce décalage sur son `<label>`, l'élément focusé chez lui étant une radio
+     * `sr-only` que ce plancher ne peut pas peindre. Un composant ne lisant pas un primitif
+     * (loi 1), la valeur est devenue une intention nommée — une source, deux lecteurs. */
+    outline-offset: var(--focus-ring-offset);
+
+    /* L'anneau s'accroche (lot E, 2026-10-21, spec `2026-10-21-lot-e-clavier-design` § 3, A11Y-05) :
+     * à l'arrivée du focus clavier il part de `--focus-ring-offset-from` et se pose à
+     * `--focus-ring-offset`, en `--duration-fast` sur `--ease-spring-pop`. Seul le décalage bouge,
+     * jamais la couleur ni l'épaisseur. Au pointeur : rien, ce plancher est `:focus-visible` seul.
+     *
+     * UNE ANIMATION ET NON UNE TRANSITION, et c'est ce qui rend le plancher tenable. Une transition
+     * veut un état de repos qui porte le décalage de départ, donc un `outline` transparent posé sur
+     * tout ce qui peut prendre le focus, et un `transition-property` qui ne serait jamais celui du
+     * composant : `transition-colors` de Tailwind le remplace, et il liste `outline-color`, de sorte
+     * que l'anneau ne claquerait pas, il fondrait depuis le transparent — c'est-à-dire qu'il
+     * s'atténuerait, ce que le lot interdit. L'animation n'existe que tant que `:focus-visible`
+     * vaut : la sortie est instantanée sans rien écrire, et aucun repos n'est peint. Les composants
+     * qui posent leur propre `transition` n'y changent rien.
+     *
+     * Sous `prefers-reduced-motion`, `--focus-ring-offset-from` est ramené à `--focus-ring-offset` :
+     * le départ vaut l'arrivée, l'anneau est là d'emblée (bloc ci-dessous). */
+    animation: focus-ring-arrive var(--duration-fast) var(--ease-spring-pop);
+  }
+
+  /* Les deux @keyframes vivent DANS la couche de base, à côté de la règle qui les joue, et non avec
+   * les autres en bas de fichier : c'est la couche de base qui consomme `--focus-ring-offset-from`,
+   * et la loi 10 ne compte comme racine que ce que `@layer base` lit. `animation-name` les trouve
+   * depuis n'importe quelle couche — c'est ce que font `ThemeSelector` et `ScratchCard`. */
+
+  /* L'arrivée de l'anneau de focus (lot E, 2026-10-21) : il part de `--focus-ring-offset-from` et
+   * revient à son décalage de repos, qui est l'arrivée non écrite — celle du plancher `:focus-visible`
+   * (`@layer base`, plus haut), ou celle que le composant déclare : `ThemeSelector` lit ce
+   * @keyframes tel quel sur son `<label>`. Une seule propriété, `outline-offset` : la couleur et la
+   * largeur ne sont jamais animées. */
+  @keyframes focus-ring-arrive {
+    from {
+      outline-offset: var(--focus-ring-offset-from);
+    }
+  }
+
+  /* Sa jumelle pour l'anneau INTÉRIEUR, à décalage négatif : la couverture de `ScratchCard`, que
+   * `overflow-hidden` empêche de déborder. Le départ est le miroir du départ ordinaire, −8 px au lieu
+   * de 8 px, et l'arrivée celle du composant, −4 px : l'anneau converge sur le bord par l'intérieur,
+   * comme l'autre converge par l'extérieur. */
+  @keyframes focus-ring-arrive-inset {
+    from {
+      outline-offset: calc(-1 * var(--focus-ring-offset-from));
+    }
+  }
+
+  /* DELTA 3.7 — la main sur ce qui est cliquable.
+   *
+   * Quatre sélecteurs, qui sont EXACTEMENT les quatre formes cliquables du système :
+   * `a[href]` (`ProjectCard`, `Portrait`), `button` (`Tab`), `label:has(input)`
+   * (`ThemeSelector`, bâti sur des `<label>` qui enveloppent une radio `sr-only`, sans `for`),
+   * et `[role="button"]` — l'échappatoire non native, qui n'attrape rien aujourd'hui.
+   *
+   * UN NOUVEAU PRIMITIF INTERACTIF S'AJOUTE ICI. C'est le prix, assumé, d'une liste explicite
+   * plutôt que d'un `:any-link, :enabled` qui attraperait aussi les champs de saisie.
+   *
+   * `summary` a été proposé et retiré : aucun `<details>` dans le repo, et son curseur par
+   * défaut est déjà la flèche — l'ajouter ne fermerait aucun piège. Le garde-fou juste en
+   * dessous, lui, en ferme un vrai.
+   *
+   * LA SPÉCIFICITÉ N'EST PAS CELLE QU'ON CROIT. `:is()` prend la plus forte de sa liste, soit
+   * `(0,1,1)` à cause de `a[href]`, et l'applique à TOUS ses arguments — `button` compris, qui
+   * seul ne vaudrait que `(0,0,1)`. Les deux `:not()` ajoutent `(0,1,0)` chacun : le sélecteur
+   * complet vaut `(0,3,1)`. C'est ce qui le fait gagner sur le `.cursor-pointer` de Tailwind et
+   * sur un `button { cursor: … }` de preflight, quelle que soit la version. Une exception
+   * future devra peser au moins autant.
+   *
+   * Un contrôle désactivé retombe sur `--cursor-default` par héritage — pas sur `not-allowed`,
+   * qui n'existe pas dans le système et n'a pas à y entrer sans cadrage. */
+  :is(a[href], button, label:has(input), [role="button"]):not([aria-disabled="true"]):not(
+      :disabled
+    ) {
+    cursor: var(--cursor-pointer);
+  }
+
+  /* DELTA 3.7 — le garde-fou des champs de saisie.
+   *
+   * IL N'EN EXISTE AUCUN dans le portfolio aujourd'hui. Cette règle n'anticipe pas une
+   * fonctionnalité, elle referme un piège pendant qu'il est visible : `cursor` s'hérite, donc le
+   * jour où un champ apparaît il prendrait la flèche EN SILENCE, et le curseur en I qui signale
+   * « ce texte s'édite » disparaîtrait sans que personne ait rien écrit.
+   *
+   * `auto` et non `text` : `auto` rend la décision au navigateur, qui pose l'I sur un champ
+   * texte et la flèche native sur un `input[type="button"]`. Un `text` en dur poserait l'I sur
+   * un bouton.
+   *
+   * VERRUE CONNUE : `input[type="submit"]` récupérerait la flèche native au lieu de la main. Le
+   * correctif, le jour où un formulaire arrive, est de l'ajouter à la liste ci-dessus — pas de
+   * toucher à cette règle-ci. */
+  :is(input, textarea, select, [contenteditable]) {
+    cursor: auto;
+  }
+
+  /* LE HALO DU SYSTÈME EST RETIRÉ DES BOUTONS, ET DES BOUTONS SEULS — lot J du 2026-10-28, spec
+   * `2026-10-28-lot-j-petits-restes-design` § 3.4, entrée A11Y-07. Sur téléphone, le premier retour d'un
+   * bouton était le rectangle gris que le navigateur peint au toucher, pas un geste du site. Ce qui le
+   * remplace est le pressé que les composants dessinent déjà : `--scale-press` sur la pastille de
+   * `Button`, l'onglet de `Tab` et l'option de `ThemeSelector`, un fond ou une graisse ailleurs.
+   *
+   * IL RESTE SUR LES LIENS, `a[href]` n'étant pas dans le sélecteur — décision de Florian : leur pressé
+   * au toucher n'existe pas (angle mort n° 22 de `.claude/rules/loi-04-etats.md`), et sans halo il
+   * n'aurait plus aucun retour. Un `<label>` non plus. Une propriété de DOCUMENT, comme le curseur
+   * ci-dessus : aucun composant n'a à l'écrire, et aucun token ne la porte. */
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* LE PANNEAU DU HASH, OUVERT AVANT L'HYDRATATION — lot K du 2026-10-28, spec
+   * `2026-10-28-lot-k-arrivee-design` § 5 (FIL-02, PERF-05). `Tab`, en non contrôlé, ne lit le hash
+   * que dans un effet : sans ces deux règles, `/#about` montrerait `Work` jusqu'à l'hydratation, deux
+   * secondes sur un téléphone en 3G. Chaque panneau porte en premier enfant une ancre vide et masquée
+   * à l'`id` de son slug (`[data-tab-anchor]`) : c'est elle que l'adresse vise, donc `:target`.
+   *
+   * POURQUOI ICI ET PAS DANS LE COMPOSANT. Le panneau visé est rendu `hidden` par le serveur, et le
+   * preflight de Tailwind fait de `[hidden]` un `display: none !important` dans `@layer base`. Une
+   * déclaration `!important` d'une couche ANTÉRIEURE l'emporte sur celle d'une couche postérieure :
+   * aucune classe de `Tab`, couche `utilities`, ne peut le battre, même en `!important`. Seule une
+   * règle de cette couche, plus spécifique, le peut. La seconde règle, qui masque le panneau que le
+   * serveur a ouvert, n'avait pas cette contrainte ; elle est écrite à côté parce que c'est le même
+   * geste, en deux moitiés.
+   *
+   * ELLES SE RETIRENT À L'HYDRATATION : `Tab` pose `data-tab-hash-synced` sur sa racine dès que son
+   * état a rejoint le hash, et `:target`, que `replaceState` ne déplace pas, ne commande plus rien.
+   * Un `display` et rien d'autre : la sélection de l'onglet est peinte par `Tab` lui-même. */
+  [data-tab-hash]:not([data-tab-hash-synced]) > [role="tabpanel"]:has(> [data-tab-anchor]:target) {
+    display: block !important;
+  }
+
+  [data-tab-hash]:not([data-tab-hash-synced]):has(> [role="tabpanel"] > [data-tab-anchor]:target)
+    > [role="tabpanel"]:not(:has(> [data-tab-anchor]:target)) {
+    display: none !important;
+  }
+}
+
+/* LA VIEW TRANSITION ENTRE DOCUMENTS — 2026-10-12, spec
+ * `2026-10-12-transition-sommaire-partage-design` § 2.1. Elle fait participer TOUTE navigation
+ * du site à une transition, et c'est le script `pagereveal` de `app/layout.tsx` qui saute toutes
+ * celles qui ne vont pas de la home à une page projet, ou d'une page projet à la home : l'arrivée
+ * directe, le rechargement, `/design-system`. Ce qui joue est réglé dans `@layer base`, sous les
+ * types `project-open` et `project-close`.
+ *
+ * HORS DE TOUTE COUCHE, et ce n'est pas un oubli : c'est une règle de document, pas un style, et
+ * la sortir de la cascade des couches lui évite de dépendre de l'ordre où Tailwind les déclare.
+ * Sous `prefers-reduced-motion`, aucune navigation n'est animée — pas même la capture.
+ *
+ * FIREFOX CHANGE DE PAGE SANS ANIMATION, sans erreur : il ignore la règle. C'est une amélioration
+ * progressive, pas une dépendance. */
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* La montée du texte de l'article, consommée sous `project-open` dans `@layer base` (au retour, rien ne monte). Le départ
+ * est `--lift-reveal`, le décalage de `Reveal` : c'est son geste, sans le flou. L'arrivée n'est
+ * pas écrite, c'est l'état de repos de la capture. */
+@keyframes page-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--lift-reveal));
+  }
+}
+
+/* L'entrée au chargement de `Reveal` (`timing="load"`, lot K du 2026-10-28) : le départ de son état
+ * d'attente au défilement — opacité 0, `--lift-reveal` plus bas, `--blur-reveal` de flou —, écrit
+ * avec les mêmes propriétés individuelles. L'arrivée n'est pas écrite, et c'est la condition de la
+ * loi 6 : jouée en `backwards`, l'animation finie ne laisse que l'état de repos, `translate: none`
+ * et `filter: none`, donc aucun bloc conteneur pour les pills `fixed`. Durée, courbe et retard sont
+ * posés par le composant. */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--lift-reveal);
+    filter: blur(var(--blur-reveal));
+  }
+}
+
+/* Le tour du glyphe `loader` de `SubscribeForm` pendant l'envoi (lot 3 du site de Neume, spec
+ * `2026-11-11-lot-3-retours-formulaires-design` § 2.2). Seul le départ est écrit ici, avec les deux
+ * `@keyframes` du plancher : `rotate` est la propriété individuelle, elle ne touche pas au `scale` du
+ * pressé de `Button`. `Button` rend son glyphe tel quel et n'accepte aucune classe, donc c'est le formulaire
+ * qui pose l'animation sur le seul `<svg>` de son bouton, quand `data-subscribe-state` vaut `sending` —
+ * huit paliers, un tour par `--duration-spin`. Sous `prefers-reduced-motion`, le filet ci-dessous ramène la
+ * durée à 1 ms et le nombre de tours à un : le glyphe est immobile. */
+@keyframes loader-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* Le coup de tampon du permis (`DesignLicence`), joué quand sa couverture est tombée : le tampon part
+ * levé et revient à l'identité, qui est l'arrivée non écrite. `scale` est la propriété individuelle :
+ * elle ne touche ni au `rotate` de leur penchement, ni à un `transform`. L'amplitude de départ,
+ * `--stamp-from`, est posée par le composant sur chaque tampon — c'est lui qui consomme
+ * `--scale-stamp-thump` ; la durée, la courbe et le retard sont les siens aussi. */
+@keyframes stamp-thump {
+  from {
+    scale: var(--stamp-from, 1);
+  }
+}
+
+/* La distribution des photos de `PhotoStrip` (lot D, 2026-10-20) : chaque photo part empilée à la
+ * place de la première — n × (chevauchement − largeur), `--photo-index` posé par le composant — et
+ * droite. L'arrivée n'est pas écrite : c'est l'état de repos, `translate: none` et l'angle de la
+ * photo. `translate` et `rotate` sont les propriétés individuelles, celles du cadre au repos et au
+ * survol. Durée, courbe et retard sont posés par le composant. */
+@keyframes photo-deal {
+  from {
+    translate: calc(var(--photo-index, 0) * (var(--space-5) - var(--size-photo-width))) 0;
+    rotate: 0deg;
+  }
+}
+
+/* Le clignement de `LookingGlasses` (lot F, 2026-10-21) : les pupilles disparaissent, le trait d'une
+ * cellule qui les remplace apparaît. Deux @keyframes, un par nœud, et seulement leur départ : l'arrivée
+ * est l'état de repos — pupilles visibles, trait masqué. Le composant les joue en `steps(1)`, et
+ * c'est ce qui fait le clignement : `visibility` s'interpole en restant `visible` tant qu'une des
+ * deux bornes l'est, donc une courbe continue montrerait les pupilles tout du long ; `steps(1)`
+ * tient le départ pendant toute la durée, puis rend l'état de repos d'un coup. Durée posée par le
+ * composant. */
+@keyframes glasses-blink-pupil {
+  from {
+    visibility: hidden;
+  }
+}
+
+@keyframes glasses-blink-lid {
+  from {
+    visibility: visible;
+  }
+}
+
+/* Loi 7 — `prefers-reduced-motion` respecté dès maintenant, pas « plus tard ».
+ *
+ * Deux niveaux. D'abord les tokens de durée sont neutralisés, donc tout mouvement bâti
+ * sur le système s'aplatit sans que le composant ait à connaître la requête média.
+ * Ensuite un filet `!important` non layeré attrape ce qui aurait échappé aux tokens (une
+ * `transition` Tailwind sans token de durée, une animation tierce). Les quatre durées propres au
+ * ticket de `ScratchCard` — `--duration-spring-*` et `--duration-scratch-sheen` — ne sont tenues que
+ * par le filet, et c'est voulu : leurs amplitudes sont derrière `motion-safe:`, il n'y a rien à
+ * aplatir au premier niveau (`DESIGN.md`, section « Mouvement », dit qui tient chaque token).
+ *
+ * Le filet ramène aussi les RETARDS à 0, `transition-delay` et `animation-delay` : sans effet
+ * aujourd'hui — le seul retard de transition, la cascade de `Reveal`, dérive de tokens déjà ramenés
+ * à 0 ci-dessous —, mais un retard littéral futur ne survivrait plus à la requête. Spec
+ * `2026-10-20-lot-b-signature-design` § 3.4.
+ *
+ * `1ms` plutôt que `0s` : une durée nulle empêche l'événement `transitionend` de se
+ * déclencher. Ce n'est pas une durée de design, c'est un coupe-circuit — d'où le littéral.
+ *
+ * Neutraliser les durées ne suffit PAS à neutraliser un mouvement : une transition à 1 ms
+ * rend le déplacement instantané, pas absent — l'image de `ProjectCard` sauterait quand même
+ * à 1.03 sous le clic, seul mouvement qu'elle porte depuis sa révision du 2026-08-26 (fixé au
+ * même jour, sur demande de Florian : le zoom du clic descend de 1.06 à 1.03, et c'est ce qui a
+ * fait renommer la rampe par amplitude plutôt que par état, voir `semantic.css`, delta 2.1).
+ * `NoteRow` a consommé ce même cran du 2026-08-30 au 2026-10-04, au même état — au CLIC seulement,
+ * son survol ne bougeait plus — donc les deux objets sautaient au même 1.03, ramené à 1 ici
+ * (delta 2.1), ce qui supprimait le zoom lui-même. LA LIGNE N'EN CONSOMME PLUS DEPUIS LE
+ * 2026-10-04 : sa vignette est partie, et `ProjectCard` est le seul objet que cette règle
+ * neutralise encore. Le FOND que la carte pose au survol et au clic, lui, n'est pas touché ici :
+ * c'est précisément ce qui fait que ses deux états deviennent IDENTIQUES sans mouvement pour les
+ * distinguer — l'angle mort n° 19 de `.claude/rules/loi-04-etats.md`, qui valait pour `ProjectCard` comme pour `NoteRow` (spec
+ * `2026-08-30-ligne-note-interactions-design.md` § 8) et ne vaut plus que pour la carte ;
+ * `NoteRow` est passée au n° 22 (`.claude/rules/loi-04-etats.md`), ses deux états portant le même fond partout.
+ * Les bordures d'état de `Portrait`, elles, ne sont pas touchées : c'est ce qui fait que son
+ * état à lui reste perceptible sans mouvement (loi 7, et décision de Florian de porter son
+ * survol par DEUX signaux plutôt qu'un).
+ *
+ * Le portrait de la tâche 3.5 (delta 3.5) ajoute une ROTATION au survol, en plus d'un zoom :
+ * neutralisée par le même mécanisme et pour la même raison — à 1 ms, la bascule de −3° serait
+ * instantanée mais bien présente, pas absente. Les deux crans `active` de `Portrait` ne sont
+ * PAS listés ici : ils valent déjà l'identité (1 et 0deg), au repos comme sous cette requête
+ * média, donc ils n'ont rien à neutraliser.
+ *
+ * L'entrée de la popin (delta popin, 2026-08-14) ajoutait un AGRANDISSEMENT depuis le centre de la
+ * fenêtre, ramené à l'identité ici pour la troisième fois la même raison — à 1 ms, le passage de
+ * 0.9 à 1 aurait été instantané mais bien PRÉSENT, pas absent, et une couche qui saute d'un facteur
+ * sous le regard est exactement le mouvement que cette requête média demande de retirer. Sa ligne,
+ * `--scale-popin-enter: 1`, est partie avec `Popin` le 2026-10-12.
+ *
+ * `PhotoStrip` (delta photos perso, 2026-08-31) N'AJOUTE QU'UNE LIGNE, ET C'EST UN ÉCART
+ * DÉLIBÉRÉ AU PRÉCÉDENT `Portrait` JUSTE AU-DESSUS : seul `--zoom-photo-hover` retombe à 1 ici.
+ * `--rotate-photo-1` À `-5` NE SONT PAS NEUTRALISÉS, ni l'inclinaison au repos ni le redressement
+ * au survol — le redressement DÉSOCCUPE une photo que sa voisine cache, il ne décore pas comme
+ * la bascule de `Portrait`, et la transition retombe de toute façon à 1 ms trois lignes plus bas,
+ * donc le changement reste instantané malgré tout, ce que cette requête média demande sans
+ * exiger l'absence de changement. Détail complet dans la docstring de `PhotoStrip` et au § 4.1
+ * de `docs/specs/2026-08-31-panneau-about-photos-perso-design.md`.
+ *
+ * Les micro-animations (delta 2026-10-07) ajoutent deux amplitudes d'entrée, ramenées à
+ * l'identité pour la raison qu'avait l'entrée de la popin : à 1 ms, une bulle qui passe de 0.96 à 1
+ * sauterait quand même. `--scale-overlay-enter` est l'échelle de départ d'une couche flottante,
+ * `--lift-tooltip-enter` la montée de départ de la bulle. Ce qui reste est le comportement d'avant
+ * le delta : la couche est là ou elle n'est pas. La troisième amplitude de la spec,
+ * `--scale-glyph-enter`, l'échelle de départ du glyphe `check` de `Button`, les rejoint depuis le
+ * 2026-10-20 : même raison, un glyphe qui naît à 0.5 sauterait quand même à 1 en 1 ms.
+ *
+ * Le coup de tampon du permis (lot B, 2026-10-20) ajoute `--scale-stamp-thump`, pour la même raison :
+ * à 1 ms, un tampon qui passe de 1.1 à 1 sauterait quand même. Ramenée à 1, l'animation joue de 1 à 1,
+ * et le filet ci-dessous lui retire durée et retard.
+ *
+ * L'anneau de focus (lot E, 2026-10-21) ajoute `--focus-ring-offset-from`, ramené à
+ * `var(--focus-ring-offset)` et non à une identité numérique : le décalage de départ est une
+ * distance, son identité est le décalage de repos. À 1 ms, un anneau qui part de 8 px pour se poser à
+ * 4 px claquerait quand même sous le regard ; ramené, il est là d'emblée. Les deux @keyframes
+ * (`focus-ring-arrive`, `-inset`) le lisent, donc `ThemeSelector` et `ScratchCard` suivent sans
+ * rien écrire de plus.
+ *
+ * Le pressé tactile (lot J, 2026-10-28) ajoute `--scale-press`, ramené à 1 : un bouton qui s'enfonce de
+ * 3 % ne bouge pas sous ce réglage, et son fond de pressé reste.
+ *
+ * La bulle qui décrit (2026-10-30) ajoute `--shift-tooltip-enter`, le départ de la bulle posée à
+ * droite, ramené à 0 pour la raison de `--lift-tooltip-enter`. SON ATTENTE, `--duration-tooltip-delay`,
+ * N'EST PAS ICI, ET C'EST VOULU : une attente n'est pas un mouvement, et ramenée à 1 ms elle
+ * ouvrirait la bulle au premier frôlement. Le script de `Tooltip` la lit pour armer une minuterie,
+ * que le filet ci-dessous, qui ne connaît que les retards CSS, ne touche pas. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-base: 1ms;
+    --duration-slow: 1ms;
+
+    --zoom-media-sm: 1;
+
+    --zoom-portrait-hover: 1;
+    --rotate-portrait-hover: 0deg;
+
+    --zoom-photo-hover: 1;
+
+    --scale-overlay-enter: 1;
+    --scale-glyph-enter: 1;
+    --scale-press: 1;
+    --lift-tooltip-enter: 0px;
+    --shift-tooltip-enter: 0px;
+
+    --duration-page-transition: 1ms;
+
+    --duration-reveal: 1ms;
+    --duration-reveal-stagger: 0ms;
+    --duration-reveal-stagger-max: 0ms;
+    --lift-reveal: 0px;
+    --blur-reveal: 0px;
+    --duration-photo-deal-stagger: 0ms;
+
+    --scale-stamp-thump: 1;
+
+    --focus-ring-offset-from: var(--focus-ring-offset);
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,347 @@
+/*
+ * primitives.css — les échelles brutes.
+ *
+ * Un primitif est une position sur une échelle, pas une intention. Il n'a de sens que
+ * pointé par un token sémantique ou re-labellisé sous un namespace Tailwind.
+ *
+ * Loi 1 — INTERDIT dans `components/` et `app/` :
+ *   var(--neutral-700), var(--red-600), var(--space-4), var(--radius-md).
+ * Seul `semantic.css` lit ce fichier, et seul ce fichier contient des littéraux de couleur.
+ * Un composant qui a besoin d'une couleur passe par une intention de `semantic.css` ;
+ * un composant qui a besoin d'un espacement ou d'un rayon passe par l'utilitaire Tailwind
+ * (`p-4`, `gap-6`, `rounded-md`) que `globals.css` génère à partir de ces échelles.
+ *
+ * Loi 10 — la rampe ne grandit qu'en dernier recours, quand aucun cran existant ne peut
+ * porter un token sémantique demandé. Tout ajout est signalé dans le delta du composant.
+ */
+
+:root {
+  /* ------------------------------------------------------------------------------------
+   * Rampe neutre — OKLCH, teinte froide (hue 250, chroma quasi nul).
+   *
+   * Quatorze crans depuis le 2026-08-11 — douze jusque-là. `--neutral-0` est du blanc pur ;
+   * `--neutral-1000` est volontairement un noir non pur (spec § 2), et il est devenu la
+   * SURFACE DE PAGE du dark le même jour : ce noir non pur était une décision esthétique en
+   * attente d'une surface à peindre. Le chroma monte de 0 à 0.006 puis retombe à 0.005 aux
+   * extrêmes, pour que le blanc et le presque-noir restent neutres : à ce niveau la
+   * teinte est sous le seuil de perception, elle empêche seulement le gris de « rendre
+   * plat » (spec § 11).
+   *
+   * Progression : les écarts de clarté entre crans consécutifs, ramenés à 100 unités
+   * d'index, forment un profil unimodal (0.030 → 0.110 au milieu → 0.075), sans marche
+   * brutale : le plus grand saut entre deux écarts consécutifs est de 1.40×. La rampe du
+   * spec présentait un saut de 3.00× entre 300 et 400 et un rebond entre 900 et 1000 ;
+   * elle a été recalculée en tâche 1.2.
+   *
+   * Colonnes annotées : sRGB 8 bits rendu · luminance relative WCAG (Y) · contraste
+   * WCAG 2.x contre `--neutral-0`. Valeurs CALCULÉES (OKLCH → sRGB Ottosson → luminance
+   * relative WCAG 2.x), pas estimées. Les quatorze crans sont dans le gamut sRGB : aucune
+   * composante linéaire négative ni supérieure à 1. Les hex annotés ne sont pas de la
+   * décoration : `scripts/laws/contrast.mjs` les relit un par un et les confronte à sa propre
+   * conversion — c'est le test du convertisseur, et il compte désormais quatorze lignes.
+   * ------------------------------------------------------------------------------------ */
+
+  --neutral-0: oklch(1 0 0); /* #ffffff · Y 1.000000 ·  1.00:1 — blanc pur */
+  --neutral-50: oklch(0.985 0.002 250); /* #f9fafb · Y 0.954760 ·  1.05:1 */
+  --neutral-100: oklch(0.965 0.003 250); /* #f2f4f5 · Y 0.901712 ·  1.10:1 */
+  --neutral-200: oklch(0.915 0.004 250); /* #e1e3e5 · Y 0.766029 ·  1.29:1 */
+  --neutral-300: oklch(0.845 0.005 250); /* #cacccf · Y 0.602473 ·  1.61:1 */
+  --neutral-400: oklch(0.755 0.006 250); /* #adb0b3 · Y 0.431896 ·  2.18:1 */
+  --neutral-500: oklch(0.645 0.006 250); /* #8b8e91 · Y 0.268793 ·  3.29:1 */
+  --neutral-600: oklch(0.535 0.006 250); /* #6b6d71 · Y 0.152553 ·  5.18:1 */
+  --neutral-700: oklch(0.43 0.006 250); /* #4d5053 · Y 0.079396 ·  8.11:1 */
+  --neutral-800: oklch(0.325 0.006 250); /* #323437 · Y 0.034099 · 12.49:1 */
+  --neutral-900: oklch(0.235 0.006 250); /* #1c1e21 · Y 0.012852 · 16.71:1 */
+
+  /* LES DEUX CRANS DU 2026-08-11, et ils comblent une ASYMÉTRIE DE CONSTRUCTION, pas un
+   * manque de confort. Spec : `docs/specs/2026-08-11-dark-mode-design.md` § 3.
+   *
+   * LE CONSTAT EST ARITHMÉTIQUE. Entre `--neutral-0` et `--neutral-200`, la rampe pose TROIS
+   * crans — ΔL de 0.015, 0.020 et 0.050. Entre `--neutral-900` et `--neutral-1000`, elle n'en
+   * pose AUCUN, pour un ΔL de 0.075. Elle a été calculée en tâche 1.2 pour une interface
+   * CLAIRE, où toutes les séparations subtiles se jouent près du blanc : le fond détaché à
+   * 1.05:1, le puits du contrôle segmenté à 1.10:1, le passe-partout du média à 1.10:1. Le
+   * dark demande exactement les mêmes séparations, et il les demande PRÈS DU NOIR, où la
+   * rampe n'avait rien à offrir.
+   *
+   * SANS EUX, `--color-surface-subtle` en dark devrait sauter à `--neutral-900`, soit 1.16:1
+   * au lieu de 1.05:1, et le puits du contrôle segmenté avec lui : le dark serait plus
+   * CONTRASTÉ DANS SES SUBTILITÉS que le light, ce qui est le contraire du réglage voulu.
+   *
+   * QUI LES EXIGE, nommément — c'est ce qui empêche un troisième cran de s'ajouter par
+   * ressemblance (loi 10) :
+   *   `--neutral-975` : `surface-subtle`, `surface-media`, `button-surface-secondary`.
+   *   `--neutral-950` : `segmented-track`, `interactive-border`, `button-surface-secondary-hover`.
+   *
+   * LE CHROMA DESCEND — 0.006 (900) → 0.0055 (950) → 0.005 (975) → 0.005 (1000) — parce que
+   * l'en-tête de cette rampe le dit déjà : il « retombe à 0.005 aux extrêmes, pour que le
+   * blanc et le presque-noir restent neutres ». Deux crans qui s'approchent de l'extrême
+   * suivent cette descente ; un 0.006 sur le 950 serait une bosse que rien ne justifie.
+   *
+   * LA NOMENCLATURE RESTE MONOTONE — 900 → 950 → 975 → 1000 — et aucun cran existant ne bouge :
+   * pas de renumérotation, donc les douze annotations d'origine restent justes.
+   *
+   * Colonne annotée : sRGB · Y · contraste contre `--neutral-0`, comme les douze autres. Mais
+   * c'est contre `--neutral-1000` que ces deux-là travaillent, et c'est ce chiffre qui les
+   * justifie : 1.06:1 pour le 950, 1.03:1 pour le 975 — les deux séparations que la moitié
+   * claire obtient avec `--neutral-100` (1.10:1) et `--neutral-50` (1.05:1). */
+  --neutral-950: oklch(0.195 0.0055 250); /* #131517 · Y 0.007366 · 18.30:1 — 1.06:1 sur le 1000 */
+  --neutral-975: oklch(0.175 0.005 250); /* #0f1113 · Y 0.005495 · 18.92:1 — 1.03:1 sur le 1000 */
+
+  --neutral-1000: oklch(0.16 0.005 250); /* #0c0d0f · Y 0.004005 · 19.44:1 — noir non pur */
+
+  /* Unique cran translucide de la rampe, ajouté en tâche 1.2 (loi 10 : aucun cran opaque
+   * ne peut porter une ombre, et une ombre opaque n'est pas une ombre). Il n'existait que
+   * pour `--shadow-overlay` ; depuis l'échelle d'élévation du 2026-11-06, il porte
+   * `--shadow-elevation-lg`.
+   *
+   * L'alpha est cuite dans le primitif plutôt que composée en `color-mix()` depuis
+   * `semantic.css` : le repli que Lightning CSS émet pour les navigateurs sans
+   * `color-mix()` laisse tomber le pourcentage et rend l'ombre OPAQUE — un repli faux est
+   * pire qu'un repli absent. */
+  --neutral-1000-a12: oklch(0.16 0.005 250 / 0.12);
+
+  /* Troisième cran translucide, ajouté le 2026-10-20 avec `--shadow-chrome` (loi 10 : même recours
+   * que les deux autres — aucun cran existant ne porte ce 10 %, et un `color-mix()` posé dans
+   * `semantic.css` aurait le repli opaque décrit ci-dessus). Il n'existait que pour
+   * `--shadow-chrome` ; il porte depuis le 2026-11-06 `--shadow-elevation-md`, qui en est le nouveau
+   * nom, son jumeau en filtre `--drop-shadow-elevation-md`, et `--shadow-elevation-sm`. */
+  --neutral-1000-a10: oklch(0.16 0.005 250 / 0.1);
+
+  /* ------------------------------------------------------------------------------------
+   * Couleurs de retour — les PREMIÈRES COULEURS CHROMATIQUES du système, le 2026-11-11.
+   *
+   * Décision de Florian, spec `docs/specs/2026-11-11-lot-3-retours-formulaires-design.md` § 1 :
+   * « des couleurs qui donnent du feedback visuel pour le user, donc c'est important ». Trois
+   * teintes, POUR LE RETOUR SEULEMENT, JAMAIS POUR DÉCORER : rouge (négatif), vert (positif),
+   * orangé (avertissement). Elles ne portent jamais une information seules — toujours avec une
+   * icône et un message (loi 7). L'usage est dans `DESIGN.md`, section « Retour ».
+   *
+   * LA TEINTE ET LE CHROMA SONT CEUX DU PROTOTYPE VALIDÉ ; SEULE LA CLARTÉ BOUGE, pour tenir 4.5:1.
+   *   rouge  : hue 25,  chroma 0.19 — validé à `oklch(0.55 0.19 25)`, « super ».
+   *   vert   : hue 150, chroma 0.13 — validé à `oklch(0.53 0.13 150)`, « super ».
+   *   orangé : hue 60,  chroma 0.12 — validé ocre à hue 70, puis « un tout petit peu plus orange » :
+   *            DIX DEGRÉS DE MOINS, pas plus. 60 est la hue retenue, et elle ne bouge plus.
+   *
+   * DEUX CRANS PAR TEINTE, UN PAR POLARITÉ, et leurs index suivent la CLARTÉ de la rampe neutre :
+   * `-600` est au voisinage de `--neutral-600` (L 0.535), `-500` au voisinage de `--neutral-500`
+   * (L 0.645). C'est le couple du texte tertiaire — 600 en clair, 500 en sombre —, et c'est voulu :
+   * le message d'un retour est un texte qui doit tenir le même seuil que lui, sur les mêmes fonds.
+   *
+   * LE SEUIL, et ce qui a fait bouger la clarté. Le texte tient 4.5:1 sur la page ET sur la pastille
+   * grise des champs (`--neutral-100` en clair, `--neutral-950` en sombre), qui est le fond le plus
+   * exigeant où il se pose.
+   *   - Le rouge validé tient tel quel en clair : `0.55`, 4.83:1 sur la pastille.
+   *   - Le vert validé tombait à 4.50:1 juste sur la pastille, sans marge : `0.53` → `0.52`, 4.69:1.
+   *   - L'orangé à hue 60 et L 0.56 tombait à 4.36:1 sur la pastille : `0.56` → `0.54`, 4.76:1.
+   *   - En sombre, les trois prennent la même clarté, `0.66` : 5.37 à 6.21:1 sur la pastille, et
+   *     encore 4.90:1 au moins sur `--neutral-900`, la bulle sombre, où un message de `Toast` peut
+   *     se poser.
+   *
+   * GAMUT : les six crans sont dans le gamut sRGB — aucune composante linéaire hors de [0, 1],
+   * vérifié avant écriture —, donc le hex annoté est le rendu exact, pas un rendu écrêté.
+   *
+   * Colonnes annotées, comme la rampe neutre : sRGB 8 bits · luminance relative WCAG (Y) ·
+   * contraste contre `--neutral-0` ; pour les crans sombres, le ratio qui les justifie, contre
+   * `--neutral-1000`. Les hex sont relus par `scripts/laws/contrast.mjs` comme ceux de la rampe
+   * neutre : pour ces six-là, calculés par le même convertisseur, ils ne testent pas le
+   * convertisseur, ils empêchent l'annotation de dériver de la valeur.
+   * ------------------------------------------------------------------------------------ */
+
+  --red-600: oklch(0.55 0.19 25); /* #c92f33 · Y 0.146896 ·  5.33:1 */
+  --red-500: oklch(0.66 0.19 25); /* #f05653 · Y 0.258054 ·  3.41:1 — 5.70:1 sur le 1000 */
+  --green-600: oklch(0.52 0.13 150); /* #1d7d3e · Y 0.152762 ·  5.18:1 */
+  --green-500: oklch(0.66 0.13 150); /* #4fa866 · Y 0.306268 ·  2.95:1 — 6.60:1 sur le 1000 */
+  --amber-600: oklch(0.54 0.12 60); /* #a05b11 · Y 0.149962 ·  5.25:1 */
+  --amber-500: oklch(0.66 0.12 60); /* #c77f3e · Y 0.276687 ·  3.21:1 — 6.05:1 sur le 1000 */
+
+  /* ------------------------------------------------------------------------------------
+   * Couleurs de marque — delta 3.2, déclarées par `Logo`.
+   *
+   * En HEX, quand toute la rampe ci-dessus est en OKLCH. Ce n'est pas une incohérence de
+   * style : une rampe a besoin d'uniformité perceptuelle ENTRE ses crans, or une couleur de
+   * marque n'a pas de cran voisin. C'est une valeur sRGB donnée par une charte, et
+   * l'aller-retour sRGB → OKLCH → sRGB ne round-trip pas au bit près. Écrire
+   * `oklch(0.6691 0.22 33.47)` là où la charte dit `#ff4d27` remplacerait la couleur de la
+   * marque par une approximation, pour gagner une cohérence de format qui ne sert rien.
+   * L'équivalent OKLCH est annoté pour rester lisible dans le même langage que le reste.
+   *
+   * `--brand-habitat` est du noir PUR, et non `--neutral-1000` (`#0c0d0f`) : le noir non pur
+   * est une décision esthétique du portfolio (spec § 2), le noir d'Habitat est une donnée de
+   * marque. Les faire coïncider ferait mentir les deux.
+   *
+   * Colonne annotée : équivalent OKLCH · contraste du blanc posé sur la marque.
+   *
+   * `--brand-en-solo` est la SIXIÈME, arrivée le 2026-08-30 avec la section Experience du
+   * panneau `About` — et c'est la première qui n'est PAS un projet : c'est l'entrée freelance
+   * du parcours de Florian. Son mark vient du node Figma `208:2521`. Elle affiche **2.88:1**,
+   * le plus bas des six, sous le plancher que `--brand-modeo` tenait à 3.31:1. Ce n'est ni un
+   * défaut ni un oubli : WCAG 2.2 exempte les logotypes de tout seuil de contraste (SC 1.4.3),
+   * et `Logo` est `aria-hidden` par construction — le nom de la marque est toujours écrit en
+   * texte juste à côté du mark, partout où il est employé. N'ASSOMBRIS PAS ce vert pour
+   * remonter le chiffre : ce serait modifier une marque pour satisfaire un seuil dont elle est
+   * exemptée.
+   *
+   * LES DIX SUIVANTES SONT DES OUTILS, arrivées le 2026-09-21 avec le bloc `Stack` du panneau
+   * `About` (lot 3). Elles ne sont ni des projets ni des employeurs : ce sont les marques des
+   * outils avec lesquels Florian travaille, et elles entrent ici pour la raison EXACTE des six
+   * premières — une couleur de charte n'est pas une décision de design, et l'inline de `Logo`
+   * n'a d'intérêt que si ces couleurs restent auditables.
+   *
+   * CINQ D'ENTRE ELLES PASSENT SOUS LE PLANCHER DE 2.88:1 QUE TENAIT `--brand-en-solo`, et la
+   * plus basse — `--brand-react`, 1.62:1 — vaut la moitié du seuil de 3:1. Le paragraphe
+   * ci-dessus vaut pour elles mot pour mot : WCAG 2.2 exempte les logotypes de tout seuil
+   * (SC 1.4.3), `Logo` est `aria-hidden`, le nom de la marque est écrit en texte à côté du
+   * mark. N'ÉCLAIRCIS NI N'ASSOMBRIS AUCUNE de ces valeurs pour remonter un chiffre.
+   *
+   * `--brand-github` est du noir PUR comme `--brand-habitat`, et pour la même raison. Les deux
+   * quasi-noirs, `--brand-linear` et `--brand-warp`, ne sont PAS ramenés à `--neutral-1000` :
+   * ce sont des données de charte, pas le noir du portfolio. C'est le trait de 1 px de `Logo`
+   * qui leur rend un contour sur la page sombre, et il existe depuis le 2026-08-11.
+   * ------------------------------------------------------------------------------------ */
+
+  --brand-modeo: #ff4d27; /* oklch(0.6691 0.2200 33.47)  ·  3.31:1 */
+  --brand-habitat: #000000; /* oklch(0 0 0)                · 21.00:1 */
+  --brand-vente-unique: #ff0032; /* oklch(0.6306 0.2549 23.81)  ·  3.96:1 */
+  --brand-mask: #5861ff; /* oklch(0.5810 0.2302 274.18) ·  4.60:1 */
+  --brand-fullphysio: #0a22b0; /* oklch(0.3718 0.2172 265.33) · 11.24:1 */
+  --brand-en-solo: #00ae70; /* oklch(0.6620 0.1519 159.15) ·  2.88:1 */
+
+  /* Les dix outils du bloc `Stack`, dans l'ordre de ses quatre groupes. */
+  --brand-figma: #0e98ff; /* oklch(0.6677 0.1837 249.62) ·  3.02:1 */
+  --brand-paper: #81adec; /* oklch(0.7407 0.1035 257.35) ·  2.30:1 */
+  --brand-claude: #d97757; /* oklch(0.6724 0.1308 38.76)  ·  3.12:1 */
+  --brand-codex: #7a9dff; /* oklch(0.7130 0.1486 267.70) ·  2.59:1 */
+  --brand-warp: #1e1f20; /* oklch(0.2386 0.0024 247.93) · 16.51:1 */
+  --brand-react: #61dafb; /* oklch(0.8320 0.1167 218.69) ·  1.62:1 */
+  --brand-vue: #41b883; /* oklch(0.7022 0.1324 160.49) ·  2.50:1 */
+  --brand-flutter: #39cefd; /* oklch(0.7951 0.1364 224.34) ·  1.84:1 */
+  --brand-linear: #121213; /* oklch(0.1826 0.0020 286.20) · 18.72:1 */
+  --brand-github: #000000; /* oklch(0 0 0)                · 21.00:1 */
+
+  /* ------------------------------------------------------------------------------------
+   * Échelle d'espacement — grille de 8 px, index calé sur les multiples de 4 px.
+   *
+   * Loi 2 : les pas multiples de 8 sont pour le layout, les demi-pas (1, 3, 5) sont
+   * réservés aux internes de composant. Les pas absents de cette échelle n'existent pas :
+   * `globals.css` annule l'échelle dynamique de Tailwind, donc `p-7` et `gap-13` ne
+   * compilent en rien du tout.
+   *
+   * En rem pour suivre la taille de police racine de l'utilisateur.
+   * ------------------------------------------------------------------------------------ */
+
+  /* Le cran ZÉRO. Ce n'est pas un pas d'espacement — c'est son annulation, et la loi 2 le sait
+   * déjà : sa règle mécanique saute explicitement le 0 (« il n'y a plus de pas à confronter à
+   * la grille »), et la loi 1 range `p-0`, `inset-0` et `top-0` dans ses « zéros structurels »
+   * tolérés, au motif qu'un zéro ne porte aucune décision de design.
+   *
+   * Il est déclaré ici parce que ces deux lois les supposaient FONCTIONNELS et qu'ils ne
+   * l'étaient pas. `--spacing: initial` annule l'échelle dynamique de Tailwind, donc chaque pas
+   * doit exister nommément pour que sa classe compile ; le 0 avait été oublié, et `inset-0`,
+   * `top-0` et `left-0` ne produisaient AUCUNE règle. Silencieusement : une classe Tailwind
+   * inexistante ne lève rien, elle ne fait simplement rien.
+   *
+   * Personne ne l'avait rencontré avant la tâche 3.4 parce que rien n'utilisait ces classes —
+   * le `fill` de `next/image` dans `ProjectCard` injecte son propre `inset: 0` en style inline.
+   * Le calque de `CursorPill` est le premier élément du repo à demander à Tailwind de poser un
+   * zéro de position, et il s'effondrait à zéro pixel.
+   *
+   * Sans unité : un zéro n'a pas de dimension, et `0rem` grandirait avec la taille de police
+   * racine pour valoir toujours zéro. */
+  --space-0: 0;
+
+  --space-1: 0.25rem; /*   4 px — demi-pas, interne composant */
+  --space-2: 0.5rem; /*   8 px — layout */
+  --space-3: 0.75rem; /*  12 px — demi-pas, interne composant */
+  --space-4: 1rem; /*  16 px — layout */
+  --space-5: 1.25rem; /*  20 px — demi-pas, interne composant */
+  --space-6: 1.5rem; /*  24 px — layout */
+  --space-8: 2rem; /*  32 px — layout */
+  --space-10: 2.5rem; /*  40 px — layout */
+  --space-12: 3rem; /*  48 px — layout */
+  --space-16: 4rem; /*  64 px — layout */
+  --space-20: 5rem; /*  80 px — layout */
+  --space-24: 6rem; /*  96 px — layout */
+  --space-32: 8rem; /* 128 px — layout */
+  --space-40: 10rem; /* 160 px — layout */
+
+  /* ------------------------------------------------------------------------------------
+   * Échelle de rayons.
+   *
+   * En px et non en rem : un rayon est un arrondi de tracé, pas une mesure de texte. Le
+   * registre visé est « pixel adouci » (spec § 11), et un rayon qui grandit avec la taille
+   * de police racine perd ce registre.
+   *
+   * `--radius-none` documente le cran 0 de l'échelle ; l'utilitaire `rounded-none` est un
+   * utilitaire statique de Tailwind, il n'a pas besoin d'être mappé.
+   *
+   * L'échelle doublait — 2, 4, 8 — et `--radius-xl` la rompt à 12 plutôt qu'à 16 (delta 3.3).
+   * Le 12 vient du dessin du cadre de média de `SideProjectCard` (`ProjectCard` le consommait à
+   * l'origine, avant sa révision du 2026-08-26, voir juste en dessous), pas d'une progression :
+   * le déclarer comme un cran à part entière est ce qui le rend visible sur
+   * `/design-system/tokens`, là où un `rounded-[12px]` écrit dans le composant serait une
+   * décision de design invisible et refusée par la loi 1.
+   *
+   * `--radius-2xl` — delta du 2026-08-26, déclaré par `ProjectCard` quand son survol cesse
+   * d'être porté par une bordure de 4 px et devient un fond posé sur la carte entière. La
+   * valeur n'est pas un choix libre : elle suit la RÈGLE CONCENTRIQUE que la docstring du
+   * composant détaille — le rayon de la carte est celui de son image plus le padding qui les
+   * sépare. Le 2026-08-26 ça donnait 16 = 8 (`--radius-lg`) + 8 (`--space-2`).
+   *
+   * `--radius-3xl` — delta du 2026-08-28, MÊME COMPOSANT, MÊME RÈGLE, PADDING REMONTÉ. Florian
+   * a demandé un padding plus large sur la carte ; il repasse de `--space-2` à `--space-4`, et
+   * le rayon de la carte suit — 24 = 8 (`--radius-lg`, le rayon de l'image, INCHANGÉ) + 16
+   * (`--space-4`). C'est la troisième fois que ce composant fait bouger cette rampe, et les
+   * trois fois par la même arithmétique : ce n'est pas une échelle qui grandit au goût, c'est
+   * une conséquence qu'on recalcule.
+   *
+   * `--radius-2xl` N'A PLUS DE CONSOMMATEUR DEPUIS CE JOUR-LÀ, ET IL RESTE. Ce n'est pas un
+   * token mort au sens de la loi 10 : le balayage des tokens morts porte sur `semantic.css`,
+   * là où un token est une INTENTION que plus personne ne porte. Ici la rampe est une ÉCHELLE
+   * exposée en utilitaires par `@theme inline`, et un trou en son milieu — `rounded-xl` puis
+   * `rounded-3xl`, sans le cran intermédiaire — se paierait le jour où quelqu'un écrirait
+   * `rounded-2xl` et n'obtiendrait RIEN, sans qu'aucune règle ne crie. Le précédent est
+   * `--radius-none`, qui documente le cran 0 sans qu'aucun composant ne le consomme. Les
+   * valeurs restent d'ailleurs alignées sur celles de Tailwind — 2, 4, 8, 12, 16, 24 — ce qui
+   * est la seule raison pour laquelle un nom de cran ne surprend personne.
+   *
+   * L'ÉCHELLE NE DOUBLE DONC PLUS À PARTIR DE 8 : 2, 4, 8, puis 12, 16, 24, en pas de 4. La
+   * version précédente de ce commentaire se félicitait de retrouver le doublement à 16 ; c'était
+   * vrai le temps que la rampe s'arrête là. Elle ne s'y arrête plus, et ce n'est pas une perte —
+   * aucun de ces trois crans n'a été choisi pour compléter une progression, les trois sont sortis
+   * d'un calcul concentrique.
+   * ------------------------------------------------------------------------------------ */
+
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px; /* défaut du système (spec § 5.1) */
+  --radius-lg: 8px;
+  --radius-xl: 12px; /* delta 3.3 — cadre de média de SideProjectCard */
+  --radius-2xl: 16px; /* delta 2026-08-26 — sans consommateur du 2026-08-28 au 2026-11-06 : `Tile` le reprend, puis `PixelPreview` et `CodeBlock` */
+  --radius-3xl: 24px; /* delta 2026-08-28 — carte entière de ProjectCard */
+  --radius-full: 9999px;
+}
+
+/* --------------------------------------------------------------------------------------
+ * Familles de fontes — les seuls primitifs de ce fichier qui ne sont PAS déclarés ici.
+ *
+ *   --font-geist-latin          --font-geist-latin-ext
+ *   --font-pixelify-sans        --font-geist-mono-latin
+ *
+ * Ces quatre-là nomment une fonte et un sous-ensemble, donc une position sur une échelle
+ * et non une intention : ce sont bien des primitifs, au même titre que `--neutral-700`.
+ * Ils ne peuvent pourtant pas vivre ici, parce que leur valeur est un nom de famille
+ * haché à la compilation par `next/font/local` (`__geistLatin_a1b2c3`) : la seule
+ * autorité capable de l'écrire est `app/layout.tsx`, qui les pose sur l'élément racine.
+ *
+ * `--font-pixelify-sans` n'a qu'un seul nom, sans suffixe `-latin` : Pixelify Sans est
+ * livrée en un seul fichier woff2, sous-ensemble `latin` + `latin-ext` combiné, pas en
+ * deux faces à `unicode-range` disjointe comme Geist. `--font-geist-mono-latin` garde son suffixe
+ * sans avoir de jumelle : seule la face `latin` de Geist Mono est livrée, depuis le 2026-10-16.
+ *
+ * Conséquence pour la loi 1, inchangée : un composant ne les lit jamais. `semantic.css`
+ * les aliase en `--font-body`, `--font-pixel` et `--font-code`, qui sont les trois seules
+ * familles qu'un composant a le droit de connaître (loi 3, amendée tâche 3.1 puis le
+ * 2026-10-16 — Manrope portait le texte jusqu'au 2026-10-06, où Geist l'a remplacée). Changer de fonte = changer un fichier dans `public/fonts/`, un appel
+ * dans `app/layout.tsx`, et rien d'autre.
+ * -------------------------------------------------------------------------------------- */
