@@ -102,14 +102,17 @@ function Notice({ item, closeLabel }: { item: ToastItem; closeLabel: string }) {
           removeToast(item.id);
       }}
       className={cn(
-        "pointer-events-auto flex items-start gap-3 rounded-2xl bg-toast-surface p-3 shadow-elevation-md",
+        "pointer-events-auto flex gap-3 rounded-2xl bg-toast-surface p-3 shadow-elevation-md",
+        /* Sans description, l'icône, le titre et les boutons se centrent en hauteur ; avec, ils se calent en
+         * haut, sur la première ligne. Décision de Florian du 2026-11-12. */
+        item.description ? "items-start" : "items-center",
         "transition-[opacity,translate,filter] duration-[var(--duration-reveal)] ease-out",
         "starting:opacity-0 starting:translate-y-[var(--lift-reveal)] starting:blur-[var(--blur-reveal)]",
         "data-[closing]:opacity-0 data-[closing]:translate-y-[var(--lift-reveal)] data-[closing]:blur-[var(--blur-reveal)]",
         "data-[closing]:duration-[var(--duration-base)]",
       )}
     >
-      <span className={cn("flex shrink-0 self-start", tone.color)}>
+      <span className={cn("flex shrink-0", tone.color)}>
         <Icon name={tone.icon} />
       </span>
       <div className="flex min-w-0 flex-1 flex-col">

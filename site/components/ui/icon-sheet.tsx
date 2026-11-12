@@ -100,7 +100,8 @@ function save(name: string, svg: string) {
  * GESTE DE `Reveal` — monte, floute, se pose net —, exactement comme l'image d'`Exhibit` : le mini a son
  * `Reveal` dès le départ, sous un panneau fermé ; le grand dessin ne prend le sien qu'une fois qu'un
  * onglet a vraiment changé, pour qu'il ne rejoue pas à l'ouverture de la fiche (voir « Exhibit » pour la
- * raison du délai de secours). Passer à une autre icône ne rejoue rien et ramène au grand dessin. Sous
+ * raison du délai de secours). Passer à une autre icône ne rejoue rien et GARDE le choix de taille (depuis
+ * le 2026-11-12 ; il ramenait au grand dessin). Sous
  * mouvement réduit, rien ne bouge : ce sont les valeurs neutralisées de `Reveal`. UNE ICÔNE SANS MINI GARDE
  * LA RANGÉE, avec son seul onglet « 12 × 12 » : c'est ce qui évite que la fiche change de hauteur, donc
  * saute dans la fenêtre, quand on passe d'une icône à l'autre avec ← →. Choix de l'agent de build, à juger :
@@ -166,11 +167,12 @@ export function IconSheet({
 
   const titleId = useId();
 
-  /* Le choix de taille appartient à une icône : il est lu pour `name` et repart du grand dessin pour une
-   * autre, sans effet. `picked` est vide tant qu'aucun onglet n'a changé sur cette icône, et c'est aussi ce
-   * qui dit au grand dessin de prendre son `Reveal`. */
-  const [picked, setPicked] = useState<{ name: string; size: string } | null>(null);
-  const chosen = picked !== null && picked.name === name ? picked.size : null;
+  /* Le choix de taille appartient à la fiche ouverte, pas à une icône : il SE GARDE quand on passe d'une
+   * icône à l'autre (← → ou les boutons), décision de Florian du 2026-11-12. Une icône sans mini montre son
+   * grand dessin, et l'icône suivante qui en a un retrouve le mini. Il repart du grand dessin à la fermeture.
+   * `chosen` est vide tant qu'aucun onglet n'a changé, et c'est aussi ce qui dit au grand dessin de prendre
+   * son `Reveal`. */
+  const [chosen, setChosen] = useState<string | null>(null);
   const size = petit !== undefined && chosen === "petit" ? "petit" : "grand";
 
   const grandLabel = `${rows.length} × ${rows.length}`;
@@ -235,7 +237,7 @@ export function IconSheet({
       open={open}
       onOpenChange={onOpenChange}
       onClosed={() => {
-        setPicked(null);
+        setChosen(null);
         onClosed?.();
       }}
       labelledBy={titleId}
@@ -290,7 +292,7 @@ export function IconSheet({
             placement="bottom"
             items={items}
             value={size}
-            onValueChange={(next) => setPicked({ name, size: next })}
+            onValueChange={(next) => setChosen(next)}
           />
         </div>
 
