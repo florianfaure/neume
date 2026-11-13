@@ -25,7 +25,6 @@
   --site-tile-min: 7rem;
   --site-dot-pitch: 0.5rem;
   --site-where-width: 12.5rem;
-  --site-footer-mark-size: 24rem;
   /* La page Docs : une seule largeur pour le texte et les blocs, colonne centrée. */
   --site-docs-copy-width: 48rem;
 }
