@@ -27,7 +27,7 @@ describe("parseRequest", () => {
 
   it("trims fields before validating", () => {
     const r = parseRequest(form({ name: "  arrow-up ", meaning: "  Go up  ", link: " https://x.dev " }));
-    expect(r).toEqual({ ok: true, value: { name: "arrow-up", meaning: "Go up", link: "https://x.dev", image: null } });
+    expect(r).toEqual({ ok: true, value: { name: "arrow-up", meaning: "Go up", link: "https://x.dev/", image: null } });
   });
 
   it.each([["", "name"], ["Arrow Up", "name"], ["arrow--up", "name"], ["-up", "name"], ["a".repeat(41), "name"]])(
@@ -42,10 +42,25 @@ describe("parseRequest", () => {
     expect(parseRequest(form({ name: "a", meaning: "x".repeat(2000) })).ok).toBe(true);
   });
 
-  it.each(["javascript:alert(1)", "ftp://x.dev", "not a url", `https://x.dev/${"a".repeat(490)}`])(
+  it.each([
+    "javascript:alert(1)",
+    "ftp://x.dev",
+    "not a url",
+    `https://x.dev/${"a".repeat(490)}`,
+    "https://x.dev/a>b",
+    "https://x.dev/<b",
+    "https://x.dev/a b",
+    "https://x.dev/`b`",
+    "https://x.dev/a\u0007",
+  ])(
     "rejects the link %j",
     (link) => expect(parseRequest(form({ name: "a", meaning: "x", link }))).toEqual({ ok: false, field: "link" }),
   );
+
+  it("stores the link as its normalised href", () => {
+    const r = parseRequest(form({ name: "a", meaning: "x", link: "HTTPS://X.dev" }));
+    expect(r.ok && r.value.link).toBe("https://x.dev/");
+  });
 
   it("rejects an image over 2 MB", () => {
     expect(parseRequest(form({ name: "a", meaning: "x", image: png(2_097_153) }))).toEqual({ ok: false, field: "image" });
@@ -72,11 +87,14 @@ describe("issue", () => {
     expect(body).not.toContain("Reference");
   });
 
-  it("neutralises mentions and references", () => {
-    const body = issueBody({ name: "a", meaning: "ask @florianfaure about #12 and #fun", link: null }, null);
-    expect(body).not.toContain("@florianfaure");
-    expect(body).not.toContain("#12");
-    expect(body).toContain("#fun");
-    expect(body.replaceAll("​", "")).toContain("ask @florianfaure about #12");
+  it("keeps the meaning out of Markdown, in a fence longer than any backtick run", () => {
+    const meaning = "ask @florianfaure about #12\n```\n![x](https://evil.example/p.png)";
+    const body = issueBody({ name: "a", meaning, link: null }, null);
+    expect(body).toContain("````text\n" + meaning + "\n````\n");
+  });
+
+  it("uses a three-backtick fence for plain text", () => {
+    const body = issueBody({ name: "a", meaning: "Go up", link: null }, null);
+    expect(body).toContain("```text\nGo up\n```\n");
   });
 });

@@ -19,12 +19,17 @@ const text = (form: FormData, key: string) => {
   return typeof v === "string" ? v.trim() : "";
 };
 
-function isHttpUrl(value: string): boolean {
+/** Ce qui n'a rien à faire dans un lien collé, et qui pourrait sortir de `<…>` dans le Markdown. */
+const UNSAFE_IN_LINK = /[\s<>`\u0000-\u001f\u007f]/;
+
+/** Le lien normalisé (`URL.href`), s'il est un `http(s)` propre ; sinon `null`. */
+function httpHref(value: string): string | null {
+  if (UNSAFE_IN_LINK.test(value)) return null;
   try {
-    const { protocol } = new URL(value);
-    return protocol === "https:" || protocol === "http:";
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -37,26 +42,32 @@ export function parseRequest(form: FormData): { ok: true; value: IconRequest } |
   if (meaning.length === 0 || meaning.length > MEANING_MAX) return { ok: false, field: "meaning" };
 
   const rawLink = text(form, "link");
-  if (rawLink && (rawLink.length > LINK_MAX || !isHttpUrl(rawLink))) return { ok: false, field: "link" };
+  const link = rawLink ? httpHref(rawLink) : null;
+  if (rawLink && (link === null || link.length > LINK_MAX)) return { ok: false, field: "link" };
 
   const file = form.get("image");
   const image = file instanceof File && file.size > 0 ? file : null;
   if (image && image.size > IMAGE_MAX) return { ok: false, field: "image" };
 
-  return { ok: true, value: { name, meaning, link: rawLink || null, image } };
+  return { ok: true, value: { name, meaning, link, image } };
 }
 
 export const issueTitle = (name: string) => `Icon request: ${name}`;
 
 /**
- * Le texte de l'utilisateur, rendu inoffensif sur GitHub : un espace sans chasse après `@` et après un `#`
- * suivi d'un chiffre, pour ne notifier personne et ne renvoyer vers aucune issue. Il se lit pareil.
+ * Le texte de l'utilisateur, en texte brut : dans un bloc de code, GitHub n'y lit ni mention, ni renvoi
+ * d'issue, ni lien, ni image. La clôture est plus longue que la plus longue suite d'accents graves du texte,
+ * pour qu'il ne puisse pas la refermer.
  */
-const neutralise = (s: string) => s.replace(/@/g, "@​").replace(/#(?=\d)/g, "#​");
+function plainText(s: string): string {
+  const longest = Math.max(0, ...(s.match(/`+/g) ?? []).map((run) => run.length));
+  const fence = "`".repeat(Math.max(3, longest + 1));
+  return `${fence}text\n${s}\n${fence}`;
+}
 
 /** Le corps Markdown de l'issue. */
 export function issueBody(req: Omit<IconRequest, "image">, imageUrl: string | null): string {
-  const lines = ["### What it should mean", "", neutralise(req.meaning), ""];
+  const lines = ["### What it should mean", "", plainText(req.meaning), ""];
   if (req.link) lines.push("### Link", "", `<${req.link}>`, "");
   if (imageUrl) lines.push("### Image", "", `![Reference](<${imageUrl}>)`, "");
   lines.push("---", "Sent from neume.dev");
