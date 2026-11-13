@@ -1,14 +1,10 @@
 import type { Env } from "./env";
+import { handleImage, handleRequest } from "./handle";
+import { json } from "./json";
 
 export { RequestLimiter } from "./limiter";
 
-/** Une réponse JSON du Worker, marquée `x-neume-worker` : le reste du site ne passe jamais par ce code. */
-export function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8", "x-neume-worker": "1" },
-  });
-}
+const IMAGE_PREFIX = "/api/request-image/";
 
 /**
  * Le Worker de neume.dev. `run_worker_first: ["/api/*"]` ne lui envoie que l'API ; un autre chemin
@@ -21,7 +17,10 @@ export default {
 
     if (pathname === "/api/request") {
       if (request.method !== "POST") return json({ error: "method" }, 405);
-      return json({ error: "not-implemented" }, 501);
+      return handleRequest(request, env);
+    }
+    if (pathname.startsWith(IMAGE_PREFIX) && request.method === "GET") {
+      return handleImage(pathname.slice(IMAGE_PREFIX.length), env);
     }
     return json({ error: "not-found" }, 404);
   },
