@@ -455,27 +455,33 @@
   background-position: 0 0;
 }
 
-/* `clip-nav-panel-closed` ET `clip-nav-panel-open` — LE PANNEAU MOBILE DE `NavBar` (lot 2 du site de
- * Neume, spec `2026-11-11-lot-2-navigation-design.md` § 2.2). Deux découpes du MÊME `clip-path:
- * inset()` : fermée, le bord bas est rabattu sur le haut (100 % de la hauteur) et rien ne se voit ;
- * ouverte, la découpe ne rogne rien et le panneau se déroule vers le bas, le geste du prototype. Le
- * composant transitionne de l'une à l'autre en `--duration-base` et `--ease-out`. Aucune valeur de
- * design : des pourcentages de la boîte, la forme de la découpe, comme les autres découpes de `clip-*` — et la
- * même raison d'être une `@utility`, la loi 1 refusant un littéral dans une valeur arbitraire. */
-@utility clip-nav-panel-closed {
-  clip-path: inset(0 0 100% 0);
-}
+/* `dialog-veil-blur` — LE VOILE FLOUTÉ DE `Dialog` (`veil="blur"`, 2026-11-13, spec
+ * `2026-11-13-menu-lateral-design.md`), posé sur son `::backdrop` : la page derrière le volet de `NavBar`, floutée de
+ * `--blur-dialog-veil` et pâlie de `--color-surface` à `--opacity-dialog-veil` — la couleur de la page, qui suit donc
+ * le thème, comme le voile du bas de fenêtre. Une `@utility` et non une valeur arbitraire : la loi 1 refuse un
+ * `color-mix()` dans une valeur arbitraire. `Dialog` fait entrer et sortir le voile par son opacité, qui porte le flou
+ * avec la couleur. SOUS `prefers-reduced-transparency: reduce`, le voile redevient le voile sombre, `--color-scrim`,
+ * sans flou : une transparence demandée en moins. Les moteurs qui ignorent la requête gardent le flou. */
+@utility dialog-veil-blur {
+  background-color: color-mix(
+    in oklch,
+    var(--color-surface) var(--opacity-dialog-veil),
+    transparent
+  );
+  backdrop-filter: blur(var(--blur-dialog-veil));
 
-@utility clip-nav-panel-open {
-  clip-path: inset(0 0 0 0);
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--color-scrim);
+    backdrop-filter: none;
+  }
 }
 
 /* `chip-group-fade-left`, `-right` ET `-both` — LE FONDU DE BORD DE `ChipGroup` quand sa rangée défile
  * (2026-11-12). Un masque sur le défileur : transparent au bord, opaque à `--size-chip-group-fade` de lui, côté
  * caché seulement. Le masque ne lit que l'ALPHA de sa couleur : `--color-surface` est opaque, n'importe quel token
- * opaque ferait l'affaire, et la loi 1 interdit d'y écrire `black`. Trois `@utility` et non une valeur arbitraire,
- * pour la même raison que `clip-nav-panel-*` : un `calc()` de bords ne s'écrit pas en valeur arbitraire sans
- * littéral. */
+ * opaque ferait l'affaire, et la loi 1 interdit d'y écrire `black`. Trois `@utility` et non une valeur arbitraire :
+ * un `calc()` de bords ne s'écrit pas en valeur arbitraire sans littéral, et la loi 1 refuse un littéral dans une
+ * valeur arbitraire. */
 @utility chip-group-fade-left {
   mask-image: linear-gradient(
     to right,
