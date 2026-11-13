@@ -13,7 +13,7 @@ import { drawingOf } from "@/lib/neume";
 import { names } from "@neume-icons/svg";
 import { version } from "@neume-icons/svg/package.json";
 import { SizesScene } from "../_home/scenes/sizes";
-import { ISSUES_URL, REPO_URL } from "../_shell/links";
+import { REPO_URL } from "../_shell/links";
 import { SiteFooter } from "../_shell/site-footer";
 import { SiteNav } from "../_shell/site-nav";
 import { useSiteLayers } from "../_shell/use-site-layers";
@@ -33,11 +33,11 @@ const C = InlineCode;
 export function Docs() {
   const arrow = drawingOf("arrow-up");
   const toc = SECTIONS.map((s) => ({ id: s.id, label: s.label }));
-  const { openPalette, layers } = useSiteLayers(names, 24);
+  const { openPalette, openRequest, layers } = useSiteLayers(names, 24);
 
   return (
     <>
-      <SiteNav onSearch={openPalette} />
+      <SiteNav onSearch={openPalette} onRequest={() => openRequest()} />
 
       {/* Sous xl, pas de rail : la pastille du sommaire, en bas de la fenêtre. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-[var(--layout-gutter)] z-[var(--z-sticky)] flex justify-center xl:hidden">
@@ -338,12 +338,19 @@ document.querySelector("#icon").innerHTML = svg("search", 24);`}
               reads badly at a given size, ask for it.
             </P>
             <P>
-              <TextLink href={ISSUES_URL} newTab>
-                Open an issue on GitHub
-              </TextLink>{" "}
-              with the name you would expect, what the icon should mean, and where you would use it.
-              A screenshot of the screen it is for helps more than anything else.
+              Send the name you would expect, what the icon should mean, and, if you have one, a link
+              or an image of the same icon in another set. No GitHub account is needed: each request
+              becomes a public issue there.
             </P>
+            <div>
+              <Button
+                variant="secondary"
+                content="icon-label"
+                icon="lightbulb"
+                label="Request an icon"
+                onClick={() => openRequest()}
+              />
+            </div>
           </Section>
 
           <Section id="about">

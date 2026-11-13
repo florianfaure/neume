@@ -11,7 +11,7 @@ Ce qui n'est pas une copie et qui est donc du site : `app/` (layout, pages), `da
 
 ## Source
 
-Commit du portfolio d'où viennent les copies : `4a691d30579b09fbe63c43cde86589adb636bf70`
+Commit du portfolio d'où viennent les copies : `7e29459f4d28219cb6201f9f482208c642d73b4f`
 
 ## Commandes
 
@@ -24,7 +24,7 @@ node scripts/copy-from-portfolio.mjs [chemin-du-portfolio] --check  # échoue si
 Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> rev-parse HEAD`.
 `npm run check` lance le `--check` ; sans portfolio sur la machine, il est sauté avec un avertissement.
 
-## Fichiers copiés (57)
+## Fichiers copiés (59)
 
 - `styles/globals.css`
 - `styles/tokens/primitives.css`
@@ -75,7 +75,9 @@ Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> re
 - `components/ui/tab.tsx`
 - `components/ui/table-of-contents.tsx`
 - `components/ui/tag.tsx`
+- `components/ui/text-area.tsx`
 - `components/ui/text-field.tsx`
+- `components/ui/file-field.tsx`
 - `components/ui/text-link.tsx`
 - `components/ui/theme-selector.tsx`
 - `components/ui/tile.tsx`

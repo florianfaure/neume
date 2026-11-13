@@ -12,7 +12,6 @@ import type { Theme } from "@/data/themes";
 import { cn } from "@/lib/cn";
 import { NeumeIcon } from "@/lib/neume";
 import { SIZES } from "@neume-icons/svg/render";
-import { ISSUES_URL } from "../_shell/links";
 
 
 interface BrowseProps {
@@ -24,6 +23,8 @@ interface BrowseProps {
   size: number;
   onSizeChange: (size: number) => void;
   onOpen: (name: string) => void;
+  /** Ouvre la demande d'icône, avec la recherche comme nom quand elle en a la forme. */
+  onRequest: (name?: string) => void;
 }
 
 /**
@@ -31,7 +32,7 @@ interface BrowseProps {
  * descendant, et reprend sa forme en remontant ; puis la grille par thème. Un clic sur une tuile remonte
  * à la page, qui ouvre la fiche.
  */
-export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeChange, onOpen }: BrowseProps) {
+export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeChange, onOpen, onRequest }: BrowseProps) {
   const sentinel = useRef<HTMLDivElement>(null);
   const chips = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState(false);
@@ -210,8 +211,10 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
               <Button
                 variant="ghost"
                 label="Suggest an icon"
-                href={ISSUES_URL}
-                newTab
+                onClick={() => {
+                  const name = query.trim().toLowerCase().replace(/\s+/g, "-");
+                  onRequest(/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : undefined);
+                }}
               />
             </>
           }

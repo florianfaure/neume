@@ -34,11 +34,11 @@ export function Home() {
 
   const themes = useMemo(() => filterThemes(query), [query]);
   const order = useMemo(() => themes.flatMap((t) => t.icons), [themes]);
-  const { openPalette, openIcon, layers } = useSiteLayers(order, size);
+  const { openPalette, openIcon, openRequest, layers } = useSiteLayers(order, size);
 
   return (
     <>
-      <SiteNav onSearch={openPalette} />
+      <SiteNav onSearch={openPalette} onRequest={() => openRequest()} />
 
       <main>
         <Hero total={TOTAL} />
@@ -52,6 +52,7 @@ export function Home() {
             size={size}
             onSizeChange={setSize}
             onOpen={openIcon}
+            onRequest={openRequest}
           />
           <section
             aria-labelledby="closing-title"
