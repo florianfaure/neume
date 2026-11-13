@@ -9,6 +9,7 @@ import { SiteFooter } from "../_shell/site-footer";
 import { SiteNav } from "../_shell/site-nav";
 import { REPO_URL } from "../_shell/links";
 import { useSiteLayers } from "../_shell/use-site-layers";
+import { AskAi } from "./ask-ai";
 import { Browse } from "./browse";
 import { Features } from "./features";
 import { Hero, INSTALL_COMMAND } from "./hero";
@@ -74,6 +75,7 @@ export function Home() {
                 newTab
               />
             </div>
+            <AskAi />
           </section>
           <div className="mt-32">
             <SiteFooter />

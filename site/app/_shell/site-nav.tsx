@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { NavBar } from "@/components/ui/nav-bar";
 import { NavItem } from "@/components/ui/nav-item";
 import { ThemeSelector } from "@/components/ui/theme-selector";
-import { REPO_URL } from "./links";
+import { ISSUES_URL, REPO_URL } from "./links";
 
 /** La barre de neume.dev, la même sur toutes les pages. `onSearch` ouvre la palette (⌘K). */
 export function SiteNav({ onSearch }: { onSearch: () => void }) {
@@ -26,6 +26,14 @@ export function SiteNav({ onSearch }: { onSearch: () => void }) {
             icon="github"
             label="GitHub"
             href={REPO_URL}
+            newTab
+          />
+          <Button
+            variant="ghost"
+            content="icon-label"
+            icon="lightbulb"
+            label="Request an icon"
+            href={ISSUES_URL}
             newTab
           />
           <Button

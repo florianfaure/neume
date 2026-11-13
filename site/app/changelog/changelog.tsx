@@ -16,6 +16,15 @@ import { RELEASES } from "./releases";
 import type { Release } from "./releases";
 
 const SAMPLE = names.slice(0, 24);
+
+/** Les versions groupées par numéro majeur, dans l'ordre de `RELEASES` (la plus récente d'abord). */
+const SERIES = RELEASES.reduce<[string, Release[]][]>((groups, release) => {
+  const major = release.version.split(".")[0];
+  const last = groups[groups.length - 1];
+  if (last && last[0] === major) last[1].push(release);
+  else groups.push([major, [release]]);
+  return groups;
+}, []);
 const BEFORE_AFTER = { name: "sparkles", size: 28, zoom: 4 } as const;
 
 const formatDate = (iso: string) =>
@@ -85,7 +94,7 @@ const isMajor = (version: string) => /^[1-9]\d*\.0\.0$/.test(version);
 function Entry({ release, latest }: { release: Release; latest: boolean }) {
   const major = isMajor(release.version);
   return (
-    <li className={cn("group relative pb-24 pl-10 last:pb-0", major && "pt-8 first:pt-0")}>
+    <li className="group relative pb-24 pl-10 last:pb-0">
       {/* Le fil de la frise et sa case : un carré plein, à l'échelle d'une case de Neume. Une majeure a une
           case de 32 px, centrée sur le fil et sur la ligne du numéro. */}
       <span
@@ -96,8 +105,7 @@ function Entry({ release, latest }: { release: Release; latest: boolean }) {
         aria-hidden="true"
         className={cn(
           "absolute bg-text-primary",
-          major ? "-left-[10px] size-8" : "top-2 left-0 size-3",
-          major && (latest ? "top-5" : "top-[52px]"),
+          major ? "top-5 -left-[10px] size-8" : "top-2 left-0 size-3",
         )}
       />
       <article className="flex flex-col gap-6" aria-labelledby={`v${release.version}`}>
@@ -168,11 +176,17 @@ export function Changelog() {
           </P>
         </header>
 
-        <ol className="flex flex-col">
-          {RELEASES.map((r, i) => (
-            <Entry key={r.version} release={r} latest={i === 0} />
+        {/* Une frise par série majeure (1.x, 0.x…), séparées par un vide : le fil s'arrête à la dernière
+            version d'une série et reprend à la première de la suivante. */}
+        <div className="flex flex-col gap-32">
+          {SERIES.map(([major, releases]) => (
+            <ol key={major} aria-label={`Versions ${major}.x`} className="flex flex-col">
+              {releases.map((r) => (
+                <Entry key={r.version} release={r} latest={r === RELEASES[0]} />
+              ))}
+            </ol>
           ))}
-        </ol>
+        </div>
       </main>
 
       <div className="mx-auto w-full max-w-[var(--site-max-width)] px-[var(--layout-gutter)] pt-16">
