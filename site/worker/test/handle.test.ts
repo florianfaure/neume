@@ -44,7 +44,11 @@ function post(origin: string, fields: Record<string, string | File>, ip = freshI
   const form = new FormData();
   form.append("cf-turnstile-response", "token");
   for (const [k, v] of Object.entries({ name: "arrow-up", meaning: "Go up", ...fields })) form.append(k, v);
-  return new Request(`${origin}/api/request`, { method: "POST", body: form, headers: { "CF-Connecting-IP": ip } });
+  return new Request(`${origin}/api/request`, {
+    method: "POST",
+    body: form,
+    headers: { "CF-Connecting-IP": ip, Origin: origin },
+  });
 }
 
 const PROD = "https://neume.dev";
@@ -103,6 +107,23 @@ describe("POST /api/request", () => {
     const res = await handleRequest(post(LOCAL, {}), env, fetcher);
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ url: "https://github.com/florianfaure/neume/issues/0", dryRun: true });
+    expect(githubCalls()).toHaveLength(0);
+  });
+
+  it("dry run when the page is not neume.dev, even if the url says neume.dev", async () => {
+    // `wrangler dev` réécrit l'hôte de la requête en celui de la route : seul l'Origin du navigateur dit vrai.
+    const req = post(PROD, {});
+    req.headers.set("Origin", LOCAL);
+    const res = await handleRequest(req, env, fetcher);
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({ dryRun: true });
+    expect(githubCalls()).toHaveLength(0);
+  });
+
+  it("dry run without an Origin header", async () => {
+    const req = post(PROD, {});
+    req.headers.delete("Origin");
+    expect(await (await handleRequest(req, env, fetcher)).json()).toMatchObject({ dryRun: true });
     expect(githubCalls()).toHaveLength(0);
   });
 

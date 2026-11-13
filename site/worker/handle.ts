@@ -16,7 +16,10 @@ const IMAGE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\
  */
 export async function handleRequest(request: Request, env: Env, fetcher: typeof fetch = fetch): Promise<Response> {
   const url = new URL(request.url);
-  const production = url.hostname === env.PRODUCTION_HOST;
+  // La production, c'est l'hôte ET la page d'où part la demande : `wrangler dev` réécrit l'hôte de la requête en
+  // celui de la route (neume.dev), mais l'Origin du navigateur reste celle de la page (localhost, une preview).
+  const productionOrigin = `https://${env.PRODUCTION_HOST}`;
+  const production = url.hostname === env.PRODUCTION_HOST && request.headers.get("Origin") === productionOrigin;
   const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
 
   let form: FormData;
@@ -31,11 +34,14 @@ export async function handleRequest(request: Request, env: Env, fetcher: typeof 
   verify.append("response", String(form.get("cf-turnstile-response") ?? ""));
   verify.append("remoteip", ip);
   const verdict = await fetcher(SITEVERIFY, { method: "POST", body: verify })
-    .then((r) => r.json<{ success?: boolean; hostname?: string }>())
-    .catch(() => ({ success: false, hostname: undefined }));
+    .then((r) => r.json<{ success?: boolean; hostname?: string; "error-codes"?: string[] }>())
+    .catch((error: unknown) => ({ success: false, hostname: undefined, "error-codes": [`network: ${String(error)}`] }));
   // En production, le jeton doit avoir été délivré sur neume.dev, pas sur une preview qui partage la clé.
   const goodHost = !production || verdict.hostname === env.PRODUCTION_HOST;
-  if (verdict.success !== true || !goodHost) return json({ error: "verification" }, 403);
+  if (verdict.success !== true || !goodHost) {
+    console.warn(`Turnstile a refusé : ${JSON.stringify({ host: verdict.hostname, codes: verdict["error-codes"] })}`);
+    return json({ error: "verification" }, 403);
+  }
 
   const parsed = parseRequest(form);
   if (!parsed.ok) return json({ error: "invalid", field: parsed.field }, 400);
@@ -57,7 +63,7 @@ export async function handleRequest(request: Request, env: Env, fetcher: typeof 
   if (!(await limiter.hit(Date.now()))) return json({ error: "rate-limited" }, 429);
 
   const title = issueTitle(fields.name);
-  const imageUrl = cleaned ? `https://${env.PRODUCTION_HOST}/api/request-image/${cleaned.id}` : null;
+  const imageUrl = cleaned ? `${productionOrigin}/api/request-image/${cleaned.id}` : null;
   const body = issueBody(fields, imageUrl);
 
   // Hors production (local, previews), rien n'est rangé ni créé : les previews partagent le bucket et le jeton.
