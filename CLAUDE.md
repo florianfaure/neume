@@ -6,12 +6,12 @@ Neume terminé. Dépôt privé jusqu'au lancement.
 
 ## Ce qui ne se discute plus
 
-- **Deux grilles.** Grand : 12 × 12 cases. Petit : 8 × 8, pour les UI denses. Dessinées dans Figma
-  à 2 px par case (pages « 24px » et « 16px »), sur une seule parité par icône ; la parité impaire
-  centre une tige d'une case (`offset` = 1).
-- **Le calage** (`packages/svg/src/render.js`, seule version) : toute taille par pas de 4 de 12 à 64 ; la plus
-  grande version nette qui tient, centrée. 12 → petit ×1 (grand ×1 sans petit) · 16–20 → petit ×2 · 24–32 → ×2 ·
-  36–44 → ×3 · 48–56 → ×4 · 60–64 → ×5. Une case vaut toujours un nombre entier de pixels.
+- **La grille.** Un seul dessin par icône, 12 × 12 cases, dessiné dans Figma à 2 px par case (page
+  « 24px »). Le demi-décalage (`offset` = 1) centre une tige d'une case. Les données 8 × 8 de `icons/`
+  ne sont pas rendues : une gamme mini est envisagée, pas décidée.
+- **Le calage** (`packages/svg/src/render.js`, seule version) : toute taille par pas de 4 de 12 à 64, au
+  facteur exact `size / 12`. Net aux multiples de 12 (une case = un nombre entier de pixels), lissé entre
+  les deux. Une taille quelconque est arrondie vers le bas par `snap`.
 - **La source de vérité** est `icons/*.json`, écrite par `scripts/ingest.mjs` seulement. On ne la
   retouche pas à la main : on corrige dans Figma et on resynchronise (skill `/sync`).
 - **Aucun secret Figma** dans le projet : Claude lit Figma par le Desktop Bridge.
@@ -20,7 +20,7 @@ Neume terminé. Dépôt privé jusqu'au lancement.
 ## Commandes
 
 ```bash
-npm run build   # génère packages/svg et packages/react depuis icons/*.json (fichiers générés, versionnés)
+npm run build   # génère packages/svg, packages/react et le zip du site depuis icons/*.json (fichiers générés, versionnés)
 npm run check   # le vérificateur (+ paquets à jour + smoke test React) : rouge, rien ne sort
 npm run sheet   # la planche de contrôle, sheet/index.html
 ```
@@ -28,8 +28,9 @@ npm run sheet   # la planche de contrôle, sheet/index.html
 ## Paquets
 
 Monorepo npm workspaces : `packages/svg` (`@neume-icons/svg`, le cœur) et `packages/react`
-(`@neume-icons/react`). Ne jamais éditer à la main `packages/svg/src/data.js`, `packages/svg/dist/`
-ni `packages/react/dist/` : `npm run build` les écrit, `npm run check` refuse qu'ils soient périmés.
+(`@neume-icons/react`). Ne jamais éditer à la main `packages/svg/src/data.js`, `packages/svg/dist/`,
+`packages/react/dist/`, `.github/assets/preview.svg` ni `site/public/neume-svg-24.zip` (le zip du bouton
+« Download all » de la page Docs) : `npm run build` les écrit, `npm run check` refuse qu'ils soient périmés.
 Le React importe le cœur par `@neume-icons/svg/render` (aucune donnée tirée). Pas de `npm publish` ici.
 
 ## Sortir une version
