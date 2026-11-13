@@ -20,10 +20,19 @@ type DialogProps = {
    * rognant ses coins — le contenu pose le sien : la palette de commandes. `none` : l'enveloppe nue.
    */
   surface?: "panel" | "flush" | "none";
-  /** La largeur du panneau. `sm` : 400 px au plus. `mid` : 440 px au plus. `md` : 560 px au plus. `lg` : celle du contenu. Sans effet en `none`. */
+  /** La largeur du panneau, et celle du volet. `sm` : 400 px au plus. `mid` : 440 px au plus. `md` : 560 px au plus. `lg` : celle du contenu. Sans effet en `none`. */
   width?: "sm" | "mid" | "md" | "lg";
-  /** Où se pose la couche. `center` : au milieu de la fenêtre. `top` : à `--size-dialog-top-offset` du haut, un peu au-dessus du milieu. */
-  placement?: "center" | "top";
+  /**
+   * Où se pose la couche. `center` : au milieu de la fenêtre. `top` : à `--size-dialog-top-offset` du haut, un peu
+   * au-dessus du milieu. `right` : le volet, collé au bord droit, pleine hauteur, une bande de 64 px laissée à gauche ;
+   * il entre couché, depuis la droite. En `right`, `surface` est sans effet : le volet a sa forme.
+   */
+  placement?: "center" | "top" | "right";
+  /**
+   * Ce qui couvre la page derrière la couche. `scrim` : le voile sombre. `blur` : la page floutée et pâlie, dans la
+   * couleur de la page ; le voile sombre sous `prefers-reduced-transparency`.
+   */
+  veil?: "scrim" | "blur";
   /** Ce qui couvre la fenêtre au-dessus de la couche, hors de l'enveloppe qui entre : les confettis de la carte. */
   overlay?: ReactNode;
   children: ReactNode;
@@ -122,7 +131,11 @@ function mountDialog(dialog: HTMLDialogElement, envelope: HTMLDivElement, hooks:
     }
     closing = true;
     dialog.dataset.state = "closing";
-    const ms = parseFloat(getComputedStyle(html).getPropertyValue(CLOSING.slice(4, -1))) || 0;
+    /* En secondes comme en millisecondes : le minifieur réécrit `200ms` en `.2s`. Lue en millisecondes seules
+     * jusqu'au 2026-11-13, la valeur donnait 0,2 ms, et la sortie était coupée net. */
+    const value = getComputedStyle(html).getPropertyValue(CLOSING.slice(4, -1)).trim();
+    const amount = parseFloat(value) || 0;
+    const ms = value.endsWith("ms") ? amount : amount * 1000;
     timer = window.setTimeout(() => {
       dialog.close();
       finish(false);
@@ -158,7 +171,17 @@ function mountDialog(dialog: HTMLDialogElement, envelope: HTMLDivElement, hooks:
     { signal },
   );
 
-  dialog.addEventListener("close", () => finish(!closing), { signal });
+  /* L'événement `close` est une tâche mise en file par le navigateur, pas un appel : s'il arrive quand le
+   * dialogue a été rouvert entre-temps, il parle de la fermeture d'avant et ne ferme rien. Vu le 2026-11-13 au
+   * navigateur de test, dont la page cachée retardait la tâche : sans ce garde, la couche rouverte perdait son
+   * état et son contenu en restant ouverte. */
+  dialog.addEventListener(
+    "close",
+    () => {
+      if (!dialog.open) finish(!closing);
+    },
+    { signal },
+  );
 
   return {
     open,
@@ -255,6 +278,34 @@ function mountDialog(dialog: HTMLDialogElement, envelope: HTMLDivElement, hooks:
  * (393 px dans 408 utiles ; elles ne tiennent pas dans les 366 de `sm`). Même règle que les autres : la fenêtre
  * moins les gouttières en dessous. Les valeurs par défaut sont celles d'avant.
  *
+ * LE VOLET ET LE VOILE FLOUTÉ, LE 2026-11-13 (`extend`, spec `docs/specs/2026-11-13-menu-lateral-design.md`), pour
+ * que le menu mobile de `NavBar` COMPOSE `Dialog` au lieu d'en écrire une copie. Choix de Florian sur un prototype
+ * tapable à 375 px : l'option B, « volet + flou », et l'animation 1, « comme Dialog » — le glissé sec de tout le
+ * bord en 200 ms, « trop rapide, ça pop », écarté. Deux options, et les défauts sont ceux d'avant : rien ne bouge
+ * pour les appelants existants, leur HTML est le même.
+ *
+ *   `placement="right"` : le VOLET. Collé au bord droit, pleine hauteur ; à gauche, une bande de 64 px (`pl-16`,
+ *   la hauteur de la barre) laisse voir la page, et un appui y ferme, comme sur tout voile. Sa largeur est celle du
+ *   panneau (`width`, `sm` par défaut : la fenêtre moins la bande, 400 px au plus). Sa forme est la sienne et
+ *   `surface` n'y fait rien : la page en fond (`--color-surface`), un filet à gauche (`--border-thin` en
+ *   `--color-border-subtle`, décoratif), aucun rayon, aucune ombre, aucun padding — le contenu pose le sien. Trop
+ *   haut, il défile en lui-même (`overflow-y-auto overscroll-contain`). Il entre au MÊME GESTE que le panneau,
+ *   COUCHÉ : `--lift-reveal` vers la droite au lieu du bas, le même fondu, le même flou de `--blur-reveal`, les
+ *   mêmes 700 ms, la même sortie en 200 ms. Le mouvement réduit le ramène à rien par les mêmes tokens.
+ *
+ *   `veil="blur"` : la page derrière est FLOUTÉE ET PÂLIE, pas assombrie — `--blur-dialog-veil` (6 px) et
+ *   `--color-surface` à `--opacity-dialog-veil` (40 %), un `color-mix()` comme le voile du bas de fenêtre, qui suit
+ *   donc le thème. Les deux jetons sont neufs : `--blur-veil` (1,5 px) est le voile du bas de fenêtre, un autre
+ *   usage. Une `@utility` de `globals.css`, `dialog-veil-blur`, les porte, la loi 1 refusant un `color-mix()` en
+ *   valeur arbitraire. Le voile entre en `--duration-slow` et sort en `--duration-base`, la durée que le cycle
+ *   attend avant `close()` ; c'est son opacité qui le fait entrer, et elle porte le flou avec la couleur. Sous
+ *   `prefers-reduced-transparency: reduce`, l'utilitaire rend le voile sombre, `--color-scrim`, sans flou.
+ *   `scrim`, le défaut, est le voile d'avant, inchangé.
+ *
+ *   Deux corrections du cycle, le même jour, trouvées en vérifiant le volet : la durée de sortie est lue en
+ *   secondes comme en millisecondes (le minifieur écrit `.2s`, lue `0.2` ms la sortie était coupée net), et un
+ *   `close` arrivé en retard sur un dialogue rouvert est ignoré.
+ *
  * LE FOCUS EST NATIF. `showModal()` le donne au premier contrôle du contenu — la croix, dans les deux
  * panneaux —, et aucune ligne ne le déplace : c'est la décision de Florian du 2026-08-14 pour
  * l'ancienne `Popin`, reprise par `ShareButton` (un `focus()` posé par script sur le panneau peignait
@@ -286,6 +337,7 @@ export function Dialog({
   surface = "panel",
   width = "sm",
   placement = "center",
+  veil = "scrim",
   overlay,
   label,
   labelledBy,
@@ -326,8 +378,15 @@ export function Dialog({
     else lifecycle.current?.close();
   }, [open]);
 
-  const framed = surface !== "none";
+  const side = placement === "right";
+  const framed = !side && surface !== "none";
   const padded = surface === "panel";
+  const widthClass = {
+    sm: "w-full max-w-[var(--size-share-panel-width)]",
+    mid: "w-full max-w-[var(--size-dialog-width-mid)]",
+    md: "w-full max-w-[var(--size-dialog-width-md)]",
+    lg: "max-w-full",
+  }[width];
 
   return (
     <dialog
@@ -336,22 +395,35 @@ export function Dialog({
       aria-labelledby={labelledBy}
       className={cn(
         "group fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-hidden bg-transparent",
-        framed ? "p-[var(--layout-gutter)]" : "p-0",
+        /* Le volet laisse à gauche une bande de 64 px, la hauteur de la barre : la page s'y voit, et un appui y ferme. */
+        side ? "p-0 pl-16" : framed ? "p-[var(--layout-gutter)]" : "p-0",
         placement === "top" && "pt-[var(--size-dialog-top-offset)]",
         /* `hidden` en base, `open:flex` par-dessus. */
-        "hidden justify-center open:flex",
-        placement === "top" ? "items-start" : "items-center",
-        "backdrop:bg-scrim backdrop:opacity-0 data-[state=open]:backdrop:opacity-100",
-        "backdrop:transition-opacity backdrop:duration-[var(--duration-base)] backdrop:ease-out",
+        side ? "hidden justify-end open:flex" : "hidden justify-center open:flex",
+        side ? "items-stretch" : placement === "top" ? "items-start" : "items-center",
+        veil === "blur"
+          ? [
+              /* Le voile flouté entre en `--duration-slow` et sort en `--duration-base`, la durée que le cycle
+               * attend avant `close()`. L'opacité du voile porte aussi son flou. */
+              "backdrop:dialog-veil-blur backdrop:opacity-0 data-[state=open]:backdrop:opacity-100",
+              "backdrop:transition-opacity backdrop:duration-[var(--duration-slow)] backdrop:ease-out",
+              "data-[state=closing]:backdrop:duration-[var(--duration-base)]",
+            ]
+          : [
+              "backdrop:bg-scrim backdrop:opacity-0 data-[state=open]:backdrop:opacity-100",
+              "backdrop:transition-opacity backdrop:duration-[var(--duration-base)] backdrop:ease-out",
+            ],
       )}
     >
       <div
         ref={envelope}
         className={cn(
           "flex flex-col",
-          /* Fermée : sous sa place, floue, transparente. Ouverte : à `none`, jamais à une valeur
-           * identité. La sortie reprend le chemin en sens inverse, en `--duration-base`. */
-          "translate-y-[var(--lift-reveal)] opacity-0 blur-[var(--blur-reveal)]",
+          /* Fermée : sous sa place — à sa droite pour le volet, le geste couché —, floue, transparente.
+           * Ouverte : à `none`, jamais à une valeur identité. La sortie reprend le chemin en sens inverse,
+           * en `--duration-base`. */
+          side ? "translate-x-[var(--lift-reveal)]" : "translate-y-[var(--lift-reveal)]",
+          "opacity-0 blur-[var(--blur-reveal)]",
           "transition-[opacity,translate,filter] duration-[var(--duration-reveal)] ease-out",
           "group-data-[state=open]:translate-none group-data-[state=open]:opacity-100 group-data-[state=open]:filter-none",
           "group-data-[state=closing]:duration-[var(--duration-base)]",
@@ -360,10 +432,14 @@ export function Dialog({
             padded ? "overflow-y-auto overscroll-contain" : "overflow-hidden",
             "rounded-2xl border-[length:var(--border-thin)] border-share-border bg-surface text-text-primary shadow-elevation-lg",
             padded && "p-4",
-            width === "sm" && "w-full max-w-[var(--size-share-panel-width)]",
-            width === "mid" && "w-full max-w-[var(--size-dialog-width-mid)]",
-            width === "md" && "w-full max-w-[var(--size-dialog-width-md)]",
-            width === "lg" && "max-w-full",
+            widthClass,
+          ],
+          /* Le volet : la page en fond, un filet à gauche, aucun rayon, aucune ombre, aucun padding — le contenu
+           * pose le sien. Pleine hauteur ; s'il est trop haut, il défile en lui-même. */
+          side && [
+            "h-full overflow-y-auto overscroll-contain",
+            "border-l-[length:var(--border-thin)] border-border-subtle bg-surface text-text-primary",
+            widthClass,
           ],
         )}
       >

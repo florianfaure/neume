@@ -698,6 +698,23 @@
   --size-dialog-top-offset: 15vh;
   --size-command-palette-results-height: 340px;
 
+  /* DELTA 2026-11-13 — le voile flouté de `Dialog` (`veil="blur"`), pour le volet du menu mobile de `NavBar`
+   * (spec `2026-11-13-menu-lateral-design`). Choix de Florian sur un prototype à 375 px, l'option B : derrière le
+   * volet, la page est FLOUTÉE ET PÂLIE, pas assombrie. Les deux sont portés par `@utility dialog-veil-blur` de
+   * `globals.css`, que `Dialog` pose sur son `::backdrop`.
+   *
+   * `--blur-dialog-veil` est le flou de la page derrière, 6 px, dans la famille `--blur-` de `--blur-reveal` et de
+   * `--blur-veil`. CE N'EST PAS `--blur-veil` : celui-là est le voile du bas de fenêtre, 1,5 px au plus, un autre
+   * usage. Une amplitude d'état, que `prefers-reduced-motion` n'a pas à ramener — rien ne bouge, le voile fond en
+   * opacité ; ce qui le retire est `prefers-reduced-transparency`, où l'utilitaire rend `--color-scrim` sans flou.
+   *
+   * `--opacity-dialog-veil` est la part de `--color-surface` dans le voile, 40 %. En pourcentage, comme
+   * `--opacity-veil`, pour la même raison : `color-mix()` n'accepte qu'un pourcentage. AUCUN TOKEN DE COULEUR NEUF :
+   * le voile lit `--color-surface` et suit donc le thème sans être redéclaré dans le bloc sombre — blanc en clair,
+   * noir en sombre, au même 40 %. Rien n'est écrit sur lui : aucune paire de contraste. */
+  --blur-dialog-veil: 6px;
+  --opacity-dialog-veil: 40%;
+
   /* DELTA 2026-11-11 — `FeatureCard` (spec `2026-11-11-lot-4-composites-design` § 2.2).
    * `--size-feature-card-height` : 400 px, la hauteur minimale de la carte ; `--size-feature-card-scene-height` :
    * 240 px, celle de la zone de scène, où le contenu est centré. Des planchers : la carte grandit avec sa scène, et

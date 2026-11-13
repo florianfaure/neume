@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/cn";
 
 interface NavBarProps {
@@ -17,7 +18,7 @@ interface NavBarProps {
   brandHref?: string;
   /** Le nom accessible du `<nav>` (« Main »). Requis : une page peut porter plusieurs repères de navigation. */
   label: string;
-  /** Les liens de navigation : des `NavItem`. Au-dessus de `md` dans la barre, dessous dans le panneau du menu. */
+  /** Les liens de navigation : des `NavItem`. Au-dessus de `md` dans la barre, dessous dans le volet du menu. */
   children: ReactNode;
   /** Le contenu libre à droite — un `Button` ghost, un `ThemeSelector`. Même sort que `children` sous `md`. */
   actions?: ReactNode;
@@ -26,9 +27,9 @@ interface NavBarProps {
    * glisse hors de l'écran quand on descend et revient quand on remonte ; voir la docstring.
    */
   behavior?: "static" | "auto-hide";
-  /** Le nom accessible du bouton qui ouvre le panneau mobile. */
+  /** Le nom accessible du bouton qui ouvre le volet mobile, et celui du volet. */
   menuLabel?: string;
-  /** Le nom accessible du même bouton, panneau ouvert. */
+  /** Le nom accessible de la croix qui ferme le volet. */
   closeLabel?: string;
   /**
    * `window` (défaut) : la rangée va d'un bord de la fenêtre à l'autre, à la gouttière près. `content` : elle
@@ -51,18 +52,31 @@ const HYSTERESIS = 24;
  * droite. Créée le 2026-11-11 (lot 2 du site de Neume, spec `docs/specs/2026-11-11-lot-2-navigation-design.md`
  * § 2.2), `create`, sans benchmark Mobbin (en pause) ; le prototype validé est `protos/lot2`, cadre de
  * droite — celui avec le filet. COPIÉE SUR `Announcement` pour le défilement (le même `requestAnimationFrame`, un seuil de
- * 4 px alors — voir l'hystérésis plus bas), sur `Dialog` pour le clavier du panneau (Échap, focus qui part et revient).
+ * 4 px alors — voir l'hystérésis plus bas). Le volet mobile COMPOSE `Dialog` depuis le 2026-11-13 (voir plus bas).
  *
  * UN `<header>` ET UN `<nav>` NOMMÉ. Le `<header>` porte la barre ; le `<nav aria-label={label}>` ne porte
  * que les `NavItem`, et les actions sont à côté de lui, pas dedans : un `ThemeSelector` n'est pas un lien
  * de navigation. Le nom est requis, sans défaut — une page peut porter deux repères, un anonyme ne se
  * distingue d'aucun autre (la raison de `label` sur `Tab`).
  *
- * UN SEUL JEU DE NŒUDS POUR LES DEUX MISES EN PAGE. Les `children` et les `actions` ne sont rendus
- * qu'UNE fois. Au-dessus de `md`, leur enveloppe est en `display: contents` et ils se rangent dans la
- * barre ; dessous, l'enveloppe devient le PANNEAU, posé sous la barre. Dupliquer les liens (une rangée
- * de barre, une rangée de panneau) aurait doublé chaque lien pour l'assistance, ou demandé un second
- * repère de navigation ; ici le CSS fait seul la différence, et un lien a un seul nœud.
+ * UN SEUL EXEMPLAIRE MONTÉ. Les `children` et les `actions` ne sont montés qu'à UN endroit à la fois : dans la
+ * rangée de la barre tant que le volet est fermé — au-dessus de `md` ils s'y rangent, dessous la rangée les cache —,
+ * et dans le volet de son ouverture jusqu'à `onClosed`, pour que la sortie animée garde son contenu. Ils sont donc
+ * remontés à chaque ouverture et à chaque fermeture. Le volet est un `<dialog>` dans le top layer : les liens ne
+ * peuvent plus y entrer par `display: contents`, comme ils entraient dans l'ancien panneau.
+ *
+ * LE DOUBLE RENDU A ÉTÉ ÉCARTÉ, et c'est `ThemeSelector` qui l'a écarté. Rendre les deux copies en permanence — la
+ * rangée de barre, et le volet dans son `<dialog>` fermé — ne doublait rien pour l'assistance : un `<dialog>` fermé
+ * est en `display: none`, hors de l'arbre d'accessibilité, et volet ouvert la rangée est cachée sous `md` et inerte
+ * derrière `showModal()`. Mais `ThemeSelector` écrit `name="theme"` en dur (il se dit « à exemplaire unique »), et
+ * les radios se groupent par document, par nom et par formulaire, pas par endroit d'affichage : le top layer n'y
+ * change rien. Testé au navigateur le 2026-11-13, deux groupes `name="theme"`, l'un dans la barre, l'autre dans un
+ * `<dialog>` : dès l'analyse du HTML, les deux « light » cochés, le dernier gagne et les deux radios de la barre sont
+ * décochées ; un clic sur « dark » dans le dialogue la laisse vide, avant comme après sa fermeture. Le recalage de
+ * `ThemeSelector`, qui coche la bonne radio au montage de chaque copie, ferait la même chose — la copie du volet
+ * passe en dernier. Sur neume.dev, dont la barre porte un `ThemeSelector`, le sélecteur au-dessus de `md` n'aurait
+ * eu ni pastille ni glyphe plein sur aucune page. Décision de Florian du 2026-11-13 : un seul exemplaire monté, et
+ * `ThemeSelector` ne bouge pas — remonté, il se recale sur `html[data-theme]`.
  *
  * LE FOND : AUCUN EN HAUT DE PAGE, LA PAGE ET UN FILET QUAND ELLE REVIENT, JAMAIS D'OMBRE — décisions de
  * Florian du 2026-11-11, sur deux versions du prototype (le filet de droite contre une ombre de gauche :
@@ -80,7 +94,7 @@ const HYSTERESIS = 24;
  * se mesure depuis le DERNIER EXTRÊME du sens courant : le point le plus bas atteint quand elle est partie, le
  * plus haut quand elle est là. Un va-et-vient de moins de 24 px ne la fait plus bouger. Le fond et le filet de
  * « la page a défilé » gardent leur seuil de 4 px : ce sont un état, pas un mouvement de la barre.
- * Elle ne part JAMAIS panneau ouvert, et elle revient quand le focus y entre — un lien caché mais
+ * Elle ne part JAMAIS volet ouvert, et elle revient quand le focus y entre — un lien caché mais
  * tabulable serait un focus sur du vide. Sous `prefers-reduced-motion`, `globals.css` ramène les durées
  * à 1 ms : elle saute au lieu de glisser. Elle n'enveloppe que son propre mouvement : aucune largeur,
  * aucune gouttière de page n'est imposée en dehors du padding horizontal de `--layout-gutter` (voir
@@ -95,17 +109,29 @@ const HYSTERESIS = 24;
  * défaut `0px` est déclaré une fois, dans `semantic.css`, et c'est lui qui rend la pastille indifférente à
  * une page sans barre. Aucun contexte React, aucune ref partagée, aucune prop de plus à `Announcement`.
  *
- * LE PANNEAU MOBILE (sous `md`, le seul seuil du système). Un `Button` ghost en icône, `menu`, qui devient
- * `close` — `aria-expanded`, et la bulle du `Button` icône pour nom. Il déroule sous la barre un panneau
- * de la couleur de la page : les liens puis, séparées par un filet, les actions. La découpe qui descend
- * est le geste du prototype (`clip-nav-panel-closed` → `-open`, deux `@utility` de `globals.css`). FERMÉ,
- * il est `invisible` : il sort de l'ordre de tabulation et de l'arbre d'accessibilité sans `inert`, que
- * le CSS ne sait pas poser à un seul régime de largeur. Il se ferme au choix d'un lien, à Échap — le
- * focus revient alors au bouton —, à la croix, et quand la fenêtre repasse au-dessus de `md`.
- * À L'OUVERTURE LE FOCUS VA AU PREMIER LIEN DU PANNEAU et non au panneau : un conteneur focalisé au
- * script reçoit l'anneau de `:focus-visible` en entier — le défaut que Florian a fait retirer des
- * panneaux de `Tab` — et la loi 4 interdit de le faire taire. Le premier lien est le premier arrêt de
- * tabulation que le panneau aurait donné de toute façon.
+ * LE VOLET MOBILE (sous `md`, le seul seuil du système), DU 2026-11-13 (`refine`, spec
+ * `docs/specs/2026-11-13-menu-lateral-design.md`). Le panneau qui se déroulait sous la barre « se lisait comme
+ * une partie de la page » ; Florian a voulu une rupture nette, et choisi sur un prototype tapable à 375 px l'option
+ * B, « volet + flou », et l'animation 1, « comme Dialog » — le glissé sec, « trop rapide, ça pop », écarté. Un
+ * `Button` ghost en icône, `menu`, porte `aria-expanded` et la bulle du `Button` icône pour nom ; il ouvre un
+ * `Dialog` en `placement="right"` et `veil="blur"`, nommé `menuLabel` : un volet pleine hauteur collé au bord
+ * droit, la page floutée et pâlie derrière, une bande de 64 px à gauche. La mécanique est celle de `Dialog`, et
+ * aucune ligne ne la recopie : le piège de focus, l'inertie de la page, Échap, le geste retour, la fermeture au
+ * voile (un appui sur la bande), le verrou de défilement de la racine, l'entrée couchée et la sortie, le focus rendu
+ * au bouton menu. Le focus scripté vers le premier lien et l'écouteur d'Échap de la barre sont partis avec le
+ * panneau.
+ *
+ *   LE VOLET, DE HAUT EN BAS : une rangée de tête de 64 px, la hauteur de la barre — le signe de la marque à
+ *   gauche, rendu en DÉCOR (`aria-hidden`, pas un lien : le lien d'accueil est celui de la barre), et la croix à
+ *   droite, un `Button` ghost en icône `close` nommé `closeLabel`, exactement à la place du bouton menu ; puis les
+ *   liens en colonne, un filet (`--border-thin` en `--color-border-subtle`), et les actions en colonne, alignées à
+ *   gauche, gouttière `--layout-gutter`. Le signe étant un décor, `showModal()` donne le focus à la croix. Le
+ *   `<nav>` du volet porte le même nom que celui de la barre : un seul des deux est monté à la fois.
+ *
+ *   IL SE FERME au choix d'un lien (un écouteur de clic posé dans un effet, `jsx-a11y` refusant un gestionnaire sur
+ *   un conteneur), à la croix, à Échap, au geste retour, à un appui sur la bande, et quand la fenêtre repasse
+ *   au-dessus de `md`. La barre ne prend plus la page ni ne perd son filet volet ouvert : elle ne porte plus rien
+ *   sous elle.
  *
  * LA RANGÉE PEUT S'ALIGNER SUR LE CONTENU (`align`, 2026-11-12, `extend`, retour de Florian : sur neume.dev le
  * contenu est centré à 1440 px au plus et la barre restait collée aux bords de la fenêtre). `window` (défaut) :
@@ -113,11 +139,11 @@ const HYSTERESIS = 24;
  * `--size-nav-bar-content-width` (1440 px), la gouttière restant la sienne. Une variante fermée et un token,
  * pas une largeur libre (loi 8, loi 11). Seule la rangée est plafonnée : le `<header>` — son fond et son filet
  * — va toujours d'un bord à l'autre, sans quoi le contenu qui défile apparaîtrait de part et d'autre de la
- * barre. Le panneau mobile (sous `md`) reste pleine largeur, le plafond n'y est jamais atteint.
+ * barre. Le volet mobile (sous `md`) ne connaît pas ce plafond : il a sa largeur, celle de `Dialog`.
  *
- * COMPOSANT CLIENT (`runtime: "client"`) : état propre (ouvert, défilé, caché), effets (le défilement, la
- * touche Échap, la requête de largeur), refs (le focus du bouton et du panneau), et l'écriture d'une
- * propriété sur `<html>`.
+ * COMPOSANT CLIENT (`runtime: "client"`) : état propre (ouvert, monté dans le volet, défilé, caché), effets (le
+ * défilement, la requête de largeur, le clic d'un lien du volet, le focus qui entre), refs, un `Dialog` contrôlé,
+ * et l'écriture d'une propriété sur `<html>`.
  *
  * Histoire : `docs/history/nav-bar.md`.
  */
@@ -134,9 +160,11 @@ export function NavBar({
   align = "window",
 }: NavBarProps) {
   const header = useRef<HTMLElement>(null);
-  const menu = useRef<HTMLDivElement>(null);
-  const panel = useRef<HTMLDivElement>(null);
+  const sheet = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  /* Où sont montés les liens et les actions : dans la rangée de la barre, ou dans le volet — de son ouverture
+   * jusqu'à `onClosed` (voir « UN SEUL EXEMPLAIRE MONTÉ »). */
+  const [inSheet, setInSheet] = useState(false);
   const [over, setOver] = useState(false);
   const [hidden, setHidden] = useState(false);
   /* Le miroir de `hidden`, lu par l'écouteur de défilement sans qu'il se réarme à chaque changement. */
@@ -147,10 +175,9 @@ export function NavBar({
   }, []);
 
   const autoHide = behavior === "auto-hide";
-  /* Jamais cachée panneau ouvert : le panneau est posé sous la barre, et une barre partie le laisserait sans ancre. */
+  /* Jamais cachée volet ouvert : la croix du volet est posée à la place de son bouton menu. */
   const away = autoHide && hidden && !open;
-  const filled = (autoHide && over) || open;
-  const ruled = autoHide && over && !open;
+  const filled = autoHide && over;
 
   useEffect(() => {
     if (!autoHide) return;
@@ -214,7 +241,7 @@ export function NavBar({
     };
   }, [autoHide]);
 
-  /* Le panneau n'existe que sous `md` : la fenêtre qui repasse au-dessus le ferme. 768 px réplique
+  /* Le volet n'existe que sous `md` : la fenêtre qui repasse au-dessus le ferme. 768 px réplique
    * `--breakpoint-md`, comme les seuils de `globals.css` : si le breakpoint change, celui-ci avec lui. */
   useEffect(() => {
     if (!open) return;
@@ -226,55 +253,33 @@ export function NavBar({
     return () => query.removeEventListener("change", onChange);
   }, [open]);
 
-  /* À l'ouverture, le focus va au premier lien du panneau (voir la docstring) ; à la fermeture, il n'est
-   * rendu au bouton que par Échap et par la croix, jamais par le choix d'un lien, qui navigue. */
-  useEffect(() => {
-    if (!open) return;
-    /* Une image plus tard : au premier instant de la transition, `visibility` vaut encore sa valeur de
-     * départ, `hidden`, et un élément caché ne reçoit pas le focus. */
-    const frame = requestAnimationFrame(() => {
-      panel.current?.querySelector<HTMLElement>("a, button")?.focus();
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [open]);
-
-  const focusMenuButton = () => menu.current?.querySelector("button")?.focus();
-
-  const close = () => {
-    setOpen(false);
-    focusMenuButton();
-  };
-
-  /* Échap, le choix d'un lien et le focus qui entre sont des écouteurs posés dans un effet, et non des
-   * props `onKeyDown`, `onClick` et `onFocus` sur le `<header>` et le panneau : ce sont des conteneurs, pas des
-   * contrôles, et `jsx-a11y` refuse à raison un gestionnaire sur un élément non interactif. */
+  /* Le choix d'un lien du volet le ferme, et le focus qui entre dans la barre la fait revenir : des écouteurs
+   * posés dans un effet, et non des props `onClick` et `onFocus` sur le volet et le `<header>` — ce sont des
+   * conteneurs, pas des contrôles, et `jsx-a11y` refuse à raison un gestionnaire sur un élément non interactif. */
   useEffect(() => {
     const bar = header.current;
-    const sheet = panel.current;
-    if (!bar || !sheet) return;
+    const body = sheet.current;
+    if (!bar || !body) return;
 
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape" && open) {
-        event.stopPropagation();
-        close();
-      }
-    };
-    const onPanelClick = (event: MouseEvent) => {
+    const onSheetClick = (event: MouseEvent) => {
       if (event.target instanceof Element && event.target.closest("a")) setOpen(false);
     };
     const onFocusIn = () => {
       if (autoHide) setAway(false);
     };
 
-    bar.addEventListener("keydown", onKeyDown);
-    sheet.addEventListener("click", onPanelClick);
+    body.addEventListener("click", onSheetClick);
     bar.addEventListener("focusin", onFocusIn);
     return () => {
-      bar.removeEventListener("keydown", onKeyDown);
-      sheet.removeEventListener("click", onPanelClick);
+      body.removeEventListener("click", onSheetClick);
       bar.removeEventListener("focusin", onFocusIn);
     };
-  });
+  }, [autoHide, setAway]);
+
+  const openSheet = () => {
+    setInSheet(true);
+    setOpen(true);
+  };
 
   return (
     <header
@@ -286,7 +291,7 @@ export function NavBar({
           "transition-[translate,background-color,border-color] duration-[var(--duration-base)] ease-out",
         away && "-translate-y-full",
         filled ? "bg-surface" : "bg-transparent",
-        ruled ? "border-border-subtle" : "border-transparent",
+        filled ? "border-border-subtle" : "border-transparent",
       )}
     >
       <div
@@ -308,44 +313,69 @@ export function NavBar({
           {brand}
         </a>
 
-        <div ref={menu} className="ml-auto flex items-center md:hidden">
+        <div className="ml-auto flex items-center md:hidden">
           <Button
             variant="ghost"
             content="icon"
-            icon={open ? "close" : "menu"}
-            label={open ? closeLabel : menuLabel}
+            icon="menu"
+            label={menuLabel}
             expanded={open}
-            onClick={() => (open ? close() : setOpen(true))}
+            onClick={openSheet}
           />
         </div>
 
-        <div
-          ref={panel}
-          className={cn(
-            "flex flex-col md:contents",
-            "max-md:absolute max-md:inset-x-0 max-md:top-full max-md:gap-2 max-md:bg-surface max-md:p-4",
-            "max-md:border-b-[length:var(--border-thin)] max-md:border-border-subtle",
-            "max-md:transition-[clip-path,visibility] max-md:duration-[var(--duration-base)] max-md:ease-out",
-            open
-              ? "max-md:visible max-md:clip-nav-panel-open"
-              : "max-md:invisible max-md:clip-nav-panel-closed",
-          )}
-        >
-          <nav aria-label={label} className="flex flex-col md:flex-row">
-            {children}
-          </nav>
-          {actions ? (
-            <div
-              className={cn(
-                "flex items-center gap-2 md:ml-auto",
-                "max-md:mt-2 max-md:border-t-[length:var(--border-thin)] max-md:border-border-subtle max-md:pt-4",
-              )}
+        {/* Volet fermé, les liens et les actions sont ici : rangés dans la barre au-dessus de `md`, cachés dessous. */}
+        {inSheet ? null : (
+          <div className="hidden md:contents">
+            <nav aria-label={label} className="flex flex-row">
+              {children}
+            </nav>
+            {actions ? <div className="ml-auto flex items-center gap-2">{actions}</div> : null}
+          </div>
+        )}
+      </div>
+
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+        onClosed={() => setInSheet(false)}
+        placement="right"
+        veil="blur"
+        label={menuLabel}
+      >
+        <div ref={sheet} className="flex flex-col">
+          <div className="flex h-16 shrink-0 items-center justify-between px-[var(--layout-gutter)]">
+            <span
+              aria-hidden="true"
+              className="inline-flex h-[var(--size-touch-target)] items-center"
             >
-              {actions}
+              {brand}
+            </span>
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                content="icon"
+                icon="close"
+                label={closeLabel}
+                onClick={() => setOpen(false)}
+              />
+            </div>
+          </div>
+          {/* Volet ouvert, les liens et les actions sont ici, et plus dans la barre. */}
+          {inSheet ? (
+            <div className="flex flex-col gap-4 px-[var(--layout-gutter)] pt-2 pb-8">
+              <nav aria-label={label} className="flex flex-col">
+                {children}
+              </nav>
+              {actions ? (
+                <div className="flex flex-col items-start gap-2 border-t-[length:var(--border-thin)] border-border-subtle pt-4">
+                  {actions}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
-      </div>
+      </Dialog>
     </header>
   );
 }

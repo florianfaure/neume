@@ -33,9 +33,10 @@ interface FooterProps {
    */
   social?: { label: string; href: string; icon: IconName }[];
   /**
-   * `columns` seulement : la pièce de fin, sous la ligne du bas — un grand signe, un mot. Le composant
-   * la centre, la coupe à 160 px de haut et la fait monter quand on arrive en bas de la page ; sa
-   * taille est celle de son contenu. Ignorée en `line`.
+   * La pièce de fin, sous la ligne du bas — un grand signe, un mot. Le composant la centre, la coupe à
+   * 160 px de haut et la fait monter quand on arrive en bas de la page ; sa taille est celle de son
+   * contenu. Dans les deux formes : en `line`, sous la ligne, à 48 px d'elle, de la même zone et de la
+   * même montée qu'en `columns`.
    */
   display?: ReactNode;
   /**
@@ -77,7 +78,7 @@ interface FooterProps {
  * confrontée au manifeste par `npm run check` (loi 11).
  *
  * `newsletter`, `social` et `display` (2026-11-11, spec § 4, après la première validation ; `extend`) sont
- * trois ajouts facultatifs de `columns`. `newsletter` est une place sous la phrase : le composant n'en
+ * trois ajouts facultatifs de `columns` ; `display` l'est aussi de `line` depuis le 2026-11-13 (voir plus bas). `newsletter` est une place sous la phrase : le composant n'en
  * rend que le conteneur, le champ vient de l'appelant (aucun champ brut ici, loi 9). `social` est une
  * rangée de `Button` ghost en icône seule, la bulle de `Tooltip` portant le `label`, nouvel onglet ;
  * les cibles de 44 px débordent de 4 px, `gap-2` les empêche de se recouvrir (loi 5). La ligne du bas
@@ -90,7 +91,11 @@ interface FooterProps {
  * `columns`, dernier élément de la colonne de gauche, sous la phrase, `newsletter` et les réseaux. Absent, rien
  * ne change dans l'une ni dans l'autre. Il n'est pas ignoré en `line`, à l'inverse de `newsletter`.
  *
- * LA PIÈCE DE FIN, `display`, EST POSÉE ET COUPÉE, JAMAIS DIMENSIONNÉE. Sa taille vient de son contenu —
+ * LA PIÈCE DE FIN, `display`, EST POSÉE ET COUPÉE, JAMAIS DIMENSIONNÉE. EN `line` COMME EN `columns` (2026-11-13,
+ * `extend`, retour de Florian : neume.dev passe en `line` et garde le grand signe) : en `line`, elle se pose SOUS la
+ * ligne, à 48 px d'elle (`gap-12`, celui de `columns`), dans exactement la même zone et la même montée — un seul
+ * bloc, `displayZone`, partagé par les deux formes plutôt que recopié. Sans `display`, `line` reste `<footer>{line}</footer>`,
+ * sans une classe : le pied du portfolio ne bouge pas d'un pixel. Sa taille vient de son contenu —
  * l'appelant sait quel signe il pose, et à quelle taille. Le composant ne fait que trois choses :
  * il la centre, il la COUPE À 160 PX DE HAUT (`h-40`, le pas `space-40` ; la zone coupée, c'est ça) et
  * il la fait monter. Le contenu est aligné sur le HAUT de la zone et déborde vers le bas, où
@@ -123,6 +128,12 @@ export function Footer({
   display,
   action,
 }: FooterProps) {
+  const displayZone = display ? (
+    <div className="footer-display-zone h-40 overflow-hidden">
+      <div className="footer-display-rise flex h-full justify-center">{display}</div>
+    </div>
+  ) : null;
+
   const line = (
     <div
       className={cn(
@@ -143,7 +154,15 @@ export function Footer({
     </div>
   );
 
-  if (variant === "line") return <footer>{line}</footer>;
+  if (variant === "line") {
+    if (!displayZone) return <footer>{line}</footer>;
+    return (
+      <footer className="flex flex-col gap-12">
+        {line}
+        {displayZone}
+      </footer>
+    );
+  }
 
   return (
     <footer className="flex flex-col gap-12">
@@ -205,11 +224,7 @@ export function Footer({
         </div>
       </div>
       {line}
-      {display ? (
-        <div className="footer-display-zone h-40 overflow-hidden">
-          <div className="footer-display-rise flex h-full justify-center">{display}</div>
-        </div>
-      ) : null}
+      {displayZone}
     </footer>
   );
 }
