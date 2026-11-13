@@ -143,7 +143,7 @@ describe("POST /api/request", () => {
     expect(payload.title).toBe("Icon request: arrow-up");
     expect(payload.labels).toEqual(["icon-request"]);
     expect(payload.body).toContain("Go up");
-    expect(payload.body).toContain("<https://example.com/i>");
+    expect(payload.body).toContain("`https://example.com/i`");
   });
 
   it("stores a stripped image and links it", async () => {

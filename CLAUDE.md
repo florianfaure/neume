@@ -76,7 +76,9 @@ décodage), la range dans le bucket R2 `neume-requests` et crée l'issue (`icon-
 **Hors production, rien n'est créé ni rangé** : la production exige l'hôte `neume.dev` ET l'`Origin`
 `https://neume.dev` (`wrangler dev` réécrit l'hôte en celui de la route). Secrets du Worker, posés par Florian
 et jamais dans le dépôt : `GITHUB_TOKEN` (jeton à grain fin, Issues en écriture sur ce dépôt, un an),
-`TURNSTILE_SECRET`, `IP_SALT` ; en local, `site/.dev.vars` (copie de `.dev.vars.example`, clés de test).
+`TURNSTILE_SECRET`, `IP_SALT`, posés en dernier `TURNSTILE_SECRET` (c'est lui qui ouvre le formulaire) ; les
+previews ont les leurs (`npx wrangler preview secret put`, `TURNSTILE_SECRET` et `IP_SALT` suffisent) et leurs
+bindings dans le bloc `previews` de `wrangler.jsonc`, qui n'hérite de rien ; en local, `site/.dev.vars` (copie de `.dev.vars.example`, clés de test).
 La clé de site Turnstile, publique, est `TURNSTILE_SITE_KEY` dans `app/_shell/links.ts`. `npm run check` du site
 lance les tests du Worker (`npm test -w site`, Vitest dans le runtime Workers). Pour essayer le tout en local :
 `npm run build -w site && cd site && npx wrangler dev --port 8787`.

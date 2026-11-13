@@ -14,9 +14,11 @@ const MEANING_MAX = 2000;
 const LINK_MAX = 500;
 export const IMAGE_MAX = 2_097_152;
 
+/** Le champ texte, sans espaces autour. Le navigateur envoie les retours à la ligne en `\r\n` : ramenés à `\n`,
+ * ils comptent pour un caractère, comme dans le compteur du dialogue. */
 const text = (form: FormData, key: string) => {
   const v = form.get(key);
-  return typeof v === "string" ? v.trim() : "";
+  return typeof v === "string" ? v.replace(/\r\n?/g, "\n").trim() : "";
 };
 
 /** Ce qui n'a rien à faire dans un lien collé, et qui pourrait sortir de `<…>` dans le Markdown. */
@@ -68,7 +70,9 @@ function plainText(s: string): string {
 /** Le corps Markdown de l'issue. */
 export function issueBody(req: Omit<IconRequest, "image">, imageUrl: string | null): string {
   const lines = ["### What it should mean", "", plainText(req.meaning), ""];
-  if (req.link) lines.push("### Link", "", `<${req.link}>`, "");
+  // En code, pas en lien : une URL d'issue GitHub ferait un renvoi (« mentioned this ») dans ce dépôt-là.
+  // Le lien ne peut pas contenir d'accent grave (`httpHref`).
+  if (req.link) lines.push("### Link", "", `\`${req.link}\``, "");
   if (imageUrl) lines.push("### Image", "", `![Reference](<${imageUrl}>)`, "");
   lines.push("---", "Sent from neume.dev");
   return lines.join("\n");

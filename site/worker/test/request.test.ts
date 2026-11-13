@@ -62,6 +62,12 @@ describe("parseRequest", () => {
     expect(r.ok && r.value.link).toBe("https://x.dev/");
   });
 
+  it("counts a browser's CRLF line breaks as one character", () => {
+    const meaning = Array(1000).fill("a").join("\r\n");
+    const r = parseRequest(form({ name: "a", meaning }));
+    expect(r.ok && r.value.meaning).toBe(Array(1000).fill("a").join("\n"));
+  });
+
   it("rejects an image over 2 MB", () => {
     expect(parseRequest(form({ name: "a", meaning: "x", image: png(2_097_153) }))).toEqual({ ok: false, field: "image" });
     expect(parseRequest(form({ name: "a", meaning: "x", image: png(2_097_152) })).ok).toBe(true);
@@ -76,7 +82,7 @@ describe("issue", () => {
   it("writes the meaning, the link, the image and the source", () => {
     const body = issueBody({ name: "arrow-up", meaning: "Go up", link: "https://x.dev/i" }, "https://neume.dev/api/request-image/a.png");
     expect(body).toContain("Go up");
-    expect(body).toContain("<https://x.dev/i>");
+    expect(body).toContain("`https://x.dev/i`");
     expect(body).toContain("![Reference](<https://neume.dev/api/request-image/a.png>)");
     expect(body.trimEnd().endsWith("Sent from neume.dev")).toBe(true);
   });
@@ -91,6 +97,12 @@ describe("issue", () => {
     const meaning = "ask @florianfaure about #12\n```\n![x](https://evil.example/p.png)";
     const body = issueBody({ name: "a", meaning, link: null }, null);
     expect(body).toContain("````text\n" + meaning + "\n````\n");
+  });
+
+  it("writes the link as code, so a GitHub issue URL makes no cross-reference", () => {
+    const body = issueBody({ name: "a", meaning: "x", link: "https://github.com/o/r/issues/1" }, null);
+    expect(body).toContain("### Link\n\n`https://github.com/o/r/issues/1`\n");
+    expect(body).not.toContain("<https://github.com");
   });
 
   it("uses a three-backtick fence for plain text", () => {

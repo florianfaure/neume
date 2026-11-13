@@ -36,5 +36,22 @@
     "ISSUES_REPO": "florianfaure/neume",
     "PRODUCTION_HOST": "neume.dev"
   },
-  "observability": { "enabled": true }
+  // Les journaux du code (console) seulement : les journaux d'invocation garderaient l'adresse IP des requêtes,
+  // alors que le dialogue promet de ne garder qu'une empreinte.
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } },
+
+  // Les previews (`wrangler preview`, chaque branche) n'héritent ni des vars ni des bindings : il leur faut ce
+  // bloc. Chaque preview a son propre Durable Object. Ses secrets se posent à part (`wrangler preview secret`) ;
+  // hors de neume.dev, rien n'est rangé ni créé.
+  "previews": {
+    "vars": {
+      "ISSUES_REPO": "florianfaure/neume",
+      "PRODUCTION_HOST": "neume.dev"
+    },
+    "r2_buckets": [{ "binding": "REQUEST_IMAGES", "bucket_name": "neume-requests" }],
+    "durable_objects": {
+      "bindings": [{ "name": "REQUEST_LIMITER", "class_name": "RequestLimiter" }]
+    },
+    "observability": { "enabled": true, "logs": { "invocation_logs": false } }
+  }
 }
