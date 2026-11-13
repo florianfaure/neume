@@ -1,7 +1,7 @@
 # Les copies du portfolio dans `site/`
 
 **Règle : on ne modifie jamais une copie ici.** Les composants, les tokens et `lib/` naissent et se
-modifient dans le portfolio (`/Users/florianfaure/portfolio`) ; `site/` en garde des copies
+modifient dans le portfolio (le dépôt `portfolio`, voisin de celui-ci) ; `site/` en garde des copies
 identiques, octet pour octet. Un défaut se corrige dans le portfolio, puis on recopie. En phase 3,
 ces copies seront remplacées par le paquet Consort.
 
@@ -17,7 +17,7 @@ Commit du portfolio d'où viennent les copies : `4a691d30579b09fbe63c43cde86589a
 
 ```bash
 cd site
-node scripts/copy-from-portfolio.mjs [chemin-du-portfolio]          # refait la copie (défaut : $PORTFOLIO_PATH ou /Users/florianfaure/portfolio)
+node scripts/copy-from-portfolio.mjs [chemin-du-portfolio]          # refait la copie (défaut : $PORTFOLIO_PATH ou ../../portfolio)
 node scripts/copy-from-portfolio.mjs [chemin-du-portfolio] --check  # échoue si une copie diffère de sa source, ou si components/ui contient un fichier non déclaré
 ```
 

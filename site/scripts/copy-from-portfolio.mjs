@@ -4,7 +4,7 @@
 //   node scripts/copy-from-portfolio.mjs [chemin-du-portfolio]          refait la copie
 //   node scripts/copy-from-portfolio.mjs [chemin-du-portfolio] --check  échoue si une copie diffère
 //
-// Chemin par défaut : $PORTFOLIO_PATH, sinon /Users/florianfaure/portfolio. Le mode --check, sans
+// Chemin par défaut : $PORTFOLIO_PATH, sinon le dossier `portfolio` voisin du dépôt (../../portfolio depuis site/). Le mode --check, sans
 // portfolio présent sur la machine (CI), saute proprement avec un avertissement.
 // Règle (site/COPIES.md) : on ne modifie jamais une copie ici, on corrige dans le portfolio puis on recopie.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
@@ -44,7 +44,7 @@ export const COPIES = [
 const args = process.argv.slice(2);
 const check = args.includes("--check");
 const given = args.find((a) => !a.startsWith("--"));
-const portfolio = resolve(given ?? process.env.PORTFOLIO_PATH ?? "/Users/florianfaure/portfolio");
+const portfolio = resolve(given ?? process.env.PORTFOLIO_PATH ?? resolve(SITE, "..", "..", "portfolio"));
 
 if (!existsSync(portfolio)) {
   if (check) {

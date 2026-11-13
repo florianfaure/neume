@@ -1,3 +1,9 @@
 node_modules/
 .DS_Store
 sheet/
+
+# Notes de travail et réglages locaux : sur la machine de Florian, hors du dépôt public.
+docs/
+.claude/launch.json
+.superpowers/
+.wrangler/
