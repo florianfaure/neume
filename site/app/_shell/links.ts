@@ -5,7 +5,7 @@ export const ISSUES_URL = `${REPO_URL}/issues/new?template=icon-request.yml`;
 /** Les demandes déjà faites : les issues étiquetées `icon-request`. */
 export const REQUESTS_URL = `${REPO_URL}/issues?q=label%3Aicon-request`;
 /**
- * La clé de SITE Turnstile de neume.dev (publique, ce n'est pas un secret). Vide tant que Florian n'a pas
- * créé le widget : en local, `turnstile.tsx` prend la clé de test de Cloudflare.
+ * La clé de SITE du widget Turnstile « neume.dev » (publique, ce n'est pas un secret ; la clé secrète est
+ * `TURNSTILE_SECRET` sur le Worker). En local, `turnstile.tsx` prend la clé de test de Cloudflare.
  */
-export const TURNSTILE_SITE_KEY = "";
+export const TURNSTILE_SITE_KEY = "0x4AAAAAAF_2l0UBeVl1xXPr";
