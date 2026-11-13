@@ -1,0 +1,26 @@
+name: Icon request
+description: Ask for a new icon, or for a change to one that reads badly.
+title: "Icon request: "
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: The name you would expect to import, in kebab-case.
+      placeholder: arrow-up-circle
+    validations:
+      required: true
+  - type: textarea
+    id: meaning
+    attributes:
+      label: What it should mean
+      description: The action or object the icon stands for.
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where you would use it
+      description: The screen, the component and the size (12 to 64 px). A screenshot helps more than anything else.
+    validations:
+      required: false

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://neume.dev/docs
+    about: How to install Neume, its sizes, centring and accessibility.
