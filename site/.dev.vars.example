@@ -1,0 +1,6 @@
+# Les secrets du Worker en local : copier en `.dev.vars` (ignoré par git).
+# Le secret Turnstile est la clé de TEST publiée par Cloudflare : elle accepte toujours.
+# Hors de neume.dev, aucune issue n'est créée : le jeton GitHub n'est jamais lu en local.
+GITHUB_TOKEN=local-unused
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+IP_SALT=local-salt

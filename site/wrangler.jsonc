@@ -1,18 +1,40 @@
 {
-  // neume.dev est servi en ASSETS STATIQUES, comme le portfolio : aucun `main`, le Worker n'exécute
-  // aucun code, il sert le dossier `out/` produit par `next build`. Rien ici ne touche le compte
-  // Cloudflare tant que Florian ne lance pas lui-même `wrangler deploy`.
+  // neume.dev est servi en ASSETS STATIQUES (le dossier `out/` produit par `next build`), et un petit
+  // script, `worker/index.ts`, ne voit QUE `/api/*` (`run_worker_first`) : la demande d'icône
+  // (`docs/specs/2026-11-13-demande-d-icone-design.md`). Tout le reste ne touche jamais le code.
+  // Rien ici ne touche le compte Cloudflare : c'est le build de Workers Builds, ou Florian, qui déploie.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "neume-dev",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-08-11",
 
   // Le domaine est branché ici, en Custom Domain : au déploiement, Cloudflare crée lui-même
-  // l'enregistrement DNS et le certificat de neume.dev (zone déjà sur Cloudflare, aucun
-  // enregistrement à la racine au 12 nov. 2026). Pas encore de www.
+  // l'enregistrement DNS et le certificat de neume.dev.
   "routes": [{ "pattern": "neume.dev", "custom_domain": true }],
   "assets": {
     "directory": "./out",
+    "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
-  }
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+
+  // Les images jointes aux demandes. Le bucket est créé par Florian AVANT le premier build qui lit ce
+  // fichier : sans lui, le déploiement échoue. Il n'est pas public : le Worker sert les images.
+  "r2_buckets": [{ "binding": "REQUEST_IMAGES", "bucket_name": "neume-requests" }],
+
+  // Le compte des envois (trois par heure et par empreinte de connexion). Né au déploiement.
+  "durable_objects": {
+    "bindings": [{ "name": "REQUEST_LIMITER", "class_name": "RequestLimiter" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RequestLimiter"] }],
+
+  // Les secrets GITHUB_TOKEN, TURNSTILE_SECRET et IP_SALT sont posés sur le Worker par Florian, jamais
+  // ici ; en local, dans `.dev.vars` (voir `.dev.vars.example`). Hors de PRODUCTION_HOST, aucune issue
+  // n'est créée : le Worker la journalise.
+  "vars": {
+    "ISSUES_REPO": "florianfaure/neume",
+    "PRODUCTION_HOST": "neume.dev"
+  },
+  "observability": { "enabled": true }
 }
