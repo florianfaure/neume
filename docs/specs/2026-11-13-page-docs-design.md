@@ -87,9 +87,8 @@ corrige si un fait est faux, et ne la raccourcit pas.
 11. **About Neume** : le nom, pourquoi il existe, comment il est fait, ce qui vient ensuite (Consort),
     puis `AuthorLine` et les quatre boutons icône, et la licence MIT.
 
-**« Why it exists » est un brouillon.** Le paragraphe de la maquette est écrit à partir de faits relevés
-(le portfolio utilisait 49 glyphes empruntés à Pixelarticons ; Neume a démarré le 6 novembre 2026 et la
-0.1.0 est publiée le 11). Le vrai texte vient de Florian. Tant qu'il ne l'a pas donné, la page ne sort pas.
+**« Why it exists »** : le paragraphe de la maquette, écrit à partir de faits relevés, est validé tel quel
+par Florian le 2026-11-13.
 
 ### 4.2 La mise en page
 

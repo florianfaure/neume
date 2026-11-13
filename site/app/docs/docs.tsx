@@ -354,9 +354,6 @@ document.querySelector("#icon").innerHTML = svg("search", 24);`}
               singer what to do. Neume icons try to do the same for an interface.
             </P>
             <H3>Why it exists</H3>
-            {/* À ÉCRIRE AVEC FLORIAN : le vrai pourquoi. Faits relevés : le portfolio piochait 49
-                glyphes dans Pixelarticons et des relevés à la main ; Neume les remplace depuis le
-                11 novembre 2026. */}
             <P>
               Neume started in November 2026, when my portfolio outgrew the borrowed pixel icons it
               used. I wanted a set drawn for real interfaces: sharp at the sizes an interface actually
