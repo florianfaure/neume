@@ -53,6 +53,14 @@ function scrollMargin(target: HTMLElement): number {
   return parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
 }
 
+/**
+ * La réserve de défilement haute du conteneur (`scroll-padding-top`), lue sur lui : sur le document,
+ * `globals.css` en pose une sous `xl` pour le bouton Back. `auto` n'est pas un nombre : 0.
+ */
+function scrollPadding(root: HTMLElement): number {
+  return parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+}
+
 /** Le premier ancêtre qui défile verticalement, ou `null` si c'est le document. */
 function scrollParent(node: HTMLElement): HTMLElement | null {
   for (let up = node.parentElement; up !== null; up = up.parentElement) {
@@ -154,9 +162,14 @@ function place(pill: HTMLElement, list: HTMLElement) {
  *    charge et allonge la page, une fenêtre qui change de largeur et fait passer des titres à la
  *    ligne. Un conteneur de taille nulle n'a toujours rien de courant.
  *
- *    LE SEUIL EST LA MARGE DE DÉFILEMENT DE LA SECTION, LUE SUR ELLE. Une section est « franchie »
- *    quand son haut est à sa `scroll-margin-top` du haut du conteneur ou au-dessus — exactement là
- *    où un saut la dépose. La valeur n'est donc écrite qu'à un endroit, chez l'appelant, et un clic
+ *    LE SEUIL EST LA MARGE DE DÉFILEMENT DE LA SECTION, PLUS LA RÉSERVE DU CONTENEUR, LUES SUR EUX.
+ *    Une section est « franchie » quand son haut est à sa `scroll-margin-top`, plus le
+ *    `scroll-padding-top` du conteneur défilant (ou de `<html>` quand c'est le document), du haut du
+ *    conteneur ou au-dessus — exactement là où un saut la dépose. Le second terme est le bouton Back :
+ *    sous `xl`, `globals.css` réserve 68 à 76 px en haut de la fenêtre, et `scrollIntoView` les
+ *    respecte. Sans eux dans le seuil, une section sautée atterrissait 68 à 76 px sous lui et la
+ *    pastille annonçait la précédente (défaut relevé en construisant la page Docs de neume.dev,
+ *    2026-11-13). Les valeurs ne sont écrites que chez l'appelant et dans `globals.css`, et un clic
  *    marque l'entrée cliquée dès que sa section peut monter jusque-là — près de la fin, le saut
  *    s'arrête en bas et c'est la dernière qui l'est. Le cas du bas n'est retenu que si le conteneur
  *    défile réellement : un contenu plus court que sa boîte n'a pas de « bas de défilement ».
@@ -187,9 +200,11 @@ function place(pill: HTMLElement, list: HTMLElement) {
  *    en haut de la fenêtre. Un `scrollTo` sur le conteneur trouvé fait le même saut, à la même
  *    marge, sans rien toucher d'autre. Quand aucun conteneur ne défile, c'est le document qui est
  *    la cible, et `scrollIntoView` n'a plus d'autre ancêtre à entraîner : il respecte la
- *    `scroll-margin-top` de la section. Doux par défaut, instantané sous `prefers-reduced-motion`
- *    (loi 7) — la requête est lue au clic : la règle `scroll-behavior` de `globals.css` ne peut rien
- *    contre un `behavior` passé en JavaScript.
+ *    `scroll-margin-top` de la section ET le `scroll-padding-top` de `<html>`, que le seuil ajoute.
+ *    Le `scrollTo` du conteneur retranche de même le `scroll-padding-top` du conteneur (0 dans la
+ *    boîte de la vitrine), pour que le saut tombe toujours exactement sur le seuil. Doux par défaut,
+ *    instantané sous `prefers-reduced-motion` (loi 7) — la requête est lue au clic : la règle
+ *    `scroll-behavior` de `globals.css` ne peut rien contre un `behavior` passé en JavaScript.
  *
  *    LE FOCUS VA AU TITRE DE LA SECTION, sans défilement de plus, pour qu'un utilisateur clavier
  *    reprenne la lecture là où il a sauté. Ce titre porte `tabIndex={-1}` — une cible de focus
@@ -438,11 +453,12 @@ export function TableOfContents({
 
       /* Avant d'en avoir franchi une, la courante est la première (docstring) — et la pastille
        * attend que l'une soit franchie pour se montrer. */
+      const padding = scrollPadding(root);
       let crossed: string | null = targets[0]?.id ?? null;
       let any = false;
       for (const target of targets) {
         const offset = target.getBoundingClientRect().top - top;
-        if (offset <= scrollMargin(target) + ROUNDING) {
+        if (offset <= scrollMargin(target) + padding + ROUNDING) {
           crossed = target.id;
           any = true;
         }
@@ -572,7 +588,10 @@ export function TableOfContents({
     } else {
       const offset =
         target.getBoundingClientRect().top - root.getBoundingClientRect().top - root.clientTop;
-      root.scrollTo({ top: root.scrollTop + offset - scrollMargin(target), behavior });
+      root.scrollTo({
+        top: root.scrollTop + offset - scrollMargin(target) - scrollPadding(root),
+        behavior,
+      });
     }
 
     target.querySelector<HTMLElement>("h2, h3")?.focus({ preventScroll: true });

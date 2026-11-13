@@ -94,7 +94,9 @@ type ButtonContentProps =
  *
  * `disabled` avec `href` est refusé À LA COMPILATION : HTML n'a pas de `<a>` désactivé, et la
  * loi 11 dit qu'un lien désactivé se rendrait avec `aria-disabled` et sans `href` — un détour dont
- * aucun usage du portfolio n'a besoin. `newTab` est réservé à la forme lien, où il a un sens.
+ * aucun usage du portfolio n'a besoin. `newTab` et `download` sont réservés à la forme lien, où ils
+ * ont un sens, et ILS S'EXCLUENT L'UN L'AUTRE par typage : un fichier qu'on télécharge n'ouvre pas
+ * d'onglet, et la mention « nouvel onglet » serait fausse.
  *
  * `onClick` EST PERMIS SUR LES DEUX FORMES. Sur la forme bouton il est
  * `() => void`. Sur la forme lien il reçoit l'ÉVÉNEMENT, pour que l'appelant puisse
@@ -107,6 +109,23 @@ type ButtonElementProps =
   | {
       href: string;
       newTab?: boolean;
+      download?: never;
+      disabled?: never;
+      expanded?: never;
+      onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+    }
+  | {
+      href: string;
+      newTab?: never;
+      /**
+       * Force le téléchargement du fichier visé : `true` laisse au navigateur le nom du fichier, une
+       * chaîne l'impose (`download="neume-svg-24.zip"`). Écrite pour le bouton « Download all SVG » de
+       * neume.dev, dont le `href` pointe vers un `.zip` et qui ne pouvait pas imposer le
+       * téléchargement. Passée telle quelle au `<a>` : React rend `true` en attribut vide et omet
+       * `false`. LE NAVIGATEUR NE L'HONORE QUE POUR UNE URL DE MÊME ORIGINE ; sur une autre origine,
+       * le lien navigue comme avant. Aucun rendu ne change, et la forme bouton ne l'accepte pas.
+       */
+      download?: boolean | string;
       disabled?: never;
       expanded?: never;
       onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
@@ -114,6 +133,7 @@ type ButtonElementProps =
   | {
       href?: never;
       newTab?: never;
+      download?: never;
       disabled?: boolean;
       /**
        * L'ÉTAT FONCTIONNEL `expanded` DE LA LOI 11 : le bouton commande une couche qui s'ouvre et se
@@ -281,6 +301,9 @@ function Glyph({ name }: { name: IconName }) {
  * navigateur — pour que « Star on GitHub » et la commande npm se posent côte à côte sans écart. La cible de 44 px
  * est alors native : le calque de pointage prend la boîte et ne la déborde plus.
  *
+ * `download` EST DU 2026-11-13 (`extend`, décision de Florian, neume.dev) : voir le type
+ * `ButtonElementProps` pour la prop, son exclusion avec `newTab` et sa limite de même origine.
+ *
  * Histoire : `docs/history/button.md`.
  */
 export function Button({
@@ -294,6 +317,7 @@ export function Button({
   tooltip = "auto",
   href,
   newTab,
+  download,
   disabled,
   expanded,
   onClick,
@@ -363,7 +387,13 @@ export function Button({
    * site qu'on a livré est précisément l'intérêt du lien. */
   const control =
     href !== undefined ? (
-      <a href={href} {...newTabAttributes(newTab)} onClick={onClick} className={classes}>
+      <a
+        href={href}
+        download={download}
+        {...newTabAttributes(newTab)}
+        onClick={onClick}
+        className={classes}
+      >
         {children}
       </a>
     ) : (

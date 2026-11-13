@@ -669,8 +669,8 @@
      * gauche de la page et ne recouvre plus la colonne. Le seuil réplique `--breakpoint-xl`
      * (80rem / 1280 px), comme le régime de la gouttière réplique `--breakpoint-md` plus bas : si
      * `--breakpoint-xl` change, changer ce seuil avec lui. Cette réserve s'ajoute à la
-     * `scroll-margin-top` d'une section visée par une ancre (`/work/stash#id`) ; le sommaire, lui,
-     * défile par script et n'en tient pas compte. */
+     * `scroll-margin-top` d'une section visée par une ancre (`/work/stash#id`) ; le sommaire l'ajoute
+     * aussi à son seuil, et son saut par `scrollIntoView` la respecte. */
     @media (width < 80rem) {
       scroll-padding-top: calc(var(--layout-gutter) + var(--size-button-height) + var(--space-4));
     }

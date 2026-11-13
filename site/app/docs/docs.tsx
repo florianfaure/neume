@@ -123,6 +123,7 @@ export function Docs() {
                 icon="download"
                 label="Download all SVG (24 px)"
                 href={ZIP_URL}
+                download="neume-svg-24.zip"
               />
             </div>
           </Section>
