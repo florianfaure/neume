@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
+    // Les bundles de wrangler dev.
+    ".wrangler/**",
     "build/**",
     "next-env.d.ts",
     // Worktrees and settings of Claude Code sessions: other checkouts, not this repo's code.
