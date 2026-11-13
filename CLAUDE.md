@@ -85,7 +85,7 @@ lance les tests du Worker (`npm test -w site`, Vitest dans le runtime Workers). 
 
 **Déploiement.** neume.dev est le Worker `neume-dev`, branché sur le domaine en Custom Domain
 (`site/wrangler.jsonc`). Workers Builds le reconstruit depuis GitHub : **un push sur `main` met en production**,
-toute autre branche produit une URL de preview. Réglages côté Cloudflare : racine du dépôt `/`, build
+toute autre branche produit une URL de preview (`preview_urls`, actif depuis le déploiement de production qui l'a introduit). Réglages côté Cloudflare : racine du dépôt `/`, build
 `npm run build -w site`, déploiement `npx wrangler deploy -c site/wrangler.jsonc`, preview
 `npx wrangler preview -c site/wrangler.jsonc`. Le build distant ne lance **pas** `copies:check`, qui lit
 `~/portfolio` : c'est `npm run check` en local qui le tient, avant de pousser. `www.neume.dev` redirige en 301

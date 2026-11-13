@@ -11,6 +11,9 @@
   // Le domaine est branché ici, en Custom Domain : au déploiement, Cloudflare crée lui-même
   // l'enregistrement DNS et le certificat de neume.dev.
   "routes": [{ "pattern": "neume.dev", "custom_domain": true }],
+  // Les URL de preview des branches (<branche>-neume-dev.<sous-domaine>.workers.dev). Le réglage ne prend effet
+  // qu'au déploiement de production : une branche poussée avant n'a pas d'URL.
+  "preview_urls": true,
   "assets": {
     "directory": "./out",
     "binding": "ASSETS",
