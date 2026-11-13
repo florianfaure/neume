@@ -6,11 +6,12 @@ import { handleImage, handleRequest } from "../handle";
 type Call = { url: string; init: RequestInit };
 let calls: Call[];
 let turnstileOk: boolean;
+let turnstileHost: string;
 let githubStatus: number;
 const fetcher = (async (input: RequestInfo | URL, init: RequestInit = {}) => {
   const url = String(input);
   calls.push({ url, init });
-  if (url.startsWith("https://challenges.cloudflare.com/")) return Response.json({ success: turnstileOk });
+  if (url.startsWith("https://challenges.cloudflare.com/")) return Response.json({ success: turnstileOk, hostname: turnstileHost });
   if (url.startsWith("https://api.github.com/")) {
     return githubStatus === 201
       ? Response.json({ html_url: "https://github.com/florianfaure/neume/issues/42" }, { status: 201 })
@@ -22,6 +23,7 @@ const fetcher = (async (input: RequestInfo | URL, init: RequestInit = {}) => {
 beforeEach(() => {
   calls = [];
   turnstileOk = true;
+  turnstileHost = "neume.dev";
   githubStatus = 201;
 });
 
@@ -78,21 +80,23 @@ describe("POST /api/request", () => {
   });
 
   it("400 image when the bytes are not an image", async () => {
+    const before = (await env.REQUEST_IMAGES.list()).objects.length;
     const svg = new File([`<svg xmlns="http://www.w3.org/2000/svg"/>`], "x.png", { type: "image/png" });
     const res = await handleRequest(post(PROD, { image: svg }), env, fetcher);
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "invalid", field: "image" });
-    expect((await env.REQUEST_IMAGES.list()).objects).toHaveLength(0);
+    expect((await env.REQUEST_IMAGES.list()).objects).toHaveLength(before);
   });
 
   it("429 after three valid requests from the same ip, and stores nothing", async () => {
     const ip = freshIp();
+    const before = (await env.REQUEST_IMAGES.list()).objects.length;
     for (let n = 0; n < 3; n++) expect((await handleRequest(post(PROD, {}, ip), env, fetcher)).status).toBe(201);
     const image = new File([JPEG], "ref.jpg", { type: "image/jpeg" });
     const res = await handleRequest(post(PROD, { image }, ip), env, fetcher);
     expect(res.status).toBe(429);
     expect(await res.json()).toEqual({ error: "rate-limited" });
-    expect((await env.REQUEST_IMAGES.list()).objects).toHaveLength(0);
+    expect((await env.REQUEST_IMAGES.list()).objects).toHaveLength(before);
   });
 
   it("dry run off production", async () => {
@@ -123,10 +127,11 @@ describe("POST /api/request", () => {
 
   it("stores a stripped image and links it", async () => {
     const image = new File([JPEG], "ref.jpg", { type: "image/jpeg" });
+    const before = new Set((await env.REQUEST_IMAGES.list()).objects.map((o) => o.key));
     expect((await handleRequest(post(PROD, { image }), env, fetcher)).status).toBe(201);
-    const { objects } = await env.REQUEST_IMAGES.list();
-    expect(objects).toHaveLength(1);
-    const key = objects[0].key;
+    const added = (await env.REQUEST_IMAGES.list()).objects.filter((o) => !before.has(o.key));
+    expect(added).toHaveLength(1);
+    const key = added[0].key;
     expect(key).toMatch(/^[0-9a-f-]{36}\.jpg$/);
     const obj = await env.REQUEST_IMAGES.get(key);
     expect(obj?.httpMetadata?.contentType).toBe("image/jpeg");
@@ -136,10 +141,19 @@ describe("POST /api/request", () => {
     expect(payload.body).toContain(`https://neume.dev/api/request-image/${key}`);
   });
 
-  it("links the image on the request's own origin off production", async () => {
+  it("stores nothing off production", async () => {
+    const before = (await env.REQUEST_IMAGES.list()).objects.length;
     const image = new File([JPEG], "ref.jpg", { type: "image/jpeg" });
     const res = await handleRequest(post(LOCAL, { image }), env, fetcher);
     expect(res.status).toBe(201);
+    expect((await env.REQUEST_IMAGES.list()).objects).toHaveLength(before);
+  });
+
+  it("403 on production when the token was issued for another host", async () => {
+    turnstileHost = "neume-dev.example.workers.dev";
+    const res = await handleRequest(post(PROD, {}), env, fetcher);
+    expect(res.status).toBe(403);
+    expect(githubCalls()).toHaveLength(0);
   });
 
   it("502 when GitHub fails", async () => {

@@ -10,8 +10,8 @@ const IMAGE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\
 
 /**
  * `POST /api/request` : la demande d'icône (spec § 6). Dans l'ordre : Turnstile, le formulaire, l'image
- * (reconnue et nettoyée en mémoire), la limite, le rangement dans R2, puis l'issue — ou, hors de
- * `PRODUCTION_HOST`, son seul journal. Un envoi invalide ou refusé ne compte pas et ne range rien.
+ * (reconnue et nettoyée en mémoire), la limite, puis le rangement dans R2 et l'issue — ou, hors de
+ * `PRODUCTION_HOST`, leur seul journal. Un envoi invalide ou refusé ne compte pas et ne range rien.
  * `fetcher` sert aux appels sortants (Siteverify, GitHub) ; les tests en passent un faux.
  */
 export async function handleRequest(request: Request, env: Env, fetcher: typeof fetch = fetch): Promise<Response> {
@@ -31,9 +31,11 @@ export async function handleRequest(request: Request, env: Env, fetcher: typeof 
   verify.append("response", String(form.get("cf-turnstile-response") ?? ""));
   verify.append("remoteip", ip);
   const verdict = await fetcher(SITEVERIFY, { method: "POST", body: verify })
-    .then((r) => r.json<{ success?: boolean }>())
-    .catch(() => ({ success: false }));
-  if (verdict.success !== true) return json({ error: "verification" }, 403);
+    .then((r) => r.json<{ success?: boolean; hostname?: string }>())
+    .catch(() => ({ success: false, hostname: undefined }));
+  // En production, le jeton doit avoir été délivré sur neume.dev, pas sur une preview qui partage la clé.
+  const goodHost = !production || verdict.hostname === env.PRODUCTION_HOST;
+  if (verdict.success !== true || !goodHost) return json({ error: "verification" }, 403);
 
   const parsed = parseRequest(form);
   if (!parsed.ok) return json({ error: "invalid", field: parsed.field }, 400);
@@ -54,19 +56,18 @@ export async function handleRequest(request: Request, env: Env, fetcher: typeof 
   const limiter = env.REQUEST_LIMITER.get(env.REQUEST_LIMITER.idFromName(await fingerprint(ip, env.IP_SALT)));
   if (!(await limiter.hit(Date.now()))) return json({ error: "rate-limited" }, 429);
 
-  let imageUrl: string | null = null;
-  if (cleaned) {
-    await env.REQUEST_IMAGES.put(cleaned.id, cleaned.bytes, { httpMetadata: { contentType: cleaned.type } });
-    const origin = production ? `https://${env.PRODUCTION_HOST}` : url.origin;
-    imageUrl = `${origin}/api/request-image/${cleaned.id}`;
-  }
-
   const title = issueTitle(fields.name);
+  const imageUrl = cleaned ? `https://${env.PRODUCTION_HOST}/api/request-image/${cleaned.id}` : null;
   const body = issueBody(fields, imageUrl);
 
+  // Hors production (local, previews), rien n'est rangé ni créé : les previews partagent le bucket et le jeton.
   if (!production) {
-    console.log(`[dry run] ${title}\n${body}`);
+    console.log(`[dry run] ${title}${cleaned ? ` (image ${cleaned.type}, ${cleaned.bytes.length} octets, non rangée)` : ""}\n${body}`);
     return json({ url: DRY_RUN_URL, dryRun: true }, 201);
+  }
+
+  if (cleaned) {
+    await env.REQUEST_IMAGES.put(cleaned.id, cleaned.bytes, { httpMetadata: { contentType: cleaned.type } });
   }
 
   const res = await fetcher(`https://api.github.com/repos/${env.ISSUES_REPO}/issues`, {
