@@ -100,3 +100,11 @@
   margin-right: var(--space-2);
   opacity: 1;
 }
+
+/* La réserve de `scroll-padding-top` que `globals.css` (copie du portfolio) pose sous `xl` sert au bouton
+ * Back fixe des pages de lecture du portfolio : neume.dev n'en a pas, et la barre se cache en descendant.
+ * Gardée, elle décalait les sauts du sommaire de 68 à 76 px sous la `scroll-margin-top` des sections, et la
+ * pastille du sommaire annonçait la section précédente. */
+html {
+  scroll-padding-top: 0;
+}

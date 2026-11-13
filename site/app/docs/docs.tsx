@@ -69,7 +69,8 @@ export function Docs() {
             <P>
               Neume is a pixel icon set: {names.length} icons, each drawn cell by cell on a grid of
               12 × 12 squares. Every square is either filled or empty. There are no curves and no
-              optical tweaks hidden in the file: an icon is nothing but its filled squares.
+              optical tweaks hidden in the file: an icon is its filled squares and, for some, a
+              half-square shift that centres a stem.
             </P>
             <P>
               The same drawing serves every size from 12 to 64 px. At 12, 24, 36, 48 and 60 px a square
@@ -158,14 +159,15 @@ export function Toolbar() {
             <H3>Props</H3>
             <P>
               Every component takes the same two props. Anything else you pass goes straight to the
-              underlying <C>{"<svg>"}</C> element.
+              underlying <C>{"<svg>"}</C> element, except width, height and viewBox, which always
+              come from <C>size</C>.
             </P>
             <Exhibit
               columns={["Prop", "Default", "What it does"]}
               rows={[
                 ["size", "24", "The size in pixels. Any number, snapped down to a multiple of 4 between 12 and 64."],
                 ["title", "None", "An accessible name. Without it, the icon is hidden from screen readers."],
-                ["Others", "None", "className, style, ref and any SVG attribute are passed to the <svg>."],
+                ["Others", "None", "className, style, ref and any SVG attribute are passed to the <svg>, except width, height and viewBox."],
               ]}
               caption="The props of every Neume component."
             />
@@ -195,15 +197,19 @@ document.querySelector("#icon").innerHTML = svg("search", 24);`}
             <H3>Ready-made files</H3>
             <P>
               The package also ships one SVG file per icon at 12, 16 and 24 px. They are handy for an{" "}
-              <C>{"<img>"}</C> tag, a CSS mask or a bundler that imports SVG files.
+              <C>{"<img>"}</C> tag, a CSS mask or a bundler that imports SVG files. Inside an{" "}
+              <C>{"<img>"}</C> or a CSS background, <C>currentColor</C> has no text colour to
+              inherit, so the icon always renders black: when the colour matters, inline the SVG or
+              use the file as a CSS mask.
             </P>
             <CodeBlock code="@neume-icons/svg/dist/24/arrow-up.svg" label="Copy path" />
             <H3>Building your own wrapper</H3>
             <P>
               Writing components for another framework? The sizing rule is exported on its own, under{" "}
               <C>@neume-icons/svg/render</C>, which pulls no icon data: <C>snap</C> rounds a size,{" "}
-              <C>pick</C> gives the scale of a cell and <C>path</C> draws the outline. The compact icon
-              data is under <C>@neume-icons/svg/data</C>. The React package is built exactly this way.
+              <C>pick</C> gives the scale of a square, <C>decode</C> turns an icon’s compact data into
+              rows of squares and <C>path</C> draws them. The compact icon data is under{" "}
+              <C>@neume-icons/svg/data</C>. The React package is built exactly this way.
             </P>
           </Section>
 
@@ -276,8 +282,9 @@ document.querySelector("#icon").innerHTML = svg("search", 24);`}
             <P>
               Icons are filled with <C>currentColor</C>: they take the text colour of their parent,
               like a letter would. Inside a link or a button, the icon follows its hover and disabled
-              states without any extra work. To set a colour directly, use <C>className</C> or{" "}
-              <C>style</C>.
+              states without any extra work. To set a colour directly on a React component, use{" "}
+              <C>className</C> or <C>style</C>. With the plain SVG markup, set the CSS{" "}
+              <C>color</C> of the element that holds it.
             </P>
             <CodeBlock
               label="Copy code"
@@ -287,13 +294,20 @@ document.querySelector("#icon").innerHTML = svg("search", 24);`}
             <H3>Accessibility</H3>
             <P>
               Most icons sit next to a word that already says what they mean. Those are decorative,
-              and Neume hides them from assistive technology by default, with{" "}
+              and the React components hide them from assistive technology by default, with{" "}
               <C>aria-hidden=&quot;true&quot;</C> and <C>focusable=&quot;false&quot;</C>.
             </P>
             <P>
-              When an icon carries meaning on its own, as in a button with no label, give it a{" "}
-              <C>title</C>. The icon then gets <C>role=&quot;img&quot;</C>, a <C>{"<title>"}</C>{" "}
-              element and an <C>aria-labelledby</C> that points to it, so screen readers announce it.
+              When an icon carries meaning on its own, as in a button with no label, give the
+              component a <C>title</C>. The icon then gets <C>role=&quot;img&quot;</C>, a{" "}
+              <C>{"<title>"}</C> element and an <C>aria-labelledby</C> that points to it, so screen
+              readers announce it.
+            </P>
+            <P>
+              The markup from <C>svg()</C> and the ready-made files is always hidden from assistive
+              technology, with <C>aria-hidden=&quot;true&quot;</C>. When such an icon carries meaning
+              on its own, put the name on its parent, like an <C>aria-label</C> on the button, or use
+              the file in an <C>{"<img>"}</C> with an <C>alt</C>.
             </P>
           </Section>
 
