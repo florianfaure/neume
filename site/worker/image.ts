@@ -49,46 +49,75 @@ const concat = (parts: Uint8Array[]) => {
   return out;
 };
 
-/** JPEG : APP1 (EXIF, XMP), APP13 (Photoshop, IPTC) et COM tombent ; à partir de SOS, tout est recopié. */
-const JPEG_DROPPED = new Set([0xe1, 0xed, 0xfe]);
+/**
+ * JPEG, par liste blanche : on ne garde que ce qu'il faut pour décoder — tables, trames, balayages — et trois
+ * segments d'application connus : APP0 (JFIF), APP2 s'il porte un profil ICC, APP14 (Adobe). Tout le reste
+ * (EXIF, XMP, MPF, IPTC, commentaires, segments inconnus) tombe, y compris entre deux balayages ; ce qui suit
+ * EOI tombe aussi.
+ */
+const startsWithAscii = (bytes: Uint8Array, at: number, s: string) => startsWith(bytes, ascii(s), at);
+
+function keepJpegSegment(bytes: Uint8Array, marker: number, payload: number): boolean {
+  if (marker >= 0xc0 && marker <= 0xcf) return true; // SOFn, DHT, DAC
+  if (marker === 0xdb || marker === 0xdc || marker === 0xdd) return true; // DQT, DNL, DRI
+  if (marker === 0xe0) return startsWithAscii(bytes, payload, "JFIF\0") || startsWithAscii(bytes, payload, "JFXX\0");
+  if (marker === 0xe2) return startsWithAscii(bytes, payload, "ICC_PROFILE\0");
+  if (marker === 0xee) return startsWithAscii(bytes, payload, "Adobe");
+  return false;
+}
 
 function stripJpeg(bytes: Uint8Array): Uint8Array {
   const parts: Uint8Array[] = [bytes.subarray(0, 2)];
   let i = 2;
   while (i < bytes.length) {
-    if (bytes[i] !== 0xff) truncated();
+    if (bytes[i] !== 0xff || i + 1 >= bytes.length) truncated();
     const marker = bytes[i + 1];
-    if (marker === undefined) truncated();
-    // Les marqueurs sans longueur : remplissage, RSTn, TEM, SOI, EOI.
     if (marker === 0xff) {
-      i += 1;
+      i += 1; // octet de remplissage
       continue;
     }
     if (marker === 0xd9) {
-      parts.push(bytes.subarray(i));
-      return concat(parts);
-    }
-    if ((marker >= 0xd0 && marker <= 0xd8) || marker === 0x01) {
       parts.push(bytes.subarray(i, i + 2));
-      i += 2;
-      continue;
+      return concat(parts); // ce qui suit EOI tombe
     }
     if (i + 4 > bytes.length) truncated();
     const length = (bytes[i + 2] << 8) | bytes[i + 3];
     const end = i + 2 + length;
     if (length < 2 || end > bytes.length) truncated();
     if (marker === 0xda) {
-      parts.push(bytes.subarray(i));
-      return concat(parts);
+      // SOS, puis les données entropiques jusqu'au prochain vrai marqueur (ni FF00, ni RSTn, ni remplissage).
+      let j = end;
+      while (j < bytes.length) {
+        if (bytes[j] === 0xff) {
+          const next = bytes[j + 1];
+          if (next === undefined) truncated();
+          if (next === 0x00 || (next >= 0xd0 && next <= 0xd7)) {
+            j += 2;
+            continue;
+          }
+          if (next === 0xff) {
+            j += 1;
+            continue;
+          }
+          break;
+        }
+        j += 1;
+      }
+      parts.push(bytes.subarray(i, j));
+      i = j;
+      continue;
     }
-    if (!JPEG_DROPPED.has(marker)) parts.push(bytes.subarray(i, end));
+    if (keepJpegSegment(bytes, marker, i + 4)) parts.push(bytes.subarray(i, end));
     i = end;
   }
   truncated();
 }
 
-/** PNG : les morceaux EXIF et texte tombent ; on s'arrête à IEND. */
-const PNG_DROPPED = new Set(["eXIf", "tEXt", "iTXt", "zTXt"]);
+/** PNG, par liste blanche : les morceaux de l'image, de sa couleur et de son animation ; on s'arrête à IEND. */
+const PNG_KEPT = new Set([
+  "IHDR", "PLTE", "IDAT", "IEND", "tRNS", "gAMA", "cHRM", "sRGB", "iCCP", "sBIT", "bKGD", "pHYs",
+  "acTL", "fcTL", "fdAT",
+]);
 
 function stripPng(bytes: Uint8Array): Uint8Array {
   const parts: Uint8Array[] = [bytes.subarray(0, 8)];
@@ -99,15 +128,15 @@ function stripPng(bytes: Uint8Array): Uint8Array {
     const end = i + 12 + length;
     if (end > bytes.length) truncated();
     const type = String.fromCharCode(...bytes.subarray(i + 4, i + 8));
-    if (!PNG_DROPPED.has(type)) parts.push(bytes.subarray(i, end));
+    if (PNG_KEPT.has(type)) parts.push(bytes.subarray(i, end));
     i = end;
     if (type === "IEND") return concat(parts);
   }
   truncated();
 }
 
-/** WebP : les morceaux EXIF et XMP tombent, la taille RIFF et les drapeaux de VP8X suivent. */
-const WEBP_DROPPED = new Set(["EXIF", "XMP "]);
+/** WebP, par liste blanche : image, alpha, animation, profil ICC ; la taille RIFF et les drapeaux de VP8X suivent. */
+const WEBP_KEPT = new Set(["VP8 ", "VP8L", "VP8X", "ALPH", "ANIM", "ANMF", "ICCP"]);
 const VP8X_EXIF = 0x08;
 const VP8X_XMP = 0x04;
 
@@ -120,7 +149,7 @@ function stripWebp(bytes: Uint8Array): Uint8Array {
     const end = i + 8 + length + (length % 2);
     if (end > bytes.length) truncated();
     const type = String.fromCharCode(...bytes.subarray(i, i + 4));
-    if (!WEBP_DROPPED.has(type)) {
+    if (WEBP_KEPT.has(type)) {
       const part = bytes.slice(i, end);
       if (type === "VP8X" && length >= 1) part[8] &= ~(VP8X_EXIF | VP8X_XMP);
       parts.push(part);

@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { fingerprint, LIMIT, WINDOW_MS, type RequestLimiter } from "../limiter";
+import { connectionKey, fingerprint, LIMIT, WINDOW_MS, type RequestLimiter } from "../limiter";
 
 const stub = (name: string) => env.REQUEST_LIMITER.get(env.REQUEST_LIMITER.idFromName(name));
 // Proche de l’heure réelle : une alarme posée dans le passé partirait aussitôt et viderait le compte.
@@ -72,5 +72,20 @@ describe("fingerprint", () => {
     expect(await fingerprint("203.0.113.7", "s1")).toBe(a);
     expect(await fingerprint("203.0.113.7", "s2")).not.toBe(a);
     expect(a).not.toContain("203.0.113.7");
+  });
+});
+
+describe("connectionKey", () => {
+  it("keeps an IPv4 address whole", () => {
+    expect(connectionKey("203.0.113.7")).toBe("203.0.113.7");
+    expect(connectionKey("::ffff:203.0.113.7")).toBe("203.0.113.7");
+  });
+
+  it("reduces an IPv6 address to its /64, whatever its spelling", () => {
+    const k = connectionKey("2001:db8:1:2:aaaa::1");
+    expect(k).toBe("2001:0db8:0001:0002::/64");
+    expect(connectionKey("2001:DB8:1:2:bbbb:cccc:dddd:9")).toBe(k);
+    expect(connectionKey("2001:db8:1:3::1")).not.toBe(k);
+    expect(connectionKey("2001:db8::1")).toBe("2001:0db8:0000:0000::/64");
   });
 });

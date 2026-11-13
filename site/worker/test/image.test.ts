@@ -104,6 +104,36 @@ describe("stripMetadata", () => {
     expect(has(out, "GPS")).toBe(false);
   });
 
+  it("jpeg: keeps only known segments (APP0, APP2 ICC_PROFILE, APP14 Adobe)", () => {
+    const ICC = seg(0xe2, [...ascii("ICC_PROFILE"), 0, 1, 1, 7, 7]);
+    const MPF = seg(0xe2, [...ascii("MPF"), 0, ...ascii("GPS")]);
+    const APP3 = seg(0xe3, ascii("GPS meta"));
+    const ADOBE = seg(0xee, [...ascii("Adobe"), 0, 100, 0, 0, 0, 0, 1]);
+    const out = stripMetadata(cat(SOI, APP0, ICC, MPF, APP3, ADOBE, DQT, SOS, SCAN, EOI), "jpeg");
+    expect([...out]).toEqual([...cat(SOI, APP0, ICC, ADOBE, DQT, SOS, SCAN, EOI)]);
+  });
+
+  it("jpeg: drops metadata hidden after the first scan, and anything after EOI", () => {
+    const RST0 = [0xff, 0xd0];
+    const SCAN2 = [0x77, 0xff, 0x00, 0x88];
+    const input = cat(SOI, APP0, DQT, SOS, SCAN, RST0, SCAN, APP1, COM, SOS, SCAN2, EOI, ascii("GPS trailing"));
+    const out = stripMetadata(input, "jpeg");
+    expect([...out]).toEqual([...cat(SOI, APP0, DQT, SOS, SCAN, RST0, SCAN, SOS, SCAN2, EOI)]);
+  });
+
+  it("png: keeps only known chunks, and nothing after IEND", () => {
+    const input = cat(PNG_SIG, IHDR, chunk("tIME", [7, 7]), chunk("prVt", ascii("GPS")), chunk("pHYs", [1]), IDAT, IEND,
+      ascii("GPS trailing"));
+    const out = stripMetadata(input, "png");
+    expect(pngChunks(out)).toEqual(["IHDR", "pHYs", "IDAT", "IEND"]);
+    expect(has(out, "GPS")).toBe(false);
+  });
+
+  it("webp: keeps only known chunks", () => {
+    const out = stripMetadata(webp(VP8X(0x10), rchunk("ABCD", ascii("GPS")), rchunk("ICCP", [1, 2]), VP8), "webp");
+    expect(webpChunks(out)).toEqual(["VP8X", "ICCP", "VP8 "]);
+  });
+
   it("leaves a file without metadata byte-identical", () => {
     const jpeg = cat(SOI, APP0, DQT, SOS, SCAN, EOI);
     const png = cat(PNG_SIG, IHDR, IDAT, IEND);

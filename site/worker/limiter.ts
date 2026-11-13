@@ -6,11 +6,26 @@ export const LIMIT = 3;
 export const WINDOW_MS = 3_600_000;
 
 /**
- * L'empreinte d'une connexion : SHA-256 de l'adresse et d'un sel secret, en hexadécimal. L'adresse n'est
- * jamais gardée ; sans le sel, l'empreinte ne la redonne pas.
+ * Ce qu'on compte d'une adresse : l'IPv4 entière (y compris écrite `::ffff:a.b.c.d`), et pour l'IPv6 son
+ * préfixe /64 — un seul abonné en a des milliards, qu'il ferait tourner pour contourner la limite.
+ */
+export function connectionKey(ip: string): string {
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(ip);
+  if (mapped) return mapped[1];
+  if (!ip.includes(":")) return ip;
+  const [head, tail = ""] = ip.toLowerCase().split("::");
+  const left = head ? head.split(":") : [];
+  const right = ip.includes("::") && tail ? tail.split(":") : [];
+  const groups = ip.includes("::") ? [...left, ...new Array(8 - left.length - right.length).fill("0"), ...right] : left;
+  return `${groups.slice(0, 4).map((g) => g.padStart(4, "0")).join(":")}::/64`;
+}
+
+/**
+ * L'empreinte d'une connexion : SHA-256 de sa clé (`connectionKey`) et d'un sel secret, en hexadécimal.
+ * L'adresse n'est jamais gardée ; sans le sel, l'empreinte ne la redonne pas.
  */
 export async function fingerprint(ip: string, salt: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip + salt));
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${connectionKey(ip)}|${salt}`));
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
