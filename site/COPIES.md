@@ -11,7 +11,7 @@ Ce qui n'est pas une copie et qui est donc du site : `app/` (layout, pages), `da
 
 ## Source
 
-Commit du portfolio d'où viennent les copies : `54643dcbd9acc69f96a3a13dd0eb849e8797909e`
+Commit du portfolio d'où viennent les copies : `bfbc107483e22726be5f9cec57b1ffc477aa264a`
 
 ## Commandes
 
@@ -24,7 +24,7 @@ node scripts/copy-from-portfolio.mjs [chemin-du-portfolio] --check  # échoue si
 Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> rev-parse HEAD`.
 `npm run check` lance le `--check` ; sans portfolio sur la machine, il est sauté avec un avertissement.
 
-## Fichiers copiés (50)
+## Fichiers copiés (57)
 
 - `styles/globals.css`
 - `styles/tokens/primitives.css`
@@ -36,6 +36,7 @@ Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> re
 - `public/fonts/geist-OFL.txt`
 - `public/fonts/geist-mono-OFL.txt`
 - `public/fonts/pixelify-sans-OFL.txt`
+- `public/portrait-florian.jpeg`
 - `lib/cn.ts`
 - `lib/new-tab.tsx`
 - `lib/shortcut.ts`
@@ -43,6 +44,7 @@ Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> re
 - `lib/use-copy-feedback.ts`
 - `lib/use-keyboard-focus.ts`
 - `components/ui/announcement.tsx`
+- `components/ui/author-line.tsx`
 - `components/ui/button.tsx`
 - `components/ui/chip.tsx`
 - `components/ui/chip-group.tsx`
@@ -51,13 +53,16 @@ Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> re
 - `components/ui/copy-button.tsx`
 - `components/ui/dialog.tsx`
 - `components/ui/empty-state.tsx`
+- `components/ui/exhibit.tsx`
 - `components/ui/feature-card.tsx`
 - `components/ui/footer.tsx`
 - `components/ui/icon.tsx`
 - `components/ui/icon-sheet.tsx`
+- `components/ui/inline-code.tsx`
 - `components/ui/kbd.tsx`
 - `components/ui/list.tsx`
 - `components/ui/list-row.tsx`
+- `components/ui/logo.tsx`
 - `components/ui/nav-bar.tsx`
 - `components/ui/nav-item.tsx`
 - `components/ui/pixel-preview.tsx`
@@ -68,8 +73,10 @@ Après une mise à jour, remplace le commit ci-dessus par `git -C <portfolio> re
 - `components/ui/slider.tsx`
 - `components/ui/subscribe-form.tsx`
 - `components/ui/tab.tsx`
+- `components/ui/table-of-contents.tsx`
 - `components/ui/tag.tsx`
 - `components/ui/text-field.tsx`
+- `components/ui/text-link.tsx`
 - `components/ui/theme-selector.tsx`
 - `components/ui/tile.tsx`
 - `components/ui/toaster.tsx`
