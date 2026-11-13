@@ -74,5 +74,5 @@ export function Turnstile({ onToken }: { onToken: (token: string | null) => void
     };
   }, []);
 
-  return <div ref={box} className="empty:hidden" />;
+  return <div ref={box} />;
 }

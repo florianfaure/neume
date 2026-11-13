@@ -260,12 +260,15 @@ export function RequestDialog({
               />
             </div>
 
-            <Turnstile key={round} onToken={setToken} />
-
-            <p className="font-body text-caption text-text-tertiary">
-              Three requests an hour per connection. To count them, the site keeps a one-way fingerprint of your
-              connection for that hour, never your address.
-            </p>
+            {/* Le widget reste à hauteur nulle tant que Cloudflare ne demande rien : sans écart à lui, il ne
+                creuse pas de vide dans le formulaire. */}
+            <div className="flex flex-col">
+              <Turnstile key={round} onToken={setToken} />
+              <p className="font-body text-caption text-text-tertiary">
+                Three requests an hour per connection. To count them, the site keeps a one-way fingerprint of your
+                connection for that hour, never your address.
+              </p>
+            </div>
 
             <div aria-live="polite" className="empty:hidden">
               {phase.kind === "failed" ? (

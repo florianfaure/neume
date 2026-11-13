@@ -65,8 +65,21 @@ par le paquet Consort.
 ```bash
 cd site
 npm run dev      # http://localhost:3100
-npm run check    # lint + tsc + copies:check + build (export dans site/out)
+npm run check    # lint + tsc + tests du Worker + copies:check + build (export dans site/out)
 ```
+
+**La demande d'icône.** Le dialogue « Request an icon » (`app/_shell/request-dialog.tsx`) poste à
+`/api/request`, le seul chemin où le Worker exécute du code (`site/worker/`, `run_worker_first: ["/api/*"]`).
+Il vérifie Turnstile, valide, compte trois envois par heure et par connexion (Durable Object
+`RequestLimiter`, empreinte salée, /64 en IPv6), retire les métadonnées de l'image (liste blanche, sans
+décodage), la range dans le bucket R2 `neume-requests` et crée l'issue (`icon-request`) par l'API GitHub.
+**Hors production, rien n'est créé ni rangé** : la production exige l'hôte `neume.dev` ET l'`Origin`
+`https://neume.dev` (`wrangler dev` réécrit l'hôte en celui de la route). Secrets du Worker, posés par Florian
+et jamais dans le dépôt : `GITHUB_TOKEN` (jeton à grain fin, Issues en écriture sur ce dépôt, un an),
+`TURNSTILE_SECRET`, `IP_SALT` ; en local, `site/.dev.vars` (copie de `.dev.vars.example`, clés de test).
+La clé de site Turnstile, publique, est `TURNSTILE_SITE_KEY` dans `app/_shell/links.ts`. `npm run check` du site
+lance les tests du Worker (`npm test -w site`, Vitest dans le runtime Workers). Pour essayer le tout en local :
+`npm run build -w site && cd site && npx wrangler dev --port 8787`.
 
 **Déploiement.** neume.dev est le Worker `neume-dev`, branché sur le domaine en Custom Domain
 (`site/wrangler.jsonc`). Workers Builds le reconstruit depuis GitHub : **un push sur `main` met en production**,
