@@ -1,4 +1,4 @@
-// node scripts/build.mjs — écrit les deux paquets (packages/svg, packages/react) depuis icons/*.json.
+// node scripts/build.mjs — écrit les deux paquets (packages/svg, packages/react) et le zip du site depuis icons/*.json.
 import { rmSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,4 +17,4 @@ for (const [p, content] of files) {
   mkdirSync(dirname(root + p), { recursive: true });
   writeFileSync(root + p, content);
 }
-console.log(`✓ ${files.size} fichiers générés (packages/svg, packages/react).`);
+console.log(`✓ ${files.size} fichiers générés (packages/svg, packages/react, site/public/neume-svg-24.zip).`);

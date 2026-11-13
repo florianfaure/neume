@@ -49,11 +49,45 @@ const files = generate();
 for (const [p, content] of files) {
   const f = new URL(`../${p}`, import.meta.url);
   if (!existsSync(f)) errors.push(`${p} : manquant — lancer npm run build`);
-  else if (readFileSync(f, "utf8") !== content) errors.push(`${p} : périmé — lancer npm run build`);
+  else if (Buffer.isBuffer(content) ? !readFileSync(f).equals(content) : readFileSync(f, "utf8") !== content) errors.push(`${p} : périmé — lancer npm run build`);
 }
 const walk = (dir) => !existsSync(dir) ? [] : statSync(dir).isFile() ? [dir] : readdirSync(dir).flatMap((e) => walk(join(dir, e)));
 const root = fileURLToPath(new URL("../", import.meta.url));
 for (const g of GENERATED) for (const f of walk(join(root, g))) { const rel = relative(root, f); if (!files.has(rel)) errors.push(`${rel} : ne devrait plus exister — lancer npm run build`); }
+
+// Le zip de la page Docs, lu comme le lirait un outil d'archive : 251 SVG à 24 px, à plat, stockés tels quels.
+{
+  const ZIP = "site/public/neume-svg-24.zip";
+  const bad = (m) => errors.push(`${ZIP} : ${m} — lancer npm run build`);
+  const f = new URL(`../${ZIP}`, import.meta.url);
+  if (!existsSync(f)) bad("manquant");
+  else {
+    const z = readFileSync(f);
+    const eocd = z.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+    if (z.readUInt32LE(0) !== 0x04034b50 || eocd < 0) bad("pas une archive zip");
+    else {
+      const expected = Object.keys(sets.grand).map((n) => `${n}.svg`).sort();
+      const total = z.readUInt16LE(eocd + 10);
+      if (total !== expected.length) bad(`${total} entrées, attendu ${expected.length}`);
+      const seen = [];
+      let p = z.readUInt32LE(eocd + 16);
+      for (let i = 0; i < total; i++) {
+        if (z.readUInt32LE(p) !== 0x02014b50) { bad("répertoire central illisible"); break; }
+        const method = z.readUInt16LE(p + 10), size = z.readUInt32LE(p + 24);
+        const nameLen = z.readUInt16LE(p + 28), extraLen = z.readUInt16LE(p + 30), commentLen = z.readUInt16LE(p + 32);
+        const local = z.readUInt32LE(p + 42);
+        const name = z.toString("utf8", p + 46, p + 46 + nameLen);
+        seen.push(name);
+        if (method !== 0) bad(`${name} : compressé, attendu stocké`);
+        const start = local + 30 + z.readUInt16LE(local + 26) + z.readUInt16LE(local + 28);
+        const disk = new URL(`../packages/svg/dist/24/${name}`, import.meta.url);
+        if (!existsSync(disk) || !z.subarray(start, start + size).equals(readFileSync(disk))) bad(`${name} : différent de packages/svg/dist/24`);
+        p += 46 + nameLen + extraLen + commentLen;
+      }
+      if (seen.join() !== [...seen].sort().join() || [...seen].sort().join() !== expected.join()) bad("les noms ne sont pas ceux des icônes, triés");
+    }
+  }
+}
 
 for (const w of warn) console.log(`· ${w}`);
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); console.error(`\n${errors.length} erreur(s).`); process.exit(1); }
