@@ -51,6 +51,7 @@ type ExhibitProps = ExhibitLabels &
         caption: string;
         states?: never;
         image?: never;
+        children?: never;
       }
     | {
         /** Les états de l'avant / après, deux au moins, dans l'ordre de leurs onglets. */
@@ -60,6 +61,7 @@ type ExhibitProps = ExhibitLabels &
         /** Chaque état porte sa phrase : il n'y en a pas une pour le cadre. */
         caption?: never;
         image?: never;
+        children?: never;
       }
     | {
         /** L'image seule, sans onglets : une scène unique, qui prend le cadre des deux autres. */
@@ -72,6 +74,20 @@ type ExhibitProps = ExhibitLabels &
         columns?: never;
         rows?: never;
         states?: never;
+        children?: never;
+      }
+    | {
+        /**
+         * Le contenu libre : ce que l'appelant pose dans le cadre, sur toute la largeur de la surface.
+         * Pas de bouton d'agrandissement : agrandir un contenu libre n'a pas de sens.
+         */
+        children: ReactNode;
+        /** La phrase sous le cadre. FACULTATIVE, comme pour l'image seule : absente, ni `<figcaption>` ni écart. */
+        caption?: string;
+        columns?: never;
+        rows?: never;
+        states?: never;
+        image?: never;
       }
   );
 
@@ -117,7 +133,7 @@ const CAPTION = "w-0 min-w-full text-center font-pixel text-body-sm text-text-te
  * contenu découpé à 8 px sur `--color-surface` — et, à 12 px dessous, sa phrase. Le tableau et l'image
  * seule l'appellent une fois ; l'avant / après l'appelle dans chaque panneau, pour que chaque état
  * soit sa propre figure et que la rangée d'onglets de `Tab` reste dehors, sous elles. Sans `caption`,
- * pas de `<figcaption>` ni d'écart : seule l'image seule peut s'en passer. `trigger`, le bouton qui
+ * pas de `<figcaption>` ni d'écart : seules l'image seule et le contenu libre peuvent s'en passer. `trigger`, le bouton qui
  * ouvre la visionneuse, est posé DANS le contour, en absolu dans son coin haut droit ; le tableau n'en
  * passe pas, et son cadre ne prend alors ni `relative` ni le groupe de survol.
  */
@@ -146,7 +162,8 @@ const framed = (inner: ReactNode, caption?: string, trigger?: ReactNode) => (
  *
  * LA VARIANTE SE DÉDUIT DES DONNÉES, ET IL N'Y A PAS DE PROP `variant` (spec § 5). Des `columns` et
  * des `rows` font un tableau de verdicts ; des `states` font un avant / après qu'on bascule par des
- * onglets ; une `image` seule fait un écran sans onglets, depuis le 2026-10-17. Le contour et la
+ * onglets ; une `image` seule fait un écran sans onglets, depuis le 2026-10-17 ; des `children` font un
+ * cadre à contenu libre, depuis le 2026-11-13. Le contour et la
  * phrase sont les mêmes, seul le contenu change — « le contour avec la phrase, c'est la même chose »,
  * dit Florian. Une prop `variant` requise aurait contredit la loi 11, qui veut une variante
  * optionnelle avec un défaut, et aucun défaut n'a de sens ici : c'est le contenu qui décide, comme
@@ -315,6 +332,22 @@ const framed = (inner: ReactNode, caption?: string, trigger?: ReactNode) => (
  * SON PREMIER APPELANT EST L'IMAGE DU DASHBOARD DE STASH, rendue par le bloc `image` des case
  * studies (`app/(reading)/_render.tsx`).
  *
+ * LE CONTENU LIBRE EST LA QUATRIÈME FORME, DU 2026-11-13 — décision de Florian, pour la page
+ * /changelog de neume.dev (dépôt `/Users/florianfaure/neume`, qui recopie ce composant à l'octet près) :
+ * deux figures sous une version, un avant / après de deux panneaux avec une icône agrandie 4 fois et
+ * une grille de 24 icônes, chacune avec sa phrase, posées jusque-là dans une boîte faite à la main.
+ * Copier les classes du cadre aurait fait un sosie (ordre 3 de `CLAUDE.md`) ; la forme est donc ici.
+ * Spec : `docs/specs/2026-11-13-exhibit-contenu-libre-design.md`. `children` est EXCLUSIF des trois
+ * autres champs, par une quatrième branche de l'union (`never` de part et d'autre). Sa `caption` est
+ * FACULTATIVE, avec la règle de l'image seule : absente, ni `<figcaption>` ni écart ; texte simple,
+ * mêmes classes que les autres. IL N'Y A NI BOUTON « ENLARGE » NI VISIONNEUSE : agrandir un contenu
+ * libre n'a pas de sens, et la couche le rendrait deux fois — identifiants dupliqués, contrôles en
+ * double. Le cadre se pose comme celui du tableau, par `framed` sans `trigger` : ni `relative` ni
+ * groupe de survol. LA MARGE EST CELLE DE L'IMAGE SEULE, `px-4 py-8`, mais le contenu prend TOUTE la
+ * largeur de la surface — un bloc, et non le `flex justify-center` de l'image, qui ferait rétrécir
+ * une grille à son contenu. C'est l'appelant qui dispose son contenu dedans : le cadre ne pose
+ * aucune grille, aucun alignement. Aucun `Reveal`, comme les autres formes.
+ *
  * LA VISIONNEUSE, DU 2026-10-20 — l'image seule et l'avant / après s'ouvrent en grand ; le tableau,
  * du texte déjà replié sous `md`, n'en a pas. Florian, lot C, spec
  * `docs/specs/2026-10-20-lot-c-lecture-design.md` § 5 (rapports LEC-01 et CON-02 du catalogue du
@@ -423,14 +456,14 @@ const framed = (inner: ReactNode, caption?: string, trigger?: ReactNode) => (
  * pas à la page : son panneau enveloppe une image plafonnée à la fenêtre, et `(hover: none)` n'est pas
  * un seuil de largeur — les deux sont justifiés au champ `responsive` du manifeste.
  *
- * LES ÉTATS. Le tableau est inerte : un seul état, `default`. L'image seule est interactive par son
+ * LES ÉTATS. Le tableau et le contenu libre sont inertes : un seul état, `default`. L'image seule est interactive par son
  * bouton d'agrandissement, et l'avant / après par ses onglets et son bouton : ce sont les cinq états de
  * `Button` et de `Tab` — plus `selected` — qui s'y lisent. Le cadre n'en ajoute qu'un, `open`, la
  * visionneuse ouverte, qui porte les tokens de la couche.
  *
  * COMPOSANT CLIENT (`runtime: "client"`) : il tient l'onglet ouvert dans un état, que `Tab` contrôlé
  * exige, le premier changement d'onglet, et la visionneuse — son ouverture, `flushSync`. Un
- * fichier n'a qu'une nature, donc le tableau, qui n'en a aucun besoin, passe client avec lui — la spec
+ * fichier n'a qu'une nature, donc le tableau et le contenu libre, qui n'en ont aucun besoin, passent client avec lui — la spec
  * le prévoyait (§ 4). Les états et les refs sont déclarés avant toute branche : un hook ne se pose pas
  * sous une condition.
  *
@@ -650,7 +683,7 @@ export function Exhibit(props: ExhibitProps) {
         )}
       </>
     );
-  } else {
+  } else if (props.columns !== undefined) {
     const { columns, rows } = props;
     content = framed(
       <table className="block w-full md:table">
@@ -704,6 +737,12 @@ export function Exhibit(props: ExhibitProps) {
       </table>,
       props.caption,
     );
+  } else {
+    /* Le contenu libre, seule branche restante : `children` peut valoir `undefined` (c'est un
+     * `ReactNode`), donc on ne le teste pas — la forme se reconnaît aux trois autres. Le cadre du
+     * tableau, sans bouton ni couche, la marge de l'image seule, le contenu en bloc sur toute la
+     * largeur. */
+    content = framed(<div className="px-4 py-8">{props.children}</div>, props.caption);
   }
 
   return content;
