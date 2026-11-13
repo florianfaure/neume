@@ -12,8 +12,8 @@ import type { Theme } from "@/data/themes";
 import { cn } from "@/lib/cn";
 import { NeumeIcon } from "@/lib/neume";
 import { SIZES } from "@neume-icons/svg/render";
+import { ISSUES_URL } from "../_shell/links";
 
-export const REPO_URL = "https://github.com/florianfaure/neume";
 
 interface BrowseProps {
   /** Les thèmes avec les seules icônes qui correspondent à la recherche. */
@@ -210,7 +210,7 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
               <Button
                 variant="ghost"
                 label="Suggest an icon"
-                href={`${REPO_URL}/issues/new`}
+                href={ISSUES_URL}
                 newTab
               />
             </>

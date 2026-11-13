@@ -2,9 +2,10 @@ import { CopyButton } from "@/components/ui/copy-button";
 
 interface CodeBlockProps {
   /**
-   * La ligne de code, en texte brut : une commande, une instruction. UNE LIGNE — le bloc ne coupe
-   * pas et ne montre pas de retours à la ligne ; plusieurs lignes n'ont aucun usage au cadrage.
-   * C'est aussi la chaîne que le bouton copie : ce qu'on lit est ce qu'on obtient.
+   * Le code, en texte brut : une commande sur une ligne, ou un extrait sur plusieurs. Les retours à la
+   * ligne (`\n`) et l'indentation sont gardés tels quels ; pas de retour à la ligne au début ni à la
+   * fin, le bloc ne rogne rien et c'est à l'appelant de n'en pas passer. C'est aussi la chaîne que le
+   * bouton copie, entière : ce qu'on lit est ce qu'on obtient.
    */
   code: string;
   /**
@@ -21,7 +22,7 @@ interface CodeBlockProps {
 }
 
 /**
- * CodeBlock — une ligne de code à copier : sur le site de Neume, `npm i @neume-icons/react`. Cadré
+ * CodeBlock — un code à copier, d'une ou de plusieurs lignes : sur le site de Neume, `npm i @neume-icons/react`. Cadré
  * avec Florian, en conversation et sur un prototype en localhost, SANS benchmark Mobbin (mis en pause
  * par Florian le 2026-11-07). Spec : `docs/specs/2026-11-07-copie-et-bloc-de-code-design.md` § 3.
  *
@@ -45,20 +46,31 @@ interface CodeBlockProps {
  * deux restent dans le même groupe de jumeaux. Aucun style de bouton n'est posé ici : `CopyButton`
  * est composé tel quel, et la loi 9 interdit de le restyler par-dessus.
  *
- * LA HAUTEUR VIENT DU BOUTON : 36 px de bouton et 4 px de marge de chaque côté font 44 px DANS le
- * filet, ce qui est aussi la hauteur de la cible de pointage du bouton — son calque de 44 px tient
- * dans la marge, sans en sortir ni en recouvrir un autre (loi 5). Le filet de 1 px s'ajoute autour : la
- * boîte dessinée mesure 46 px. Aucune hauteur n'est écrite.
+ * LA HAUTEUR D'UNE LIGNE VIENT DU BOUTON : 36 px de bouton et 4 px de marge de chaque côté font 44 px
+ * DANS le filet, ce qui est aussi la hauteur de la cible de pointage du bouton — son calque de 44 px
+ * tient dans la marge, sans en sortir ni en recouvrir un autre (loi 5). Le filet de 1 px s'ajoute
+ * autour : la boîte dessinée mesure 46 px. Aucune hauteur n'est écrite : le code reçoit 8 px de marge
+ * en haut et en bas (`py-2`), et la ligne de `text-body-sm` mesure 20 px, d'où 20 + 8 + 8 = 36, la
+ * hauteur du bouton. Le `<pre>` porte lui-même `text-body-sm` et le `<code>` est `block` : sans cela
+ * le `<pre>` garde la taille de `body` (16 / 24) et sa ligne de 24 px ferait 40 de contenu.
+ *
+ * LE BLOC S'ALIGNE EN HAUT, pas au centre : sur une ligne, le code est à la même place qu'avec
+ * `items-center` (la mesure du 2026-11-13 est dans l'histoire) ; sur plusieurs, la première ligne est
+ * alignée sur le bouton, les suivantes descendent dessous, et le bouton reste en haut à droite.
+ *
+ * LES MARGES SUR PLUSIEURS LIGNES : 12 px au-dessus de la première ligne et sous la dernière (4 de la
+ * surface + 8 du code), 16 à gauche, 8 entre le code et le bouton, 4 autour du bouton.
  *
  * LE CODE EST UN `<pre><code>`, LE PREMIER `<pre>` DU SYSTÈME, en `font-code text-body-sm` et en texte
  * primaire — Geist Mono à 14 px, comme `InlineCode`, qui est la raison de la balise : une règle de
  * `npm run check` refuse `font-code` ailleurs que sur `<code>`, `<pre>`, `<kbd>` et `<samp>` (loi 3).
- * Le `<code>` porte la police et la couleur, le `<pre>` la place. Il tient sur UNE ligne
- * (`whitespace-nowrap`) et, s'il déborde, il défile à l'horizontale dans sa place : `min-w-0 flex-1`
- * l'empêche de repousser le bouton, qui garde sa colonne. La barre de défilement est masquée : une
+ * Le `<code>` porte la police et la couleur, le `<pre>` la place. Les retours à la ligne et
+ * l'indentation sont gardés (`whitespace-pre`) ; une ligne trop longue ne passe pas à la suivante, elle
+ * défile à l'horizontale dans la place du code : `min-w-0 flex-1` l'empêche de repousser le bouton, qui
+ * garde sa colonne — LE CODE NE PASSE JAMAIS SOUS LE BOUTON. La barre de défilement est masquée : une
  * barre classique ajouterait sa hauteur au bloc, et le défilement reste possible au pointeur et au
- * toucher. Le défilement n'a pas de focus : le bouton est la voie du clavier vers la ligne, qu'il
- * copie entière.
+ * toucher. Le défilement n'a pas de focus : le bouton est la voie du clavier vers l'extrait, qu'il
+ * copie entier.
  *
  * LA LARGEUR EST CELLE DE L'APPELANT (loi 8) : le bloc remplit son conteneur, sans largeur ni marge à
  * lui.
@@ -69,19 +81,29 @@ interface CodeBlockProps {
  * fraude au contrat (loi 4). `elements` reste vide : le `<button>` est rendu par `Button`, et ses
  * états sont ceux de `CopyButton`.
  *
- * Écartés : plusieurs lignes, la coloration syntaxique, les onglets npm / pnpm / yarn — aucun usage.
+ * Écartés : la coloration syntaxique, les numéros de ligne, les onglets npm / pnpm / yarn, une hauteur
+ * maximale — aucun usage.
  *
  * ANONYMISÉ POUR CONSORT, le 2026-11-11 (décision de Florian, spec
  * `docs/specs/2026-11-11-anonymisation-design.md` § 2) : `copiedLabel`, transmis à `CopyButton`,
  * remplace le mot de confirmation écrit en dur ; aucun pixel ne bouge.
  *
+ * PLUSIEURS LIGNES, le 2026-11-13 (décision de Florian, spec
+ * `docs/specs/2026-11-13-bloc-de-code-multiligne-design.md`) : `code` peut contenir des retours à la
+ * ligne, pour les extraits de la page Docs de neume.dev. L'API ne bouge pas ; l'alignement passe du
+ * centre au haut, le code reçoit `py-2`, `whitespace-pre` remplace `whitespace-nowrap`. La commande
+ * d'une ligne garde ses 46 px dessinés. Le bouton garde sa colonne, la barre de défilement reste
+ * masquée.
+ *
  * Histoire : `docs/history/code-block.md`.
  */
 export function CodeBlock({ code, label, copiedLabel }: CodeBlockProps) {
   return (
-    <div className="flex items-center gap-2 rounded-2xl border-[length:var(--border-thin)] border-code-block-border bg-code-block-surface p-1 pl-4">
-      <pre className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
-        <code className="whitespace-nowrap font-code text-body-sm text-text-primary">{code}</code>
+    <div className="flex items-start gap-2 rounded-2xl border-[length:var(--border-thin)] border-code-block-border bg-code-block-surface p-1 pl-4">
+      <pre className="min-w-0 flex-1 overflow-x-auto py-2 text-body-sm [scrollbar-width:none]">
+        <code className="block whitespace-pre font-code text-body-sm text-text-primary">
+          {code}
+        </code>
       </pre>
       <CopyButton value={code} label={label} content="icon" copiedLabel={copiedLabel} />
     </div>

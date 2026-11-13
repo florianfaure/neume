@@ -7,12 +7,13 @@
 import { readFileSync } from "node:fs";
 import { read, hex, unhex } from "../src/io.js";
 import { SIZES, svg, path } from "../packages/svg/src/render.js";
+import { zipStore } from "./zip.mjs";
 
 const ROOT = new URL("../", import.meta.url);
 const text = (p) => readFileSync(new URL(p, ROOT), "utf8");
 
 /** Les emplacements entièrement générés : build les vide avant d'écrire, check les compare en entier. */
-export const GENERATED = ["packages/svg/dist", "packages/react/dist", "packages/svg/src/data.js", ".github/assets/preview.svg"];
+export const GENERATED = ["packages/svg/dist", "packages/react/dist", "packages/svg/src/data.js", ".github/assets/preview.svg", "site/public/neume-svg-24.zip"];
 
 const HEADER = "// Généré par scripts/build.mjs depuis icons/*.json — ne pas modifier à la main.\n";
 const RESERVED = new Set(["Icon", "IconProps", "createIcon"]);
@@ -61,6 +62,8 @@ export function generate() {
     if (!SIZES.includes(size)) throw new Error(`taille ${size} absente de SIZES`);
     for (const n of names) put(`packages/svg/dist/${size}/${n}.svg`, svg(n, size, sets) + "\n");
   }
+  // Le zip du bouton « Download all » de neume.dev/docs : les fichiers à 24 px, à plat.
+  put("site/public/neume-svg-24.zip", zipStore(names.map((n) => [`${n}.svg`, files.get(`packages/svg/dist/24/${n}.svg`)])));
 
   // --- @neume-icons/react ---
   put("packages/react/dist/create-icon.js", text("packages/react/src/create-icon.js"));
