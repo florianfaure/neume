@@ -36,7 +36,7 @@ export const COPIES = [
     "announcement", "author-line", "button", "chip", "chip-group", "code-block", "command-palette", "copy-button",
     "dialog", "empty-state", "exhibit", "feature-card", "footer", "icon", "icon-sheet", "inline-code", "kbd", "list", "list-row", "logo",
     "nav-bar", "nav-item", "pixel-preview", "progress-bar", "reveal", "search-field", "segmented-track",
-    "slider", "subscribe-form", "tab", "table-of-contents", "tag", "text-field", "text-link", "theme-selector", "tile", "toaster",
+    "slider", "subscribe-form", "tab", "table-of-contents", "tag", "text-area", "text-field", "file-field", "text-link", "theme-selector", "tile", "toaster",
     "toggle-button", "toggle-group", "tooltip",
   ].map((n) => `components/ui/${n}.tsx`),
 ];

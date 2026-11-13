@@ -113,7 +113,9 @@ const STATUS = {
  * son message.
  *
  * LES ÉTATS (loi 4). `hover` : la pastille un cran plus sombre, et le texte d'attente au secondaire, où le
- * tertiaire ne tient pas 4.5:1 — comme `SearchField`. `active` : identique au repos, un clic ne change rien.
+ * tertiaire ne tient pas 4.5:1 — comme `SearchField`. EN STATUT, le blanc de la pastille reprend le gris du
+ * repos et le filet coloré reste : Florian, le 2026-11-13, « il n'y a pas de rollover » en négatif, positif ou
+ * attention. `active` : identique au repos, un clic ne change rien.
  * `disabled` : le champ entier estompé (`--opacity-disabled`), SANS survol — règle du lot 1, un contrôle
  * désactivé n'a ni survol ni bulle. `focus-visible` : voir ci-dessous.
  *
@@ -168,7 +170,8 @@ export function TextField({
           "border-[length:var(--border-thin)]",
           "transition-[background-color] duration-[var(--duration-fast)] ease-out",
           tone ? ["bg-surface", tone.border] : ["bg-search-field-surface", "border-transparent"],
-          !tone && !disabled && "hover:bg-search-field-surface-hover",
+          !disabled &&
+            (tone ? "hover:bg-search-field-surface" : "hover:bg-search-field-surface-hover"),
           disabled && "opacity-[var(--opacity-disabled)]",
           "data-[keyboard-focus]:outline-solid data-[keyboard-focus]:outline-[length:var(--border-thick)]",
           "data-[keyboard-focus]:outline-offset-[var(--focus-ring-offset)]",
@@ -194,7 +197,7 @@ export function TextField({
           className={cn(
             "min-w-0 flex-1 self-stretch appearance-none bg-transparent px-4 outline-none",
             "font-body text-body-sm text-text-primary placeholder:text-text-tertiary",
-            !tone && !disabled && "group-hover:placeholder:text-text-secondary",
+            !disabled && "group-hover:placeholder:text-text-secondary",
           )}
         />
       </div>

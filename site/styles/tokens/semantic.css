@@ -1680,6 +1680,15 @@
   --size-share-panel-width: 400px;
   --size-share-thumb: 80px;
 
+  /* --------------------------------------------------------------------------------------
+   * `--size-file-field-thumb` : 48 PX, la vignette carrée de l'image choisie dans `FileField`
+   * (`docs/specs/2026-11-13-zone-de-texte-et-fichier-design.md` § 3). 48 + 8 + 8 = 64 px de ligne,
+   * assez pour reconnaître l'image sans voler la place du nom. Delta du 2026-11-13. Consommation :
+   * `size-[var(--size-file-field-thumb)]`. Non mappée dans `@theme inline`, pour la raison de
+   * `--size-note-title-width`. Ne se remappe pas en dark.
+   * ------------------------------------------------------------------------------------ */
+  --size-file-field-thumb: 48px;
+
   /* ------------------------------------------------------------------------------------
    * DELTA 2.3 — rapport d'aspect
    *
