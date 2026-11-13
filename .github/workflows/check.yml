@@ -1,4 +1,4 @@
-# Le vérificateur sur chaque PR et sur main : rouge, on ne fusionne pas.
+# Le vérificateur (et le site) sur chaque PR et sur main : rouge, on ne fusionne pas.
 name: check
 on:
   pull_request:
@@ -17,3 +17,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      # Le site, sans `copies:check` (il lit ~/portfolio) ni le build (Workers Builds le fait) : lint, types et
+      # les tests du Worker de la demande d'icône, dans le runtime Workers.
+      - run: npm run lint -w site && npm run typecheck -w site && npm test -w site

@@ -47,7 +47,7 @@ un tracé modifié = correctif, une icône retirée ou renommée = majeure).
 3. Florian approuve les deux versions sur npmjs.com (ou `npm stage approve <id>`), avec sa 2FA, svg
    d'abord : c'est l'approbation qui les publie.
 
-`.github/workflows/check.yml` rejoue `npm run check` sur chaque PR.
+`.github/workflows/check.yml` rejoue `npm run check` sur chaque PR, puis le lint, les types et les tests du Worker du site.
 
 ## Le site (`site/`)
 
