@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { NavBar } from "@/components/ui/nav-bar";
 import { NavItem } from "@/components/ui/nav-item";
 import { ThemeSelector } from "@/components/ui/theme-selector";
-import { ISSUES_URL, REPO_URL } from "./links";
+import { REPO_URL } from "./links";
 
-/** La barre de neume.dev, la même sur toutes les pages. `onSearch` ouvre la palette (⌘K). */
-export function SiteNav({ onSearch }: { onSearch: () => void }) {
+/** La barre de neume.dev, la même sur toutes les pages. `onSearch` ouvre la palette (⌘K), `onRequest` la demande d'icône. */
+export function SiteNav({ onSearch, onRequest }: { onSearch: () => void; onRequest: () => void }) {
   return (
     <NavBar
       behavior="auto-hide"
@@ -33,8 +33,7 @@ export function SiteNav({ onSearch }: { onSearch: () => void }) {
             content="icon-label"
             icon="lightbulb"
             label="Request an icon"
-            href={ISSUES_URL}
-            newTab
+            onClick={onRequest}
           />
           <Button
             variant="ghost"

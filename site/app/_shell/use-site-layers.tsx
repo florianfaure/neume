@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import { CommandPalette } from "@/components/ui/command-palette";
+import { RequestDialog } from "./request-dialog";
 import type { CommandPaletteGroup } from "@/components/ui/command-palette";
 import { IconSheet } from "@/components/ui/icon-sheet";
 import type { IconName } from "@/components/ui/icon";
@@ -38,8 +39,15 @@ async function copyCommand() {
 export function useSiteLayers(
   order: readonly string[],
   size: number,
-): { openPalette: () => void; openIcon: (name: string) => void; layers: ReactNode } {
+): {
+  openPalette: () => void;
+  openIcon: (name: string) => void;
+  openRequest: (name?: string) => void;
+  layers: ReactNode;
+} {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestName, setRequestName] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
 
@@ -103,6 +111,8 @@ export function useSiteLayers(
         placeholder="Search icons, pages and actions…"
       />
 
+      <RequestDialog open={requestOpen} onOpenChange={setRequestOpen} initialName={requestName} />
+
       {current && big ? (
         <IconSheet
           open={sheetOpen}
@@ -121,5 +131,10 @@ export function useSiteLayers(
     </>
   );
 
-  return { openPalette: () => setPaletteOpen(true), openIcon, layers };
+  const openRequest = (name?: string) => {
+    if (name) setRequestName(name);
+    setRequestOpen(true);
+  };
+
+  return { openPalette: () => setPaletteOpen(true), openIcon, openRequest, layers };
 }

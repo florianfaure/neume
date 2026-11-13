@@ -156,11 +156,11 @@ function Entry({ release, latest }: { release: Release; latest: boolean }) {
 
 /** La page Changelog de neume.dev : une frise des versions, la plus récente en haut. */
 export function Changelog() {
-  const { openPalette, layers } = useSiteLayers(names, 24);
+  const { openPalette, openRequest, layers } = useSiteLayers(names, 24);
 
   return (
     <>
-      <SiteNav onSearch={openPalette} />
+      <SiteNav onSearch={openPalette} onRequest={() => openRequest()} />
 
       <main className="mx-auto flex w-full max-w-[var(--site-docs-copy-width)] flex-col gap-24 px-[var(--layout-gutter)] pt-32 pb-16">
         <header className="flex flex-col gap-6">
