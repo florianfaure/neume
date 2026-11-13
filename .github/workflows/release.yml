@@ -15,13 +15,14 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-      # `npm stage publish` demande npm ≥ 11.15.0.
-      - run: npm install -g npm@^11.15.0
+      # `npm stage publish` demande npm ≥ 11.15.0. Version exacte : ce job peut publier, il n'installe rien
+      # qui bouge sans commit (de même, les actions sont épinglées à leur commit, l'étiquette en commentaire).
+      - run: npm install -g npm@11.21.2
       - run: npm ci
       - name: Le tag et les paquets disent la même version
         run: node scripts/version.mjs --assert "${GITHUB_REF_NAME#v}"
