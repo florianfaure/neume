@@ -24,7 +24,7 @@ export function SiteNav({ onSearch, onRequest }: { onSearch: () => void; onReque
             variant="ghost"
             content="icon-label"
             icon="github"
-            label="GitHub"
+            label="Star on GitHub"
             href={REPO_URL}
             newTab
           />
