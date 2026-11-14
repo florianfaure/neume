@@ -35,8 +35,19 @@ export function SiteNav({ onSearch, onRequest }: { onSearch: () => void; onReque
             label="Request an icon"
             onClick={onRequest}
           />
-          <Button variant="ghost" content="icon" icon="search" label="Search" onClick={onSearch} />
-          <ThemeSelector />
+          {/* Sans bulle : elle passait par-dessus le fond qui glisse, et la loupe se lit seule. */}
+          <Button
+            variant="ghost"
+            content="icon"
+            icon="search"
+            label="Search"
+            tooltip="none"
+            onClick={onSearch}
+          />
+          {/* Les actions de la barre se touchent ; le sélecteur, qui a sa propre piste, reste à l'écart. */}
+          <div className="flex md:ml-2">
+            <ThemeSelector />
+          </div>
         </>
       }
     >

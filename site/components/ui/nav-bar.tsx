@@ -107,10 +107,12 @@ function Actions({ layout, children }: { layout: "row" | "column"; children: Rea
         : null;
     };
 
-    /* Hors d'un contrôle — l'écart entre deux boutons, un `ThemeSelector` —, le fond s'éteint : la rangée n'est pas
-     * une liste serrée, et un fond resté sous un sélecteur qui a sa propre piste se lirait comme une sélection. */
+    /* L'ÉCART N'ÉTEINT PAS LE FOND, comme dans `List` : sous le pointeur qui le traverse, la cible est la rangée
+     * elle-même, et le fond éteint là reparaissait sur le bouton suivant sans glisser — « c'est direct, instant »,
+     * Florian, 2026-11-14. Seul un enfant qui n'est pas un contrôle l'éteint : un `ThemeSelector`, qui a sa propre
+     * piste, sous lequel un fond resté se lirait comme une sélection. */
     const onPointerOver = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return;
+      if (event.pointerType === "touch" || event.target === root || event.target === fond) return;
       place(controlOf(root, event.target));
     };
     const onPointerLeave = () => place(focused());
@@ -142,10 +144,10 @@ function Actions({ layout, children }: { layout: "row" | "column"; children: Rea
       ref={box}
       data-hover-glide=""
       className={cn(
-        "relative flex gap-2",
+        "relative flex",
         layout === "row"
           ? "ml-auto items-center"
-          : "flex-col items-start border-t-[length:var(--border-thin)] border-border-subtle pt-4",
+          : "flex-col items-start gap-2 border-t-[length:var(--border-thin)] border-border-subtle pt-4",
       )}
     >
       <span
@@ -269,9 +271,14 @@ function Actions({ layout, children }: { layout: "row" | "column"; children: Rea
  * peint plus son propre survol (voir sa docstring) ; son pressé reste le sien. TROIS DIFFÉRENCES AVEC `List` : la
  * position se mesure en x ET en y, et la taille en largeur ET en hauteur, pour la rangée de la barre comme pour la
  * colonne du volet ; elle se lit par la chaîne des `offsetParent`, sans les transformations du volet qui entre ;
- * et HORS D'UN CONTRÔLE LE FOND S'ÉTEINT — l'écart de 8 px entre deux boutons comme un `ThemeSelector`, qui a sa
- * propre piste : un fond resté dessous se lirait comme une sélection. Un `<span aria-hidden>` premier enfant de la
- * rangée, hors du flux, que les boutons (`relative`) recouvrent.
+ * et SUR UN ENFANT QUI N'EST PAS UN CONTRÔLE LE FOND S'ÉTEINT — un `ThemeSelector`, qui a sa propre piste : un fond
+ * resté dessous se lirait comme une sélection. L'écart, lui, ne l'éteint pas, comme dans `List`. Un `<span
+ * aria-hidden>` premier enfant de la rangée, hors du flux, que les boutons (`relative`) recouvrent.
+ *
+ * LES ACTIONS SE TOUCHENT DANS LA BARRE (2026-11-14, `refine`, décision de Florian sur neume.dev) : la rangée n'a
+ * plus d'écart entre elles, le fond passe d'un bouton au voisin sans vide, et le padding de chaque bouton fait
+ * l'espace. Le volet garde ses 8 px entre deux lignes : en colonne, des pastilles collées se liraient comme un
+ * seul bloc. Ce qui doit rester à l'écart dans la barre — un `ThemeSelector` — y est mis par l'appelant.
  *
  * COMPOSANT CLIENT (`runtime: "client"`) : état propre (ouvert, monté dans le volet, défilé, caché), effets (le
  * défilement, la requête de largeur, le clic d'un lien du volet, le focus qui entre, le fond des actions), refs, un `Dialog` contrôlé,
