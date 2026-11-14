@@ -47,6 +47,123 @@ interface NavBarProps {
  */
 const HYSTERESIS = 24;
 
+/** Le contrôle visé par le fond des actions : un lien ou un bouton actif de la rangée, ou `null`. */
+function controlOf(root: HTMLElement, target: EventTarget | null): HTMLElement | null {
+  const control = target instanceof Element ? target.closest<HTMLElement>("a, button") : null;
+  return control && root.contains(control) && !control.matches(":disabled") ? control : null;
+}
+
+/** La position de `control` dans `root`, par la chaîne des `offsetParent` — `root` est `relative`, elle s'arrête à
+ * lui. Sans les transformations — l'entrée du volet, le départ de la barre, l'enfoncement du bouton —, que
+ * `getBoundingClientRect` compterait. */
+function offsetIn(root: HTMLElement, control: HTMLElement) {
+  let x = 0;
+  let y = 0;
+  let node: Element | null = control;
+  while (node instanceof HTMLElement && node !== root) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+    node = node.offsetParent;
+  }
+  return { x, y };
+}
+
+/**
+ * Les actions de la barre, et leur fond qui glisse (voir « LE FOND DES ACTIONS GLISSE » dans la docstring de
+ * `NavBar`). COPIÉ SUR `List` : un `<span aria-hidden>` premier enfant, positionné par mesure du DOM, posé par
+ * `pointerover` et `focusin`, éteint au départ du pointeur et du focus ; `data-state` tenu par le DOM, pas par React.
+ * `data-hover-glide` est le signal que lit `Button` : un `ghost` posé dedans ne peint plus son propre survol.
+ * `row` : la rangée de la barre ; `column` : la colonne du volet, sous son filet.
+ */
+function Actions({ layout, children }: { layout: "row" | "column"; children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const mark = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const root = box.current;
+    const fond = mark.current;
+    if (!root || !fond) return;
+
+    /* Le fond sur `control`, ou éteint si `control` est nul. Le premier placement ne glisse pas : il apparaît. */
+    const place = (control: HTMLElement | null) => {
+      if (!control) {
+        delete fond.dataset.state;
+        return;
+      }
+      const hidden = fond.dataset.state === undefined;
+      const { x, y } = offsetIn(root, control);
+      fond.style.setProperty("--nav-bar-glide-x", `${x}px`);
+      fond.style.setProperty("--nav-bar-glide-y", `${y}px`);
+      fond.style.setProperty("--nav-bar-glide-w", `${control.offsetWidth}px`);
+      fond.style.setProperty("--nav-bar-glide-h", `${control.offsetHeight}px`);
+      fond.dataset.state = hidden ? "jump" : "on";
+    };
+
+    /* Le contrôle qui porte le focus clavier, ou `null` : un clic ne le compte pas. */
+    const focused = () => {
+      const active = document.activeElement;
+      return active instanceof HTMLElement && active.matches(":focus-visible")
+        ? controlOf(root, active)
+        : null;
+    };
+
+    /* Hors d'un contrôle — l'écart entre deux boutons, un `ThemeSelector` —, le fond s'éteint : la rangée n'est pas
+     * une liste serrée, et un fond resté sous un sélecteur qui a sa propre piste se lirait comme une sélection. */
+    const onPointerOver = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      place(controlOf(root, event.target));
+    };
+    const onPointerLeave = () => place(focused());
+    const onFocusIn = (event: FocusEvent) => {
+      const control = focused();
+      if (control && control === controlOf(root, event.target)) place(control);
+      else place(null);
+    };
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget;
+      if (next instanceof Node && root.contains(next)) return;
+      place(null);
+    };
+
+    root.addEventListener("pointerover", onPointerOver);
+    root.addEventListener("pointerleave", onPointerLeave);
+    root.addEventListener("focusin", onFocusIn);
+    root.addEventListener("focusout", onFocusOut);
+    return () => {
+      root.removeEventListener("pointerover", onPointerOver);
+      root.removeEventListener("pointerleave", onPointerLeave);
+      root.removeEventListener("focusin", onFocusIn);
+      root.removeEventListener("focusout", onFocusOut);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={box}
+      data-hover-glide=""
+      className={cn(
+        "relative flex gap-2",
+        layout === "row"
+          ? "ml-auto items-center"
+          : "flex-col items-start border-t-[length:var(--border-thin)] border-border-subtle pt-4",
+      )}
+    >
+      <span
+        ref={mark}
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute top-0 left-0 rounded-full bg-button-surface-ghost-hover opacity-0",
+          "h-[var(--nav-bar-glide-h)] w-[var(--nav-bar-glide-w)] [translate:var(--nav-bar-glide-x)_var(--nav-bar-glide-y)]",
+          "transition-[translate,width,height,opacity] duration-[var(--duration-base)] ease-in-out",
+          "data-[state=jump]:transition-[opacity]",
+          "data-[state=on]:opacity-100 data-[state=jump]:opacity-100",
+        )}
+      />
+      {children}
+    </div>
+  );
+}
+
 /**
  * NavBar — l'en-tête de site : le lien d'accueil à gauche, les liens de navigation, les actions à
  * droite. Créée le 2026-11-11 (lot 2 du site de Neume, spec `docs/specs/2026-11-11-lot-2-navigation-design.md`
@@ -141,8 +258,23 @@ const HYSTERESIS = 24;
  * — va toujours d'un bord à l'autre, sans quoi le contenu qui défile apparaîtrait de part et d'autre de la
  * barre. Le volet mobile (sous `md`) ne connaît pas ce plafond : il a sa largeur, celle de `Dialog`.
  *
+ * LE FOND DES ACTIONS GLISSE (2026-11-14, `refine`, retour de Florian sur neume.dev : « un background qui se
+ * déplace d'un item à l'autre et qui prenne la taille de l'item, un peu comme le composant tab »). Les actions ont
+ * UN fond gris, et non un par bouton : il se pose sous le lien ou le bouton survolé, glisse au suivant et prend sa
+ * largeur. COPIÉ SUR `List`, premier fond de survol qui glisse, lui-même pris de la pastille de `SegmentedTrack` :
+ * même durée (`--duration-base`), même courbe (`--ease-in-out`), sans rebond ; le premier placement ne glisse pas,
+ * il apparaît (`data-state="jump"`) ; il suit le focus clavier `:focus-visible`, pas un clic ; il n'existe pas au
+ * toucher. La couleur est celle du survol du bouton `ghost` (`--color-button-surface-ghost-hover`) : rien ne change
+ * à l'œil sous un bouton immobile, seul le trajet est neuf. `Button` lit `data-hover-glide` sur la rangée et ne
+ * peint plus son propre survol (voir sa docstring) ; son pressé reste le sien. TROIS DIFFÉRENCES AVEC `List` : la
+ * position se mesure en x ET en y, et la taille en largeur ET en hauteur, pour la rangée de la barre comme pour la
+ * colonne du volet ; elle se lit par la chaîne des `offsetParent`, sans les transformations du volet qui entre ;
+ * et HORS D'UN CONTRÔLE LE FOND S'ÉTEINT — l'écart de 8 px entre deux boutons comme un `ThemeSelector`, qui a sa
+ * propre piste : un fond resté dessous se lirait comme une sélection. Un `<span aria-hidden>` premier enfant de la
+ * rangée, hors du flux, que les boutons (`relative`) recouvrent.
+ *
  * COMPOSANT CLIENT (`runtime: "client"`) : état propre (ouvert, monté dans le volet, défilé, caché), effets (le
- * défilement, la requête de largeur, le clic d'un lien du volet, le focus qui entre), refs, un `Dialog` contrôlé,
+ * défilement, la requête de largeur, le clic d'un lien du volet, le focus qui entre, le fond des actions), refs, un `Dialog` contrôlé,
  * et l'écriture d'une propriété sur `<html>`.
  *
  * Histoire : `docs/history/nav-bar.md`.
@@ -330,7 +462,7 @@ export function NavBar({
             <nav aria-label={label} className="flex flex-row">
               {children}
             </nav>
-            {actions ? <div className="ml-auto flex items-center gap-2">{actions}</div> : null}
+            {actions ? <Actions layout="row">{actions}</Actions> : null}
           </div>
         )}
       </div>
@@ -367,11 +499,7 @@ export function NavBar({
               <nav aria-label={label} className="flex flex-col">
                 {children}
               </nav>
-              {actions ? (
-                <div className="flex flex-col items-start gap-2 border-t-[length:var(--border-thin)] border-border-subtle pt-4">
-                  {actions}
-                </div>
-              ) : null}
+              {actions ? <Actions layout="column">{actions}</Actions> : null}
             </div>
           ) : null}
         </div>

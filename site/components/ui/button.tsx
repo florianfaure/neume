@@ -304,6 +304,13 @@ function Glyph({ name }: { name: IconName }) {
  * `download` EST DU 2026-11-13 (`extend`, décision de Florian, neume.dev) : voir le type
  * `ButtonElementProps` pour la prop, son exclusion avec `newTab` et sa limite de même origine.
  *
+ * LE SURVOL D'UN `ghost` PEUT VENIR DE SON PARENT (2026-11-14, `refine`, retour de Florian sur neume.dev). Dans
+ * une rangée qui porte `data-hover-glide` — les actions de `NavBar`, seul appelant —, le `ghost` ne peint plus son
+ * fond de survol : un seul fond, celui de la rangée, glisse d'un bouton à l'autre et prend sa taille, au même token
+ * (`--color-button-surface-ghost-hover`). Le pressé, l'enfoncement et l'anneau restent ceux du bouton. Un attribut
+ * lu par le bouton, et non une classe posée sur lui de l'extérieur : l'ordre n° 3 interdit de restyler un composant
+ * par-dessus. L'API ne bouge pas.
+ *
  * Histoire : `docs/history/button.md`.
  */
 export function Button({
@@ -356,7 +363,9 @@ export function Button({
     ],
     variant === "ghost" && [
       "text-text-primary",
-      "not-disabled:hover:bg-button-surface-ghost-hover not-disabled:active:bg-button-surface-ghost-active",
+      /* Dans une rangée qui porte `data-hover-glide` (les actions de `NavBar`), le survol est le fond partagé qui
+       * glisse sous le bouton, et le bouton n'en peint pas un second ; le pressé reste le sien. */
+      "not-in-data-hover-glide:not-disabled:hover:bg-button-surface-ghost-hover not-disabled:active:bg-button-surface-ghost-active",
     ],
     "focus-visible:outline-[length:var(--border-thick)] focus-visible:outline-focus-ring",
     "disabled:opacity-[var(--opacity-disabled)]",
