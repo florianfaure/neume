@@ -8,7 +8,8 @@ import { unhex } from "../packages/svg/src/render.js";
 // unhex vit avec la règle de rendu (le paquet en a besoin) ; on la réexporte pour ingest.
 export { unhex };
 
-export const SETS = { grand: 12, petit: 8 };
+/** Les jeux : grand (le dessin 12 × 12), solid (sa version pleine, mêmes noms), petit (8 × 8, hors rendu). */
+export const SETS = { grand: 12, solid: 12, petit: 8 };
 export const file = (set) => new URL(`../icons/${set}.json`, import.meta.url);
 
 export function read(set) {

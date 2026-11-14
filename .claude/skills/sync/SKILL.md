@@ -36,7 +36,7 @@ compare et écrit, `scripts/check.mjs` tranche. Tu transportes les données, tu 
 | Message | Geste |
 |---|---|
 | blocs hors grille ou parités mélangées | une partie est décalée d'1 px par rapport au reste |
-| cadre W × H | le cadre doit faire 24 × 24 (page 24px) ou 16 × 16 (page 16px) |
+| cadre W × H | le cadre doit faire 24 × 24 (pages 24px et 24px solid) ou 16 × 16 (page 16px) |
 | pivoté ou mis à l'échelle | remettre rotation à 0 et échelle à 100 % |
 | contour / arrondi / opacité / pas en noir plein | formes pleines, noir #000, opacité 100 %, sans rayon |
 | opération booléenne | aplatir (Cmd+E) |
@@ -44,3 +44,9 @@ compare et écrit, `scripts/check.mjs` tranche. Tu transportes les données, tu 
 | nom en double | renommer l'un des deux cadres |
 
 Une icône refusée garde sa version précédente : un refus ne casse jamais le set.
+
+## La page « 24px solid »
+
+Elle est lue comme les autres (jeu `solid`, clés `solid/<nom>` dans `ONLY`). Chaque cadre y porte le nom de
+son icône de la page 24px, sans suffixe : c'est le build qui publie `<nom>-solid`. Une icône ajoutée sur la
+page 24px sans son solide (ou l'inverse) fait échouer `npm run check` : dis à Florian lequel manque.

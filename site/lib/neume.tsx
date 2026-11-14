@@ -7,7 +7,7 @@ import type { Icon as Drawing } from "@neume-icons/svg/render";
 
 // Ce que la page sait de Neume : retrouver une icône par son nom (`arrow-up` → `ArrowUp`), son dessin,
 // et le SVG ou le JSX qu'on copie. Le composant `Icon` des copies ne porte que les glyphes du système :
-// l'accueil, lui, montre les 251 icônes du paquet.
+// l'accueil, lui, montre toutes les icônes du paquet.
 
 const COMPONENTS = Icons as unknown as Record<string, NeumeIconComponent>;
 

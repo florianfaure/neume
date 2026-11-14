@@ -1,6 +1,6 @@
 # @neume-icons/svg
 
-Neume is a pixel icon set: 251 icons on a 12 × 12 grid.
+Neume is a pixel icon set: 248 icons on a 12 × 12 grid, each with a solid version.
 This package is the framework-agnostic core. For React, use [`@neume-icons/react`](../react).
 
 ```sh
@@ -12,8 +12,9 @@ npm install @neume-icons/svg
 ```js
 import { svg, names, SIZES } from "@neume-icons/svg";
 
-svg("arrow-up", 24); // '<svg xmlns=… fill="currentColor" shape-rendering="crispEdges">…</svg>'
-names;               // every icon name, in design order
+svg("arrow-up", 24);   // '<svg xmlns=… fill="currentColor" shape-rendering="crispEdges">…</svg>'
+svg("star-solid", 24); // the solid version: the icon name followed by -solid
+names;                 // every icon name, in design order (each has its `-solid`)
 ```
 
 `svg(name, size)` accepts 12 to 64 in steps of 4 and throws on anything else.
@@ -24,10 +25,12 @@ Plain files are shipped too, drawn with `fill="currentColor"`:
 @neume-icons/svg/dist/12/arrow-up.svg
 @neume-icons/svg/dist/16/arrow-up.svg
 @neume-icons/svg/dist/24/arrow-up.svg
+@neume-icons/svg/dist/24/arrow-up-solid.svg
 ```
 
 Lower-level pieces: `pick`, `path`, `snap` (also under `@neume-icons/svg/render`, which pulls no icon data)
-and the compact icon data under `@neume-icons/svg/data` (`[ox, oy, hex]` per icon).
+and the compact icon data under `@neume-icons/svg/data` (`[ox, oy, hex]` per icon: `grand` for the icons,
+`solid` for their solid versions, under the same names).
 
 ## How sizes work
 
