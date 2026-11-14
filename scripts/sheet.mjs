@@ -1,4 +1,4 @@
-// node scripts/sheet.mjs — la planche de contrôle : chaque icône à chaque taille, de 12 à 64.
+// node scripts/sheet.mjs — la planche de contrôle : chaque icône et sa version solide à chaque taille, de 12 à 64.
 // Une page autonome (sheet/index.html) : les données et le code de rendu de packages/svg/src/render.js y sont
 // recopiés tels quels, pour qu'elle s'ouvre sans serveur et montre exactement ce que le paquet rendra.
 
@@ -6,7 +6,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { read } from "../src/io.js";
 
 const render = readFileSync(new URL("../packages/svg/src/render.js", import.meta.url), "utf8").replace(/^export /gm, "");
-const data = JSON.stringify({ grand: read("grand"), petit: read("petit") });
+// Chaque icône suivie de sa version solide, publiée sous `<nom>-solid` : la planche les montre comme le paquet les nomme.
+const grand = read("grand"), solid = read("solid");
+const both = Object.fromEntries(Object.keys(grand).flatMap((n) => [[n, grand[n]], ...(solid[n] ? [[`${n}-solid`, solid[n]]] : [])]));
+const data = JSON.stringify({ grand: both, petit: read("petit") });
 
 const html = `<!doctype html>
 <html lang="fr">
@@ -51,7 +54,7 @@ ${render}
 const DATA = ${data};
 const names = [...new Set([...Object.keys(DATA.grand), ...Object.keys(DATA.petit)])];
 const t = document.getElementById("t");
-document.getElementById("count").textContent = Object.keys(DATA.grand).length + " en 12 × 12 · " + Object.keys(DATA.petit).length + " en 8 × 8";
+document.getElementById("count").textContent = Object.keys(DATA.grand).length + " en 12 × 12 (base et solide) · " + Object.keys(DATA.petit).length + " en 8 × 8";
 let head = "<thead><tr><th>icône</th>" + SIZES.map((s) => "<th>" + s + "</th>").join("") + "</tr></thead><tbody>";
 for (const name of names) {
   head += '<tr data-name="' + name + '"><td>' + name + "</td>";

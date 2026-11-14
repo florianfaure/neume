@@ -13,10 +13,11 @@
 </p>
 
 <p align="center">
-  <img src=".github/assets/preview.svg" alt="The 251 Neume icons, at 24 px.">
+  <img src=".github/assets/preview.svg" alt="The 248 Neume icons, at 24 px.">
 </p>
 
-Neume is 251 icons, each drawn cell by cell on a grid of 12 × 12 squares. The same drawing serves every
+Neume is 248 icons, each drawn cell by cell on a grid of 12 × 12 squares, and each with a solid version
+drawn on the same grid. The same drawing serves every
 size: at 12, 24, 36, 48 and 60 px every square lands on whole pixels and the edges stay sharp. In between,
 the icon scales smoothly and keeps its proportions. The full documentation lives at
 [neume.dev/docs](https://neume.dev/docs).
@@ -28,7 +29,7 @@ npm install @neume-icons/react   # React components
 npm install @neume-icons/svg     # the core, for any framework or none
 ```
 
-Or download every icon as an SVG file at 24 px: [neume-svg-24.zip](https://neume.dev/neume-svg-24.zip).
+Or download every icon and its solid version as SVG files at 24 px: [neume-svg-24.zip](https://neume.dev/neume-svg-24.zip).
 [More on installing →](https://neume.dev/docs#install)
 
 ## React
@@ -39,9 +40,11 @@ import { ArrowUp, Search } from "@neume-icons/react";
 <ArrowUp />                         // 24 px, decorative
 <Search size={16} title="Search" /> // with an accessible name
 <ArrowUp className="text-neutral-500" />  // colour from currentColor
+<StarSolid />                       // the solid version
 ```
 
-Component names are the PascalCase of the icon name (`arrow-up` → `ArrowUp`). Each icon is its own module,
+Component names are the PascalCase of the icon name (`arrow-up` → `ArrowUp`), and every icon has a solid
+version with `Solid` at the end (`star` → `StarSolid`). Each icon is its own module,
 so your bundle keeps only the icons you import. React 18 or later, ESM only, types included.
 [Props and details →](https://neume.dev/docs#react)
 
@@ -50,12 +53,13 @@ so your bundle keeps only the icons you import. React 18 or later, ESM only, typ
 ```js
 import { svg, names, SIZES } from "@neume-icons/svg";
 
-svg("arrow-up", 32); // '<svg … width="32" height="32" …>…</svg>'
-names;               // every icon name, in design order
+svg("arrow-up", 32);   // '<svg … width="32" height="32" …>…</svg>'
+svg("star-solid", 24); // the solid version: the icon name followed by -solid
+names;                 // every icon name, in design order
 ```
 
 `svg(name, size)` accepts 12 to 64 in steps of 4 and throws on anything else. Ready-made files ship too, at
-12, 16 and 24 px: `@neume-icons/svg/dist/24/arrow-up.svg`.
+12, 16 and 24 px: `@neume-icons/svg/dist/24/arrow-up.svg`, and `arrow-up-solid.svg` beside it.
 [Files and building your own wrapper →](https://neume.dev/docs#svg)
 
 ## Sizes and centring

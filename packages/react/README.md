@@ -1,6 +1,6 @@
 # @neume-icons/react
 
-Neume is a pixel icon set: 251 icons on a 12 × 12 grid.
+Neume is a pixel icon set: 248 icons on a 12 × 12 grid, each with a solid version.
 Each icon is a React component in its own module, so bundlers keep only the ones you import.
 
 ```sh
@@ -15,9 +15,11 @@ import { ArrowUp, X } from "@neume-icons/react";
 <ArrowUp />                         // 24 px, decorative (aria-hidden)
 <X size={16} title="Close" />       // role="img" with an accessible name
 <ArrowUp className="text-red-500" /> // colour comes from currentColor
+<StarSolid />                       // the solid version of Star
 ```
 
-Component names are the PascalCase of the icon name: `arrow-up` becomes `ArrowUp`. A single icon can also be
+Component names are the PascalCase of the icon name: `arrow-up` becomes `ArrowUp`. Every icon has a solid
+version, the same name followed by `Solid`: `StarSolid`, `ArrowUpSolid`. A single icon can also be
 imported directly: `@neume-icons/react/icons/ArrowUp`.
 
 | Prop | Default | |

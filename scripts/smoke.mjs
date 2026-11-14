@@ -8,19 +8,23 @@ import * as Icons from "@neume-icons/react";
 import { svg, names, SIZES } from "@neume-icons/svg";
 import { path, pick } from "@neume-icons/svg/render";
 import { read } from "../src/io.js";
-import { pascal } from "./generate.mjs";
+import { pascal, solidName } from "./generate.mjs";
 
 const errors = [];
 const fail = (m) => errors.push(m);
 const D = /<path d="([^"]*)"/;
 const grab = (html, re) => html.match(re)?.[1];
 
-const json = { grand: read("grand"), petit: read("petit") };
+const json = { grand: read("grand"), solid: read("solid"), petit: read("petit") };
 const origWarn = console.warn;
 console.warn = () => {}; // les tailles non valides du test préviennent en dev ; on les compte plus bas
 
+// Chaque icône, puis sa version solide : même composant à suffixe, même SVG du cœur à suffixe, même dessin que icons/solid.json.
+const all = names.flatMap((n) => [[n, json.grand[n]], [solidName(n), json.solid[n]]]);
+if (Object.keys(Icons).filter((k) => typeof Icons[k] !== "string").length !== all.length) fail(`l'index React exporte ${Object.keys(Icons).length} composants, attendu ${all.length}`);
+
 let count = 0;
-for (const name of names) {
+for (const [name, drawing] of all) {
   const Icon = Icons[pascal(name)];
   if (!Icon) { fail(`${name} : composant ${pascal(name)} absent de l'index`); continue; }
   for (const size of SIZES) {
@@ -38,7 +42,7 @@ for (const name of names) {
     // Égalité avec le cœur (données compactes) et avec les lignes du JSON source (chemin indépendant).
     if (d !== grab(svg(name, size), D)) fail(`${at} : le rendu React diffère de svg() du cœur`);
     const p = pick(size);
-    if (d !== path(json.grand[name], p.k, size)) fail(`${at} : le rendu diffère du tracé calculé depuis icons/grand.json`);
+    if (!drawing || d !== path(drawing, p.k, size)) fail(`${at} : le rendu diffère du tracé calculé depuis icons/*.json`);
     const sr = whole ? "crispEdges" : "geometricPrecision";
     if (!grab(svg(name, size), /shape-rendering="([^"]*)"/)?.includes(sr)) fail(`${at} : svg() doit porter shape-rendering="${sr}"`);
     for (const a of ['width="' + size + '"', 'height="' + size + '"', 'viewBox="0 0 ' + size + " " + size + '"', 'fill="currentColor"', `shape-rendering="${sr}"`])
@@ -75,4 +79,4 @@ if (!named.includes('role="img"') || !id || !named.includes(`<title id="${id}">C
 if (!named.includes('class="c"') || !named.includes("color:red") || !named.includes('data-x="1"')) fail("className, style et props SVG doivent passer");
 
 if (errors.length) { for (const e of errors.slice(0, 40)) console.error(`✗ ${e}`); console.error(`\n${errors.length} erreur(s) au smoke test.`); process.exit(1); }
-console.log(`✓ smoke : ${names.length} icônes × ${SIZES.length} tailles (${count} rendus React) — dans la boîte, entiers aux multiples de 12, identiques au cœur.`);
+console.log(`✓ smoke : ${all.length} icônes (${names.length} et leurs versions solides) × ${SIZES.length} tailles (${count} rendus React) — dans la boîte, entiers aux multiples de 12, identiques au cœur.`);

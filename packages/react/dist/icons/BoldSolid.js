@@ -1,0 +1,4 @@
+// Généré par scripts/build.mjs depuis icons/*.json — ne pas modifier à la main.
+import { createIcon } from "../create-icon.js";
+
+export const BoldSolid = /*#__PURE__*/ createIcon("BoldSolid", [1, 1, "0003f01081081f01081081081083f0000000"]);

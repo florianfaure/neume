@@ -1,7 +1,8 @@
 // Neume — extraction des icônes depuis Figma, à exécuter tel quel dans le contexte du plugin
 // (figma_execute via le Desktop Bridge). Aucun jeton : on lit le fichier ouvert.
 //
-// Pages lues : « 24px » (grand, 12 × 12 cases) et « 16px » (petit, 8 × 8 cases). Une case = 2 × 2 px.
+// Pages lues : « 24px » (grand, 12 × 12 cases), « 24px solid » (solid, les versions pleines du grand,
+// mêmes noms) et « 16px » (petit, 8 × 8 cases). Une case = 2 × 2 px.
 // Chaque cadre est rastérisé au pixel (test du centre de chaque pixel), puis réduit en cases :
 // tous les blocs doivent tomber sur la même parité (ox, oy ∈ {0, 1}) et être pleins ou vides.
 //
@@ -9,7 +10,7 @@
 //   MODE = "digest" → { grand: [[nom, empreinte | null]], petit: […], issues } : toutes les icônes,
 //                     dans l'ordre de Figma, null pour une icône refusée ;
 //   MODE = "full"   → { grand: [[nom, ox, oy, hex]], … } : seulement les icônes de ONLY
-//                     (« grand/nom », « petit/nom »), hex = lignes de cases, 3 caractères par
+//                     (« grand/nom », « solid/nom », « petit/nom »), hex = lignes de cases, 3 caractères par
 //                     ligne en 12 × 12, 2 en 8 × 8.
 // L'empreinte est un FNV-1a de `${ox}${oy}${hex}`, recalculée à l'identique par src/io.js.
 
@@ -18,6 +19,7 @@ const ONLY = [];
 
 const SETS = [
   { key: "grand", page: "24px", px: 24, cells: 12 },
+  { key: "solid", page: "24px solid", px: 24, cells: 12 },
   { key: "petit", page: "16px", px: 16, cells: 8 },
 ];
 

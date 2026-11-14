@@ -1,5 +1,5 @@
 // Les données du catalogue de neume.dev : propres au site, les paquets n'en ont pas besoin.
-// Un thème par icône (les 251 sont couvertes ; `npm run check` du dépôt n'a pas à le vérifier, le
+// Un thème par icône (les 248 sont couvertes ; `npm run check` du dépôt n'a pas à le vérifier, le
 // site filtre sur les icônes qui existent) et quelques mots de plus pour la recherche.
 
 import { grand } from "@neume-icons/svg/data";
@@ -7,7 +7,7 @@ import { grand } from "@neume-icons/svg/data";
 const RAW_THEMES: readonly (readonly [string, string])[] = [
   ["Navigation", "arrow-up arrow-down arrow-left arrow-right arrow-up-right arrow-up-left arrow-down-left arrow-down-right chevron-up chevron-down chevron-left chevron-right chevrons-up-down chevrons-left chevrons-right corner-down-left undo redo refresh external-link sort"],
   ["Actions", "plus minus close check edit trash copy clipboard download upload share link unlink search filter settings more-horizontal more-vertical menu grip maximize minimize zoom-in zoom-out save print log-in log-out"],
-  ["Status", "info alert-triangle alert-circle check-circle x-circle help-circle badge-check loader dot bell bell-off lock unlock shield eye eye-off star star-filled heart bookmark flag thumbs-up thumbs-down"],
+  ["Status", "info alert-triangle alert-circle check-circle x-circle help-circle badge-check loader dot bell bell-off lock unlock shield eye eye-off star heart bookmark flag thumbs-up thumbs-down"],
   ["Communication", "mail message send phone at-sign inbox reply mic mic-off video"],
   ["Files", "file file-text file-plus folder folder-open image film music code terminal book newspaper archive paperclip"],
   ["Text", "type bold italic underline align-left align-center align-right list-ordered quote"],
@@ -20,7 +20,7 @@ const RAW_THEMES: readonly (readonly [string, string])[] = [
   ["Interface", "layout grid list columns sidebar table layers sliders toggle window square check-square circle hash contrast"],
   ["Creative", "palette brush pen-tool wand crop scissors droplet"],
   ["Devices", "monitor smartphone laptop watch keyboard command wifi bluetooth battery battery-charging power qr-code scan"],
-  ["Weather & nature", "sun sun-filled moon moon-filled cloud-rain snowflake umbrella flame leaf mountain"],
+  ["Weather & nature", "sun moon cloud-rain snowflake umbrella flame leaf mountain"],
   ["Dev & AI", "sparkles bot git-branch bug cloud database server hard-drive cpu puzzle zap"],
   ["Games", "gamepad ghost sword crown gem coin dice potion skull"],
   ["Cursors", "cursor-default cursor-pointer cursor-coin cursor-text cursor-grab cursor-grabbing cursor-not-allowed cursor-crosshair cursor-wait"],

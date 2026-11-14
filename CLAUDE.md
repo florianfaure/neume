@@ -7,7 +7,11 @@ Neume terminé. Dépôt privé jusqu'au lancement.
 ## Ce qui ne se discute plus
 
 - **La grille.** Un seul dessin par icône, 12 × 12 cases, dessiné dans Figma à 2 px par case (page
-  « 24px »). Le demi-décalage (`offset` = 1) centre une tige d'une case. Les données 8 × 8 de `icons/`
+  « 24px »). Le demi-décalage (`offset` = 1) centre une tige d'une case.
+- **Le solide.** Chaque icône a sa version pleine, même grille, même nom, dessinée sur la page « 24px solid »
+  (`icons/solid.json`). Elle est publiée sous `<nom>-solid` (`svg("star-solid", 24)`, `<StarSolid />`,
+  `dist/24/star-solid.svg`) ; un nom finissant par `-solid` est réservé. `npm run check` refuse une icône
+  sans solide, ou un solide sans icône. Les données 8 × 8 de `icons/`
   ne sont pas rendues : une gamme mini est envisagée, pas décidée.
 - **Le calage** (`packages/svg/src/render.js`, seule version) : toute taille par pas de 4 de 12 à 64, au
   facteur exact `size / 12`. Net aux multiples de 12 (une case = un nombre entier de pixels), lissé entre
