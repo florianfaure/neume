@@ -35,13 +35,7 @@ export function SiteNav({ onSearch, onRequest }: { onSearch: () => void; onReque
             label="Request an icon"
             onClick={onRequest}
           />
-          <Button
-            variant="ghost"
-            content="icon-label"
-            icon="search"
-            label="Search"
-            onClick={onSearch}
-          />
+          <Button variant="ghost" content="icon" icon="search" label="Search" onClick={onSearch} />
           <ThemeSelector />
         </>
       }
