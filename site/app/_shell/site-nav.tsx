@@ -32,7 +32,7 @@ export function SiteNav({ onSearch, onRequest }: { onSearch: () => void; onReque
             variant="ghost"
             content="icon-label"
             icon="lightbulb"
-            label="Request an icon"
+            label="Suggest an icon"
             onClick={onRequest}
           />
           {/* Sans bulle : elle passait par-dessus le fond qui glisse, et la loupe se lit seule. */}
