@@ -68,7 +68,7 @@ const OPTIONS: {
   {
     value: "light",
     icon: "sun",
-    iconFilled: "sun-filled",
+    iconFilled: "sun-solid",
     target: "before:right-0",
     early: {
       label: cn(
@@ -88,7 +88,7 @@ const OPTIONS: {
   {
     value: "dark",
     icon: "moon",
-    iconFilled: "moon-filled",
+    iconFilled: "moon-solid",
     target: "before:left-0",
     early: {
       label: cn(

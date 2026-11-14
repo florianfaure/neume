@@ -27,19 +27,29 @@ interface IconSheetProps {
   name: string;
   /** Le thème de l'icône, en `Tag` à côté du nom. Sans lui, pas de pastille. */
   tag?: string;
-  /** Le grand dessin, 12 × 12 sur Neume : les lignes de `icons/grand.json`. */
-  rows: readonly string[];
-  /** Le décalage du grand dessin d'une demi-case, `[0, 0]` par défaut. */
-  offset?: readonly [0 | 1, 0 | 1];
+  /** Le dessin de base, 12 × 12 sur Neume : ses lignes et son décalage. */
+  base: Drawing;
+  /** La version pleine du même dessin, à la même taille : ses lignes et son décalage. */
+  solid: Drawing;
   /**
-   * Le mini, 8 × 8 sur Neume : ses lignes et son décalage. Sans lui, la rangée d'onglets ne porte que la
-   * taille du grand dessin, grisée de rien : un seul onglet, et la fiche garde la même hauteur.
+   * L'onglet ouvert, tenu par l'appelant : c'est lui qui choisit, d'après elle, le SVG, le JSX et
+   * l'import qu'il passe à la fiche. Contrôlé, comme `open`.
    */
-  petit?: Drawing;
+  value: "base" | "solid";
+  /**
+   * La demande de changement d'onglet : un clic, Entrée ou Espace sur un onglet, et `"base"` après la
+   * fermeture si la fiche n'y était pas. La fiche ne change pas d'onglet seule.
+   */
+  onValueChange: (value: "base" | "solid") => void;
   /** La ligne d'import, copiée et affichée telle quelle : `import { Heart } from "@neume-icons/react";`. */
   importLine: string;
   /** Le SVG de l'icône, tel que « Copy SVG » le met dans le presse-papiers et que « Download » l'écrit. */
   svg: string;
+  /**
+   * Le nom du fichier que « Download » écrit, sans l'extension `.svg`, ajoutée par la fiche : celui du
+   * style montré, `star-solid` sous Solid. `name` par défaut.
+   */
+  fileName?: string;
   /** Le JSX de l'icône, tel que « Copy JSX » le met dans le presse-papiers. */
   jsx: string;
   /** L'icône précédente. Fourni, il fait exister la flèche ← et la touche ←. */
@@ -47,14 +57,17 @@ interface IconSheetProps {
   /** L'icône suivante. Fourni, il fait exister la flèche → et la touche →. */
   onNext?: () => void;
   /**
-   * Les petits textes système, défaut anglais. `sizes` nomme la rangée d'onglets, `cells` finit le nom des
-   * dessins (« heart, 12 × 12 cells »). Chacun est remplaçable seul.
+   * Les petits textes système, défaut anglais. `styles` nomme la rangée d'onglets, `base` et `solid` ses
+   * deux onglets ; `cells` finit le nom des dessins (« heart, Solid, 12 × 12 cells »). Chacun est
+   * remplaçable seul.
    */
   labels?: {
     previous?: string;
     next?: string;
     close?: string;
-    sizes?: string;
+    styles?: string;
+    base?: string;
+    solid?: string;
     cells?: string;
     copyImport?: string;
     copySvg?: string;
@@ -76,12 +89,13 @@ function save(name: string, svg: string) {
 
 /**
  * IconSheet — la fiche d'une icône de neume.dev : la couche qui s'ouvre au clic sur une icône. Le nom et
- * son thème, le dessin dans son contour, le choix grand dessin / mini sous lui, l'import à copier, puis
- * Copy SVG, Copy JSX et Download. Cadrée avec Florian le 2026-11-11 sur un prototype en localhost, trois
- * versions, sans benchmark Mobbin (en pause) ; spec `docs/specs/2026-11-11-fiche-icone-design.md`.
+ * son thème, le dessin dans son contour, le choix Base / Solid sous lui, l'import à copier, puis Copy SVG,
+ * Copy JSX et Download. Cadrée avec Florian le 2026-11-11 sur un prototype en localhost, trois versions,
+ * sans benchmark Mobbin (en pause) ; spec `docs/specs/2026-11-11-fiche-icone-design.md`. Le choix des
+ * tailles (12 × 12 / 8 × 8) a laissé la place au choix des styles le 2026-11-14, pour la 1.0.0 de Neume.
  *
  * ELLE COMPOSE, ET N'ÉCRIT RIEN QUI EXISTE (loi 9). `Dialog` pour la couche, `PixelPreview` pour le dessin,
- * `Tab` pour le choix des tailles, `CodeBlock` pour l'import, `CopyButton` et `Button` pour les actions,
+ * `Tab` pour le choix du style, `CodeBlock` pour l'import, `CopyButton` et `Button` pour les actions,
  * `Tag` pour le thème, `Reveal` pour le geste. Elle ne connaît pas le paquet d'icônes : elle reçoit les
  * données d'une icône — nom, dessins, chaînes à copier — et ne fabrique ni SVG ni JSX. Elle n'a aucun
  * token à elle ; deux composants ont été étendus pour elle, `PixelPreview` (la taille `large`) et
@@ -92,20 +106,38 @@ function save(name: string, svg: string) {
  * (366 px utiles) les trois actions, 393 px, passaient à la ligne. De haut en bas : l'en-tête, TOUJOURS SUR UNE
  * LIGNE (le nom en Pixelify, qui se rogne s'il est trop long, le thème en `Tag`, entier, puis ← → et la croix,
  * des `Button` ghost icône avec la bulle de `Tooltip`, poussés à droite) ; le contour du
- * dessin sur toute la largeur, le dessin centré ; les onglets 12 × 12 / 8 × 8 ; l'import ; les trois actions.
+ * dessin sur toute la largeur, le dessin centré ; les onglets Base / Solid ; l'import ; les trois actions.
  * La bande des tailles du premier prototype est retirée.
  *
- * LES TAILLES SONT LE `Tab` D'`EXHIBIT`, SOUS LE CADRE (`placement="bottom"`), contrôlé : la piste grise,
- * la pastille blanche sans ombre, centrée dans sa barre. Au changement d'onglet, LE NOUVEAU DESSIN ENTRE AU
- * GESTE DE `Reveal` — monte, floute, se pose net —, exactement comme l'image d'`Exhibit` : le mini a son
- * `Reveal` dès le départ, sous un panneau fermé ; le grand dessin ne prend le sien qu'une fois qu'un
- * onglet a vraiment changé, pour qu'il ne rejoue pas à l'ouverture de la fiche (voir « Exhibit » pour la
- * raison du délai de secours). Passer à une autre icône ne rejoue rien et GARDE le choix de taille (depuis
- * le 2026-11-12 ; il ramenait au grand dessin). Sous
- * mouvement réduit, rien ne bouge : ce sont les valeurs neutralisées de `Reveal`. UNE ICÔNE SANS MINI GARDE
- * LA RANGÉE, avec son seul onglet « 12 × 12 » : c'est ce qui évite que la fiche change de hauteur, donc
- * saute dans la fenêtre, quand on passe d'une icône à l'autre avec ← →. Choix de l'agent de build, à juger :
- * l'autre issue était d'ôter la rangée, ou de griser un second onglet — `Tab` n'a pas d'onglet désactivé.
+ * LES STYLES SONT LE `Tab` D'`EXHIBIT`, SOUS LE CADRE (`placement="bottom"`) : la piste grise, la pastille
+ * blanche sans ombre, centrée dans sa barre. Deux onglets, toujours : « Base », le dessin de 12 × 12, et
+ * « Solid », sa version pleine, à la même taille — Neume 1.0.0 en donne une à chacune de ses icônes, d'où
+ * `solid` requis. Les deux libellés sont dans `labels`, remplaçables.
+ *
+ * L'ONGLET OUVERT APPARTIENT À L'APPELANT, `value` + `onValueChange` (loi 11), et c'est la raison de tout :
+ * la fiche ne fabrique ni SVG ni JSX, donc c'est l'appelant qui, sachant l'onglet ouvert, lui passe le SVG,
+ * le JSX et l'import du dessin montré — « Copy SVG », « Copy JSX », « Download » et la ligne d'import
+ * suivent l'onglet sans que la fiche le sache. Il n'y a pas de mode non contrôlé : aucun appelant n'en a
+ * l'usage, et un appelant qui n'aurait pas l'onglet montrerait un dessin et copierait l'autre. La fiche ne
+ * change pas d'onglet seule : elle DEMANDE, comme `Dialog` demande la fermeture — au clic d'un onglet, et
+ * `"base"` APRÈS LA FERMETURE si elle n'y était pas, pour qu'une fiche rouverte reparte du dessin de base.
+ * Passer d'une icône à l'autre (← → ou les boutons) ne touche pas à l'onglet : le choix SE GARDE (depuis
+ * le 2026-11-12, alors pour les tailles), et l'icône suivante s'ouvre dans le même style.
+ *
+ * AU CHANGEMENT D'ONGLET, LE NOUVEAU DESSIN ENTRE AU GESTE DE `Reveal` — monte, floute, se pose net —,
+ * exactement comme l'image d'`Exhibit` : le dessin de l'onglet fermé a son `Reveal` dès le départ, sous un
+ * panneau fermé ; celui de l'onglet ouvert à l'ouverture ne prend le sien qu'une fois qu'un onglet a
+ * vraiment changé, pour qu'il ne rejoue pas à l'ouverture de la fiche (voir « Exhibit » pour la raison du
+ * délai de secours). Passer à une autre icône ne rejoue rien : les `Reveal` restent montés, seules leurs
+ * cases changent. Sous mouvement réduit, rien ne bouge : ce sont les valeurs neutralisées de `Reveal`. LA
+ * HAUTEUR NE BOUGE PAS d'une icône à l'autre : la rangée a toujours ses deux onglets, et les deux dessins
+ * ont la même grille.
+ *
+ * LE MINI DE 8 × 8 EST SORTI LE 2026-11-14 (`petit`, `break`). Aucun appelant de neume.dev ne le passait
+ * plus, et `Icon` ne le rend plus depuis Neume 0.2.0 (loi 5). Le garder à côté aurait mis trois onglets de
+ * deux natures dans une rangée — deux styles, puis une taille — et en faire une entrée générique aurait
+ * ouvert une liste de dessins que personne n'appelle (loi 11, retenue de la loi 10). Il revient, s'il revient,
+ * sur la parole de Florian.
  *
  * ← → ET ÉCHAP SANS ÊTRE ÉCRITS. Aucun raccourci n'est affiché : ← et → sont écoutés sur le document tant
  * que la fiche est ouverte, et seulement si l'appelant a fourni `onPrevious` et `onNext`. Une flèche déjà
@@ -117,16 +149,19 @@ function save(name: string, svg: string) {
  * `min-w-0`. Vérifié avec `arrow-down-right`, le nom le plus long.
  *
  * L'ACCESSIBILITÉ. La couche est nommée par le titre — le nom de l'icône —, `PixelPreview` porte son
- * `label` (« heart, 12 × 12 cells »), les boutons à icône seule portent leur nom et leur bulle ; le focus
+ * `label`, qui nomme le style (« heart, Solid, 12 × 12 cells »), la rangée est nommée par ce qu'elle choisit
+ * (« Drawing style »), les boutons à icône seule portent leur nom et leur bulle ; le focus
  * est natif : `showModal()` le donne au premier contrôle et le navigateur le rend au déclencheur. Les
  * confirmations « Copied! » sont annoncées par la région `aria-live` de `CopyButton`.
  *
- * « DOWNLOAD » ÉCRIT LE SVG QU'ON LUI A PASSÉ, en `<nom>.svg`, depuis une adresse d'objet — et non une adresse
+ * « DOWNLOAD » ÉCRIT LE SVG QU'ON LUI A PASSÉ, en `<fileName>.svg`, depuis une adresse d'objet — et non une adresse
  * de fichier passée en prop, comme la spec le prévoyait. Une adresse aurait demandé à `Button` une prop
  * `download` ; le SVG est déjà là pour « Copy SVG », et c'est la même chaîne : ce qu'on copie est ce qu'on
- * télécharge. Choix de l'agent de build, à juger.
+ * télécharge. Choix de l'agent de build, à juger. LE NOM DU FICHIER EST À L'APPELANT (`fileName`, `name` par
+ * défaut), depuis le 2026-11-14 : sous Solid, Neume nomme le fichier `star-solid.svg` quand le titre reste `star`,
+ * et la fiche ne connaît pas la convention de nommage du paquet — elle reçoit le nom, comme elle reçoit le SVG.
  *
- * COMPOSANT CLIENT : l'état du choix de taille, l'écoute des flèches, l'adresse d'objet du téléchargement.
+ * COMPOSANT CLIENT : l'état « un onglet a changé », l'écoute des flèches, l'adresse d'objet du téléchargement.
  * Contrôlé comme `Dialog`, il n'est instanciable que depuis un composant client : sur `/design-system`, c'est
  * un îlot de vitrine qui l'ouvre.
  *
@@ -142,11 +177,13 @@ export function IconSheet({
   onClosed,
   name,
   tag,
-  rows,
-  offset,
-  petit,
+  base,
+  solid,
+  value,
+  onValueChange,
   importLine,
   svg,
+  fileName,
   jsx,
   onPrevious,
   onNext,
@@ -156,7 +193,9 @@ export function IconSheet({
     previous = "Previous icon",
     next = "Next icon",
     close = "Close",
-    sizes = "Drawing size",
+    styles = "Drawing style",
+    base: baseLabel = "Base",
+    solid: solidLabel = "Solid",
     cells = "cells",
     copyImport = "Copy import",
     copySvg = "Copy SVG",
@@ -167,16 +206,11 @@ export function IconSheet({
 
   const titleId = useId();
 
-  /* Le choix de taille appartient à la fiche ouverte, pas à une icône : il SE GARDE quand on passe d'une
-   * icône à l'autre (← → ou les boutons), décision de Florian du 2026-11-12. Une icône sans mini montre son
-   * grand dessin, et l'icône suivante qui en a un retrouve le mini. Il repart du grand dessin à la fermeture.
-   * `chosen` est vide tant qu'aucun onglet n'a changé, et c'est aussi ce qui dit au grand dessin de prendre
-   * son `Reveal`. */
-  const [chosen, setChosen] = useState<string | null>(null);
-  const size = petit !== undefined && chosen === "petit" ? "petit" : "grand";
-
-  const grandLabel = `${rows.length} × ${rows.length}`;
-  const petitLabel = petit ? `${petit.rows.length} × ${petit.rows.length}` : "";
+  /* Vrai dès qu'un onglet a vraiment changé dans la fiche ouverte : c'est alors seulement que le dessin
+   * de l'onglet ouvert à l'ouverture prend son `Reveal` — l'autre l'a dès le départ, sous son panneau
+   * fermé (voir la docstring). Faux de nouveau à la fermeture. Passer d'une icône à l'autre n'y touche
+   * pas : l'onglet ouvert, tenu par l'appelant, ne bouge pas, et aucun dessin ne rejoue. */
+  const [switched, setSwitched] = useState(false);
 
   const walk = useEffectEvent((event: KeyboardEvent) => {
     if (
@@ -203,33 +237,26 @@ export function IconSheet({
     return () => document.removeEventListener("keydown", walk);
   }, [open]);
 
-  const preview = (drawing: Drawing, side: string) => (
-    <PixelPreview
-      size="large"
-      rows={drawing.rows}
-      offset={drawing.offset}
-      label={`${name}, ${side} ${cells}`}
-    />
-  );
-
-  const grand = preview({ rows, offset }, grandLabel);
-
-  const items = [
-    {
-      value: "grand",
-      label: grandLabel,
-      panel: chosen !== null ? <Reveal>{grand}</Reveal> : grand,
-    },
-    ...(petit
-      ? [
-          {
-            value: "petit",
-            label: petitLabel,
-            panel: <Reveal>{preview(petit, petitLabel)}</Reveal>,
-          },
-        ]
-      : []),
+  const drawings = [
+    { value: "base" as const, label: baseLabel, drawing: base },
+    { value: "solid" as const, label: solidLabel, drawing: solid },
   ];
+
+  const items = drawings.map((item) => {
+    const preview = (
+      <PixelPreview
+        size="large"
+        rows={item.drawing.rows}
+        offset={item.drawing.offset}
+        label={`${name}, ${item.label}, ${item.drawing.rows.length} × ${item.drawing.rows.length} ${cells}`}
+      />
+    );
+    return {
+      value: item.value,
+      label: item.label,
+      panel: switched || item.value !== value ? <Reveal>{preview}</Reveal> : preview,
+    };
+  });
 
   return (
     <Dialog
@@ -237,7 +264,8 @@ export function IconSheet({
       open={open}
       onOpenChange={onOpenChange}
       onClosed={() => {
-        setChosen(null);
+        setSwitched(false);
+        if (value !== "base") onValueChange("base");
         onClosed?.();
       }}
       labelledBy={titleId}
@@ -288,11 +316,15 @@ export function IconSheet({
          * piste à l'import à celui de l'en-tête au dessin. */}
         <div className="-mb-3">
           <Tab
-            label={sizes}
+            label={styles}
             placement="bottom"
             items={items}
-            value={size}
-            onValueChange={(next) => setChosen(next)}
+            value={value}
+            onValueChange={(next) => {
+              if (next === value) return;
+              setSwitched(true);
+              onValueChange(next === "solid" ? "solid" : "base");
+            }}
           />
         </div>
 
@@ -306,7 +338,7 @@ export function IconSheet({
             variant="ghost"
             content="icon-label"
             icon="download"
-            onClick={() => save(name, svg)}
+            onClick={() => save(fileName ?? name, svg)}
           />
         </div>
       </div>

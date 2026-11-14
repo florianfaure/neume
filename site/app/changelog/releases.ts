@@ -10,11 +10,25 @@ export type Release = {
   title: string;
   summary: string;
   changes: string[];
-  /** Ce que la version montre en image : la même icône avant / après, ou un échantillon du set. */
-  figure?: "before-after" | "sample";
+  /** Ce que la version montre en image : la même icône avant / après, un échantillon du set, ou des icônes à côté de leur version solide. */
+  figure?: "before-after" | "sample" | "solid";
 };
 
 export const RELEASES: Release[] = [
+  {
+    version: "1.0.0",
+    date: "2026-11-14",
+    title: "A solid version of every icon",
+    summary:
+      "Every icon now has a solid version, drawn square by square on the same 12 × 12 grid. It carries the icon’s name followed by -solid: star-solid, <StarSolid />, star-solid.svg.",
+    changes: [
+      "248 solid icons, one for each icon, in both packages and in the zip of SVG files.",
+      "@neume-icons/svg: svg(\"star-solid\", 24), the files dist/24/star-solid.svg, and the solid table under @neume-icons/svg/data.",
+      "@neume-icons/react: a component for each, the PascalCase name followed by Solid: StarSolid, ArrowUpSolid.",
+      "Breaking: star-filled, sun-filled and moon-filled are removed. Use star-solid, sun-solid and moon-solid.",
+    ],
+    figure: "solid",
+  },
   {
     version: "0.2.0",
     date: "2026-11-12",

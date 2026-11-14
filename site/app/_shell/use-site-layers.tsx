@@ -9,12 +9,19 @@ import type { CommandPaletteGroup } from "@/components/ui/command-palette";
 import { IconSheet } from "@/components/ui/icon-sheet";
 import type { IconName } from "@/components/ui/icon";
 import { KEYWORDS, THEMES } from "@/data/themes";
-import { drawingOf, importOf, jsxOf, svgOf } from "@/lib/neume";
+import { drawingOf, importOf, jsxOf, publishedName, svgOf } from "@/lib/neume";
+import type { Style } from "@/lib/neume";
 import { toast } from "@/lib/toast";
 import { INSTALL_COMMAND } from "../_home/hero";
 import { REPO_URL } from "./links";
 
 type Offset = readonly [0 | 1, 0 | 1];
+
+/** Le dessin d'une icône dans un style, au format de `PixelPreview`. */
+function drawing(name: string, style: Style) {
+  const { rows, offset } = drawingOf(name, style);
+  return { rows, offset: offset as Offset };
+}
 
 const THEME_OF = new Map(THEMES.flatMap((t) => t.icons.map((name) => [name, t.label] as const)));
 
@@ -50,6 +57,9 @@ export function useSiteLayers(
   const [requestName, setRequestName] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
+  // L'onglet Base / Solid de la fiche : il se garde d'une icône à l'autre, la fiche le ramène à Base à la
+  // fermeture. Le SVG, le JSX et l'import copiés sont ceux du style ouvert.
+  const [style, setStyle] = useState<Style>("base");
 
   const openIcon = (name: string) => {
     setCurrent(name);
@@ -100,7 +110,6 @@ export function useSiteLayers(
 
   const index = current ? order.indexOf(current) : -1;
   const step = (by: number) => setCurrent(order[(index + by + order.length) % order.length]);
-  const big = current ? drawingOf(current) : undefined;
 
   const layers = (
     <>
@@ -113,17 +122,20 @@ export function useSiteLayers(
 
       <RequestDialog open={requestOpen} onOpenChange={setRequestOpen} initialName={requestName} />
 
-      {current && big ? (
+      {current ? (
         <IconSheet
           open={sheetOpen}
           onOpenChange={setSheetOpen}
           name={current}
           tag={THEME_OF.get(current)}
-          rows={big.rows}
-          offset={big.offset as Offset}
-          importLine={importOf(current)}
-          svg={svgOf(current, size)}
-          jsx={jsxOf(current, size)}
+          base={drawing(current, "base")}
+          solid={drawing(current, "solid")}
+          value={style}
+          onValueChange={setStyle}
+          importLine={importOf(current, style)}
+          svg={svgOf(current, size, style)}
+          fileName={publishedName(current, style)}
+          jsx={jsxOf(current, size, style)}
           onPrevious={index >= 0 && order.length > 1 ? () => step(-1) : undefined}
           onNext={index >= 0 && order.length > 1 ? () => step(1) : undefined}
         />

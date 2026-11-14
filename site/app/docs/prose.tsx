@@ -10,6 +10,7 @@ export const SECTIONS = [
   { id: "install", label: "Install" },
   { id: "react", label: "React" },
   { id: "svg", label: "Plain SVG" },
+  { id: "solid", label: "Solid icons" },
   { id: "sizes", label: "Sizes" },
   { id: "centring", label: "Centring" },
   { id: "colour-and-accessibility", label: "Colour and accessibility" },
