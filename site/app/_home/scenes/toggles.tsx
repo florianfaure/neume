@@ -3,7 +3,7 @@ import { ToggleButton } from "@/components/ui/toggle-button";
 
 // Les paires que Neume livre, dessinées ensemble : aucun glyphe n'apparaît deux fois, quel que soit le thème.
 const PAIRS: { label: string; icon: IconName; pressedIcon: IconName }[] = [
-  { label: "Favorite", icon: "star", pressedIcon: "star-filled" },
+  { label: "Favorite", icon: "star", pressedIcon: "star-solid" },
   { label: "Hide", icon: "eye", pressedIcon: "eye-off" },
   { label: "Mute microphone", icon: "mic", pressedIcon: "mic-off" },
   { label: "Mute notifications", icon: "bell", pressedIcon: "bell-off" },

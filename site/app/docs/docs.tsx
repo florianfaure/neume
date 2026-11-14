@@ -19,7 +19,7 @@ import { SiteNav } from "../_shell/site-nav";
 import { useSiteLayers } from "../_shell/use-site-layers";
 import { H3, P, SECTIONS, Section, Ul } from "./prose";
 
-/** Le zip de `npm run build` (racine), servi tel quel : les 251 SVG à 24 px. */
+/** Le zip de `npm run build` (racine), servi tel quel : chaque icône et sa version solide, en SVG à 24 px. */
 const ZIP_URL = "/neume-svg-24.zip";
 
 const C = InlineCode;
@@ -32,6 +32,8 @@ const C = InlineCode;
  */
 export function Docs() {
   const arrow = drawingOf("arrow-up");
+  const star = drawingOf("star");
+  const starSolid = drawingOf("star", "solid");
   const toc = SECTIONS.map((s) => ({ id: s.id, label: s.label }));
   const { openPalette, openRequest, layers } = useSiteLayers(names, 24);
 
@@ -70,7 +72,8 @@ export function Docs() {
               Neume is a pixel icon set: {names.length} icons, each drawn cell by cell on a grid of
               12 × 12 squares. Every square is either filled or empty. There are no curves and no
               optical tweaks hidden in the file: an icon is its filled squares and, for some, a
-              half-square shift that centres a stem.
+              half-square shift that centres a stem. Every icon also has a solid version, drawn on
+              the same grid.
             </P>
             <P>
               The same drawing serves every size from 12 to 64 px. At 12, 24, 36, 48 and 60 px a square
@@ -89,8 +92,8 @@ export function Docs() {
                 of any icon at any size, and ships ready-made SVG files.
               </li>
               <li>
-                A zip of every icon as an SVG file at 24 px, for design tools, a CMS, slides, or a
-                project without a build step.
+                A zip of every icon and its solid version as SVG files at 24 px, for design tools, a
+                CMS, slides, or a project without a build step.
               </li>
             </Ul>
             <P>All of it is free and open source, under the MIT licence.</P>
@@ -114,7 +117,7 @@ export function Docs() {
             <P>
               The whole set as SVG files, drawn at 24 px with <C>fill=&quot;currentColor&quot;</C>.
               One file per icon, named after the icon: <C>arrow-up.svg</C>, <C>search.svg</C>, and
-              so on.
+              so on, with each solid version beside it: <C>arrow-up-solid.svg</C>.
             </P>
             <div className="flex">
               <Button
@@ -132,8 +135,8 @@ export function Docs() {
             <P>
               Every icon is a React component, exported under the PascalCase of its name:{" "}
               <C>arrow-up</C> becomes <C>ArrowUp</C>, <C>alarm-clock</C> becomes{" "}
-              <C>AlarmClock</C>. You can find every name in the catalogue on the home page, and copy
-              its import from the icon’s sheet.
+              <C>AlarmClock</C>. The solid version adds <C>Solid</C>: <C>StarSolid</C>. You can find
+              every name in the catalogue on the home page, and copy its import from the icon’s sheet.
             </P>
             <CodeBlock
               label="Copy code"
@@ -184,9 +187,10 @@ export function Toolbar() {
               label="Copy code"
               code={`import { svg, names, SIZES } from "@neume-icons/svg";
 
-svg("arrow-up", 32); // '<svg … width="32" height="32" …>…</svg>'
-names;               // every icon name, in design order
-SIZES;               // [12, 16, 20, 24, … 64]
+svg("arrow-up", 32);   // '<svg … width="32" height="32" …>…</svg>'
+svg("star-solid", 24); // the solid version
+names;                 // every icon name, in design order
+SIZES;                 // [12, 16, 20, 24, … 64]
 
 document.querySelector("#icon").innerHTML = svg("search", 24);`}
             />
@@ -212,6 +216,40 @@ document.querySelector("#icon").innerHTML = svg("search", 24);`}
               rows of squares and <C>path</C> draws them. The compact icon data is under{" "}
               <C>@neume-icons/svg/data</C>. The React package is built exactly this way.
             </P>
+          </Section>
+
+          <Section id="solid">
+            <P>
+              Every icon has a solid version: the same drawing on the same 12 × 12 grid, with its
+              shape filled in. Details inside the shape, like the flap of an envelope or the dot of an
+              info sign, become holes. Icons that are only lines, such as a chevron or a plus, stay
+              as they are.
+            </P>
+            <div className="flex justify-center gap-6 py-4">
+              <PixelPreview
+                rows={star.rows}
+                offset={star.offset as readonly [0 | 1, 0 | 1]}
+                label="star, 12 × 12 cells"
+              />
+              <PixelPreview
+                rows={starSolid.rows}
+                offset={starSolid.offset as readonly [0 | 1, 0 | 1]}
+                label="star, solid, 12 × 12 cells"
+              />
+            </div>
+            <P>
+              A solid icon carries the name of its icon followed by <C>-solid</C>, in both packages
+              and in the files. Use it for a selected or active state, next to the regular icon.
+            </P>
+            <Exhibit
+              columns={["Where", "Regular", "Solid"]}
+              rows={[
+                ["React", "<Star />", "<StarSolid />"],
+                ["Core", "svg(\"star\", 24)", "svg(\"star-solid\", 24)"],
+                ["Files", "dist/24/star.svg", "dist/24/star-solid.svg"],
+              ]}
+              caption="The same icon, regular and solid."
+            />
           </Section>
 
           <Section id="sizes">

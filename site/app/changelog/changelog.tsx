@@ -26,6 +26,7 @@ const SERIES = RELEASES.reduce<[string, Release[]][]>((groups, release) => {
   return groups;
 }, []);
 const BEFORE_AFTER = { name: "sparkles", size: 28, zoom: 4 } as const;
+const SOLID_PAIRS = ["star", "heart", "bell", "folder", "home", "user"] as const;
 
 const formatDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", {
@@ -83,6 +84,26 @@ function Sample() {
             <NeumeIcon name={n} size={24} />
           </span>
         ))}
+      </div>
+    </Exhibit>
+  );
+}
+
+/** Des icônes, chacune suivie de sa version solide. */
+function SolidPairs() {
+  return (
+    <Exhibit caption="Each icon, followed by its solid version.">
+      <div className="grid grid-cols-6 gap-2 sm:grid-cols-12">
+        {SOLID_PAIRS.flatMap((n) =>
+          (["base", "solid"] as const).map((style) => (
+            <span
+              key={`${n}-${style}`}
+              className="flex aspect-square items-center justify-center text-text-primary"
+            >
+              <NeumeIcon name={n} size={24} style={style} />
+            </span>
+          )),
+        )}
       </div>
     </Exhibit>
   );
@@ -149,6 +170,7 @@ function Entry({ release, latest }: { release: Release; latest: boolean }) {
         </Ul>
         {release.figure === "before-after" ? <BeforeAfter /> : null}
         {release.figure === "sample" ? <Sample /> : null}
+        {release.figure === "solid" ? <SolidPairs /> : null}
       </article>
     </li>
   );
@@ -167,7 +189,8 @@ export function Changelog() {
           <h1 className="font-pixel text-h1 font-normal text-text-primary">Changelog</h1>
           <P>
             Every release of Neume. The React package and the core always ship together, at the same
-            version: a new icon is a minor version, a corrected drawing a patch. Each release is also
+            version: a new icon is a minor version, a corrected drawing a patch, an icon removed or renamed
+            a major version. Each release is also
             on{" "}
             <TextLink href={`${REPO_URL}/releases`} newTab>
               GitHub

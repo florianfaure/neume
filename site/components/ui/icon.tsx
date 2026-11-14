@@ -1,4 +1,4 @@
-import { grand } from "@neume-icons/svg/data";
+import { grand, solid } from "@neume-icons/svg/data";
 import { decode, path, pick } from "@neume-icons/svg/render";
 import { cn } from "@/lib/cn";
 
@@ -79,7 +79,6 @@ interface IconProps {
     | "eye"
     | "eye-off"
     | "star"
-    | "star-filled"
     | "heart"
     | "bookmark"
     | "flag"
@@ -212,9 +211,7 @@ interface IconProps {
     | "qr-code"
     | "scan"
     | "sun"
-    | "sun-filled"
     | "moon"
-    | "moon-filled"
     | "cloud-rain"
     | "snowflake"
     | "umbrella"
@@ -263,7 +260,255 @@ interface IconProps {
     | "youtube"
     | "threads"
     | "discord"
-    | "notion";
+    | "notion"
+    | "arrow-up-solid"
+    | "arrow-down-solid"
+    | "arrow-left-solid"
+    | "arrow-right-solid"
+    | "arrow-up-right-solid"
+    | "arrow-up-left-solid"
+    | "arrow-down-left-solid"
+    | "arrow-down-right-solid"
+    | "chevron-up-solid"
+    | "chevron-down-solid"
+    | "chevron-left-solid"
+    | "chevron-right-solid"
+    | "chevrons-up-down-solid"
+    | "chevrons-left-solid"
+    | "chevrons-right-solid"
+    | "corner-down-left-solid"
+    | "undo-solid"
+    | "redo-solid"
+    | "refresh-solid"
+    | "external-link-solid"
+    | "sort-solid"
+    | "plus-solid"
+    | "minus-solid"
+    | "close-solid"
+    | "check-solid"
+    | "edit-solid"
+    | "trash-solid"
+    | "copy-solid"
+    | "clipboard-solid"
+    | "download-solid"
+    | "upload-solid"
+    | "share-solid"
+    | "link-solid"
+    | "unlink-solid"
+    | "search-solid"
+    | "filter-solid"
+    | "settings-solid"
+    | "more-horizontal-solid"
+    | "more-vertical-solid"
+    | "menu-solid"
+    | "grip-solid"
+    | "maximize-solid"
+    | "minimize-solid"
+    | "zoom-in-solid"
+    | "zoom-out-solid"
+    | "save-solid"
+    | "print-solid"
+    | "log-in-solid"
+    | "log-out-solid"
+    | "info-solid"
+    | "alert-triangle-solid"
+    | "alert-circle-solid"
+    | "check-circle-solid"
+    | "x-circle-solid"
+    | "help-circle-solid"
+    | "badge-check-solid"
+    | "loader-solid"
+    | "dot-solid"
+    | "bell-solid"
+    | "bell-off-solid"
+    | "lock-solid"
+    | "unlock-solid"
+    | "shield-solid"
+    | "eye-solid"
+    | "eye-off-solid"
+    | "star-solid"
+    | "heart-solid"
+    | "bookmark-solid"
+    | "flag-solid"
+    | "thumbs-up-solid"
+    | "thumbs-down-solid"
+    | "mail-solid"
+    | "message-solid"
+    | "send-solid"
+    | "phone-solid"
+    | "at-sign-solid"
+    | "inbox-solid"
+    | "reply-solid"
+    | "mic-solid"
+    | "mic-off-solid"
+    | "video-solid"
+    | "file-solid"
+    | "file-text-solid"
+    | "file-plus-solid"
+    | "folder-solid"
+    | "folder-open-solid"
+    | "image-solid"
+    | "film-solid"
+    | "music-solid"
+    | "code-solid"
+    | "terminal-solid"
+    | "book-solid"
+    | "newspaper-solid"
+    | "archive-solid"
+    | "paperclip-solid"
+    | "type-solid"
+    | "bold-solid"
+    | "italic-solid"
+    | "underline-solid"
+    | "align-left-solid"
+    | "align-center-solid"
+    | "align-right-solid"
+    | "list-ordered-solid"
+    | "quote-solid"
+    | "user-solid"
+    | "users-solid"
+    | "user-plus-solid"
+    | "user-circle-solid"
+    | "id-card-solid"
+    | "glasses-solid"
+    | "calendar-solid"
+    | "clock-solid"
+    | "alarm-clock-solid"
+    | "timer-solid"
+    | "hourglass-solid"
+    | "history-solid"
+    | "home-solid"
+    | "building-solid"
+    | "pin-solid"
+    | "map-solid"
+    | "globe-solid"
+    | "compass-solid"
+    | "navigation-solid"
+    | "car-solid"
+    | "plane-solid"
+    | "briefcase-solid"
+    | "chart-bar-solid"
+    | "chart-line-solid"
+    | "chart-pie-solid"
+    | "trending-up-solid"
+    | "trending-down-solid"
+    | "activity-solid"
+    | "target-solid"
+    | "trophy-solid"
+    | "lightbulb-solid"
+    | "rocket-solid"
+    | "key-solid"
+    | "wrench-solid"
+    | "credit-card-solid"
+    | "shopping-bag-solid"
+    | "shopping-cart-solid"
+    | "wallet-solid"
+    | "receipt-solid"
+    | "tag-solid"
+    | "percent-solid"
+    | "gift-solid"
+    | "package-solid"
+    | "truck-solid"
+    | "store-solid"
+    | "play-solid"
+    | "pause-solid"
+    | "stop-solid"
+    | "skip-back-solid"
+    | "skip-forward-solid"
+    | "rewind-solid"
+    | "fast-forward-solid"
+    | "shuffle-solid"
+    | "repeat-solid"
+    | "volume-solid"
+    | "volume-off-solid"
+    | "headphones-solid"
+    | "camera-solid"
+    | "layout-solid"
+    | "grid-solid"
+    | "list-solid"
+    | "columns-solid"
+    | "sidebar-solid"
+    | "table-solid"
+    | "layers-solid"
+    | "sliders-solid"
+    | "toggle-solid"
+    | "window-solid"
+    | "square-solid"
+    | "check-square-solid"
+    | "circle-solid"
+    | "hash-solid"
+    | "contrast-solid"
+    | "palette-solid"
+    | "brush-solid"
+    | "pen-tool-solid"
+    | "wand-solid"
+    | "crop-solid"
+    | "scissors-solid"
+    | "droplet-solid"
+    | "monitor-solid"
+    | "smartphone-solid"
+    | "laptop-solid"
+    | "watch-solid"
+    | "keyboard-solid"
+    | "command-solid"
+    | "wifi-solid"
+    | "bluetooth-solid"
+    | "battery-solid"
+    | "battery-charging-solid"
+    | "power-solid"
+    | "qr-code-solid"
+    | "scan-solid"
+    | "sun-solid"
+    | "moon-solid"
+    | "cloud-rain-solid"
+    | "snowflake-solid"
+    | "umbrella-solid"
+    | "flame-solid"
+    | "leaf-solid"
+    | "mountain-solid"
+    | "sparkles-solid"
+    | "bot-solid"
+    | "git-branch-solid"
+    | "bug-solid"
+    | "cloud-solid"
+    | "database-solid"
+    | "server-solid"
+    | "hard-drive-solid"
+    | "cpu-solid"
+    | "puzzle-solid"
+    | "zap-solid"
+    | "gamepad-solid"
+    | "ghost-solid"
+    | "sword-solid"
+    | "crown-solid"
+    | "gem-solid"
+    | "coin-solid"
+    | "dice-solid"
+    | "potion-solid"
+    | "skull-solid"
+    | "cursor-default-solid"
+    | "cursor-pointer-solid"
+    | "cursor-coin-solid"
+    | "cursor-text-solid"
+    | "cursor-grab-solid"
+    | "cursor-grabbing-solid"
+    | "cursor-not-allowed-solid"
+    | "cursor-crosshair-solid"
+    | "cursor-wait-solid"
+    | "linkedin-solid"
+    | "figma-solid"
+    | "github-solid"
+    | "x-solid"
+    | "bluesky-solid"
+    | "claude-solid"
+    | "chatgpt-solid"
+    | "dribbble-solid"
+    | "behance-solid"
+    | "instagram-solid"
+    | "youtube-solid"
+    | "threads-solid"
+    | "discord-solid"
+    | "notion-solid";
   /**
    * La taille rendue, en px CSS : 12, 16, 24 ou 48 (loi 5), 24 par défaut. Le DESSIN, lui, est toujours
    * le grand de 12 × 12, que le calage de Neume met à l'échelle de cette taille (docstring du composant).
@@ -287,13 +532,21 @@ const SIZE_CLASS = {
  * rendu à l'autre, et `ThemeSelector` en rend quatre à chaque bascule. */
 const TRACES = new Map<string, string>();
 
+/* La grille compacte d'un nom. Un `<nom>-solid` se lit dans la table `solid` du paquet, sous le nom de
+ * l'icône de base (`solid.star`) ; tout autre nom, dans `grand`. Aucun nom de base ne finit par `-solid`. */
+const SOLID = "-solid";
+
+function compact(name: IconName) {
+  return name.endsWith(SOLID) ? solid[name.slice(0, -SOLID.length)] : grand[name];
+}
+
 function trace(name: IconName, size: NonNullable<IconProps["size"]>): string {
   const key = `${name}@${size}`;
   let d = TRACES.get(key);
   if (d === undefined) {
     /* Le grand dessin 12 × 12 à toutes les tailles, depuis Neume 0.2.0 : `pick` rend le facteur exact. */
     const { k } = pick(size);
-    d = path(decode(grand[name]), k, size);
+    d = path(decode(compact(name)), k, size);
     TRACES.set(key, d);
   }
   return d;
@@ -304,18 +557,25 @@ function trace(name: IconName, size: NonNullable<IconProps["size"]>): string {
  * autorise à porter un `<svg>` inline.
  *
  * NEUME EST LA SOURCE UNIQUE, depuis le 2026-11-11 (`docs/specs/2026-11-11-icon-neume-design.md`).
- * Neume (neume.dev, licence MIT) est le set d'icônes de Florian : 251 dessins sur une grille de
- * 12 × 12. Ses 228 minis de 8 × 8 restent dans le paquet, mais `Icon` ne les lit plus depuis Neume
+ * Neume (neume.dev, licence MIT) est le set d'icônes de Florian : 248 dessins sur une grille de
+ * 12 × 12, et leurs 248 solides. Ses 225 minis de 8 × 8 restent dans le paquet, mais `Icon` ne les lit plus depuis Neume
  * 0.2.0 (2026-11-12, décision de Florian : un seul dessin, un rapport de trait constant). Le paquet est une
  * dépendance à VERSION EXACTE — une mise à jour de Neume est un geste délibéré, qui change des
  * dessins sous nos pieds et repasse donc `Icon` en `draft`. Les tracés copiés de Pixelarticons, les
  * relevés de nodes et le glyphe repris du favicon sont sortis le même jour ; leur table et sa
  * docstring sont dans l'histoire, mot pour mot.
  *
+ * LES SOLIDES, DEPUIS NEUME 1.0.0 (2026-11-14). Chaque icône a une version pleine, que le paquet range
+ * dans sa table `solid` sous le nom de l'icône de base et publie sous `<nom>-solid` : `Icon` l'accepte
+ * sous ce même nom (`name="star-solid"`), et `compact` la lit dans `solid`. L'union porte donc les 248
+ * noms de base puis leurs 248 solides — tout nom de Neume, et aucun autre (loi 5), d'où les solides
+ * tous, et non les seuls employés. `star-filled`, `sun-filled` et `moon-filled` sont sortis de Neume ce
+ * jour-là : ce sont `star-solid`, `sun-solid` et `moon-solid`, aux mêmes cases.
+ *
  * LE CŒUR, PAS LE PAQUET REACT. `@neume-icons/svg` livre les grilles compactes (`/data`) et la règle
  * de calage (`/render` : `pick`, `decode`, `path`) ; `Icon` en tire un `d` et pose LUI-MÊME le
  * `<svg>`, avec ses classes et ses jetons. `@neume-icons/react` aurait été plus lourd pour rien : un
- * composant par icône, donc les 251 modules importés dès que le nom est une donnée ; un renvoi de ref
+ * composant par icône, donc les 496 modules importés dès que le nom est une donnée ; un renvoi de ref
  * à l'ancienne et un `useId` par glyphe ; des attributs `width` / `height` et une API de classes et
  * de styles ouverte, que la loi 11 refuse ; et sa dépendance au cœur est en `^0.1.0`, qui ne fige
  * pas la version.
