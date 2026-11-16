@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { Toaster } from "@/components/ui/toaster";
 import "@/styles/globals.css";
 import "@/styles/site.css";
+import { SITE_NAME, SITE_URL } from "./_shell/seo";
 
 // Les quatre faces ci-dessous, et les deux scripts de tête, sont recopiés du `app/layout.tsx` du
 // portfolio (commit dans COPIES.md) : le pourquoi de chaque réglage y est écrit. Ce fichier-ci est
@@ -108,23 +109,17 @@ const THEME_SCRIPT = `try{var t=localStorage.getItem("theme");if(t!=="light"&&t!
 
 const REVEAL_SCRIPT = `!function(){var d=document.documentElement,n=0;if(!("IntersectionObserver"in window))return;d.dataset.reveal="";setTimeout(function(){if(d.dataset.revealReady===undefined)delete d.dataset.reveal},3000);requestAnimationFrame(function r(){var b=document.querySelectorAll("[data-reveal-timing=load]:not([style])");for(var i=0;i<b.length;i++)b[i].style.setProperty("--reveal-index",n++);if(document.readyState==="loading")requestAnimationFrame(r)})}()`;
 
+// Ce que toutes les pages partagent. Le titre, la description, l'adresse canonique et les cartes de
+// partage sont posés par chaque page (`pageMetadata`, `app/_shell/seo.ts`) : le layout ne donne que le
+// repli, celui que prend une page sans métadonnées (la 404), et il ne se dit canonique de rien.
+// L'image (`app/opengraph-image.png`) et les icônes (`icon.svg`, `favicon.ico`, `apple-icon.png`) sont
+// des fichiers de app/, branchés par Next. Ils sortent de `scripts/brand-assets.mjs`.
 export const metadata: Metadata = {
-  metadataBase: new URL("https://neume.dev"),
-  title: "Neume — pixel icons for real interfaces",
-  description:
-    "A pixel icon set drawn square by square, shipped as SVG and React.",
-  alternates: { canonical: "/" },
-  // L'image (`app/opengraph-image.png`) et les icônes (`icon.svg`, `favicon.ico`, `apple-icon.png`) sont
-  // des fichiers de app/, branchés par Next. Ils sortent de `scripts/brand-assets.mjs`.
-  openGraph: {
-    type: "website",
-    url: "/",
-    siteName: "Neume",
-    title: "Neume — pixel icons for real interfaces",
-    description:
-      "A pixel icon set drawn square by square, shipped as SVG and React.",
-  },
-  twitter: { card: "summary_large_image" },
+  metadataBase: new URL(SITE_URL),
+  title: { default: SITE_NAME, template: `%s — ${SITE_NAME}` },
+  applicationName: SITE_NAME,
+  authors: [{ name: "Florian Faure", url: "https://florianfaure.com" }],
+  creator: "Florian Faure",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -1,26 +1,18 @@
-import type { Metadata } from "next";
 import { Changelog } from "./changelog";
+import { changelogJsonLd, jsonLdText, pageMetadata } from "../_shell/seo";
 
-const title = "Changelog — Neume";
-const description = "Every release of Neume, the pixel icon set: what changed, and when.";
-
-// Comme /docs : redéfinir `openGraph` et `twitter` remplace ceux du layout en entier, image comprise.
-const image = {
-  url: "/opengraph-image.png",
-  width: 1200,
-  height: 630,
-  type: "image/png",
-  alt: "Neume: pixel icons for real interfaces.",
-};
-
-export const metadata: Metadata = {
-  title,
-  description,
-  alternates: { canonical: "/changelog" },
-  openGraph: { type: "website", siteName: "Neume", url: "/changelog", title, description, images: [image] },
-  twitter: { card: "summary_large_image", title, description, images: [image] },
-};
+export const metadata = pageMetadata({
+  title: "Changelog: every release of the pixel icon set — Neume",
+  description:
+    "Every release of Neume, the free and open source pixel icon set: new icons, changed drawings and breaking changes, version by version.",
+  path: "/changelog",
+});
 
 export default function ChangelogPage() {
-  return <Changelog />;
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdText(changelogJsonLd()) }} />
+      <Changelog />
+    </>
+  );
 }
