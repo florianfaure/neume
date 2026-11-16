@@ -11,3 +11,9 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
+
+# Les previews des branches (<branche>-neume-dev.<sous-domaine>.workers.dev) servent le même site que
+# neume.dev : sans cet en-tête, un moteur pourrait les indexer comme des doublons. Un joker d'hôte ne
+# traverse pas les points : la règle ne touche que workers.dev, jamais neume.dev.
+https://:worker.:subdomain.workers.dev/*
+  X-Robots-Tag: noindex
