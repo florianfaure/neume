@@ -68,7 +68,14 @@ export function RequestDialog({
   const [image, setImage] = useState<File | null>(null);
   const [invalid, setInvalid] = useState<Field | null>(null);
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setTokenState] = useState<string | null>(null);
+  // Le même jeton, lisible par un envoi déjà parti : le widget ne se charge qu'à l'ouverture, et quelqu'un de
+  // rapide peut cliquer sur Send avant que Cloudflare ait répondu. L'envoi attend alors le jeton ici.
+  const tokenRef = useRef<string | null>(null);
+  const setToken = (value: string | null) => {
+    tokenRef.current = value;
+    setTokenState(value);
+  };
   // Un jeton Turnstile ne sert qu'une fois : le widget renaît après chaque envoi, et le champ fichier après une réussite.
   const [round, setRound] = useState(0);
   const [lastInitial, setLastInitial] = useState(initialName);
@@ -106,8 +113,17 @@ export function RequestDialog({
       setPhase({ kind: "idle" });
       return;
     }
-    if (!token) {
+    setPhase({ kind: "sending" });
+    // Le jeton arrive une à trois secondes après l'ouverture : on l'attend, huit secondes au plus.
+    let ready = token ?? tokenRef.current;
+    for (let waited = 0; !ready && waited < 8000; waited += 100) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      ready = tokenRef.current;
+    }
+    if (!ready) {
       setPhase({ kind: "failed", message: "The spam check has not loaded. Wait a moment, then send again.", fallback: true });
+      // Un script qui n'a pas chargé ne se recharge pas tout seul : le widget renaît, et réessaie.
+      setRound((r) => r + 1);
       return;
     }
 
@@ -116,9 +132,8 @@ export function RequestDialog({
     body.append("meaning", trimmed.meaning);
     body.append("link", trimmed.link);
     if (image) body.append("image", image);
-    body.append("cf-turnstile-response", token);
+    body.append("cf-turnstile-response", ready);
 
-    setPhase({ kind: "sending" });
     let res: Response;
     try {
       res = await fetch("/api/request", { method: "POST", body });

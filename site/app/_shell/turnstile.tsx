@@ -26,7 +26,11 @@ function loadTurnstile(): Promise<TurnstileApi> {
     const script = document.createElement("script");
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     script.async = true;
-    script.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error("turnstile")));
+    script.onload = () => {
+      if (window.turnstile) return resolve(window.turnstile);
+      loading = null;
+      reject(new Error("turnstile"));
+    };
     script.onerror = () => {
       loading = null;
       reject(new Error("turnstile"));
