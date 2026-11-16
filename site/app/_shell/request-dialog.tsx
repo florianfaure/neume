@@ -72,6 +72,10 @@ export function RequestDialog({
   // Un jeton Turnstile ne sert qu'une fois : le widget renaît après chaque envoi, et le champ fichier après une réussite.
   const [round, setRound] = useState(0);
   const [lastInitial, setLastInitial] = useState(initialName);
+  // Le dialogue est monté fermé sur chaque page : le widget, lui, attend la première ouverture. Sans cela le
+  // script de Turnstile et son iframe (un tiers) se chargeaient à l'arrivée sur n'importe quelle page.
+  const [opened, setOpened] = useState(false);
+  if (open && !opened) setOpened(true);
 
   // Une nouvelle ouverture depuis la recherche de l'accueil propose son nom, sans écraser une saisie en cours.
   if (initialName !== lastInitial) {
@@ -263,7 +267,7 @@ export function RequestDialog({
             {/* Le widget reste à hauteur nulle tant que Cloudflare ne demande rien : sans écart à lui, il ne
                 creuse pas de vide dans le formulaire. */}
             <div className="flex flex-col">
-              <Turnstile key={round} onToken={setToken} />
+              {opened && <Turnstile key={round} onToken={setToken} />}
               <p className="font-body text-caption text-text-tertiary">
                 Three requests an hour per connection. To count them, the site keeps a one-way fingerprint of your
                 connection for that hour, never your address.
