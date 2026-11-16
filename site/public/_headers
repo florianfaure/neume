@@ -17,3 +17,25 @@
 # traverse pas les points : la règle ne touche que workers.dev, jamais neume.dev.
 https://:worker.:subdomain.workers.dev/*
   X-Robots-Tag: noindex
+
+# Les données de navigation que Next exporte à côté de chaque page (index.txt, __next.*.txt) et la page
+# /_not-found sont servies en 200 : sans cet en-tête, un moteur qui exécute la page peut les indexer.
+# Une règle par chemin : pas de joker de suffixe, qui toucherait robots.txt.
+/index.txt
+  X-Robots-Tag: noindex
+/docs.txt
+  X-Robots-Tag: noindex
+/changelog.txt
+  X-Robots-Tag: noindex
+/_not-found.txt
+  X-Robots-Tag: noindex
+/_not-found
+  X-Robots-Tag: noindex
+/_not-found/*
+  X-Robots-Tag: noindex
+/__next.*
+  X-Robots-Tag: noindex
+/docs/__next.*
+  X-Robots-Tag: noindex
+/changelog/__next.*
+  X-Robots-Tag: noindex

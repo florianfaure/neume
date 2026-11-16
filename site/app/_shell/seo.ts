@@ -112,13 +112,11 @@ const sourceCode = {
   url: `${SITE_URL}/`,
   codeRepository: REPO_URL,
   license: "https://opensource.org/licenses/MIT",
-  programmingLanguage: ["TypeScript", "JavaScript"],
-  runtimePlatform: "React",
+  programmingLanguage: "JavaScript",
   version,
   isAccessibleForFree: true,
   keywords: "pixel icons, pixel icon set, pixel art icons, React icons, SVG icons, open source icons",
   author: { "@id": AUTHOR_ID },
-  mainEntityOfPage: { "@id": WEBSITE_ID },
 };
 
 const graph = (...nodes: object[]) => ({ "@context": "https://schema.org", "@graph": nodes });
@@ -144,10 +142,14 @@ export const docsJsonLd = ({ title, description }: { title: string; description:
       url: `${SITE_URL}/docs`,
       inLanguage: "en",
       image: `${SITE_URL}${SHARE_IMAGE.url}`,
-      author,
+      author: { "@id": AUTHOR_ID },
       about: { "@id": CODE_ID },
       isPartOf: { "@id": WEBSITE_ID },
     },
+    // Google ne relie pas les graphes d'une page à l'autre : les nœuds cités par @id sont redits ici.
+    website,
+    author,
+    sourceCode,
     breadcrumb("Docs", "/docs"),
   );
 
