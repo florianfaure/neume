@@ -70,7 +70,8 @@ type ChipGroupProps = ChipGroupBaseProps &
  * `chevron-left` ou `chevron-right`, bulle « Scroll left » / « Scroll right » en props — se pose sur le fondu,
  * UNIQUEMENT de ce côté-là : elle n'apparaît que s'il reste à défiler, et fait défiler d'environ 80 % de la
  * largeur visible. Tout tient : ni fondu ni flèche, et la rangée est celle d'avant. La flèche qui disparaît
- * en tenant le focus le rend à la chip choisie, pour que le focus ne tombe pas sur la page. Un `ResizeObserver`
+ * en tenant le focus le rend à l'autre flèche, ou à défaut à la chip choisie, SANS faire défiler la rangée
+ * (2026-11-21) : le focus ne tombe pas sur la page, et la rangée reste où on l'a menée. Un `ResizeObserver`
  * et l'écoute du défilement tiennent l'état ; sous `prefers-reduced-motion` le défilement est immédiat. Le
  * défileur laisse 8 px de marge autour de la rangée (compensés par des marges négatives) pour que l'anneau
  * de focus et la cible de 44 px ne soient pas rognés par son `overflow`.
@@ -107,14 +108,20 @@ export function ChipGroup({
       const start = el.scrollLeft > 1;
       const end = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
       setMore((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
-      /* Une flèche qui disparaît sous le focus le rend à la chip choisie. */
+      /* Une flèche qui disparaît sous le focus le rend à l'autre flèche, restée à l'écran ; à défaut, à la
+       * chip choisie. Jamais en faisant défiler : la chip choisie est souvent hors champ, et le navigateur
+       * ramenait la rangée sur elle — au bout de la rangée, « Scroll right » renvoyait tout à gauche. */
       const active = document.activeElement;
-      if (
-        active &&
-        ((!start && startArrow.current?.contains(active)) ||
-          (!end && endArrow.current?.contains(active)))
-      ) {
-        el.querySelector<HTMLElement>("input:checked")?.focus();
+      const lostStart = !start && startArrow.current?.contains(active);
+      const lostEnd = !end && endArrow.current?.contains(active);
+      if (active && (lostStart || lostEnd)) {
+        const other = lostEnd ? (start ? startArrow.current : null) : end ? endArrow.current : null;
+        const arrow = other?.querySelector<HTMLElement>("button");
+        arrow?.focus({ preventScroll: true });
+        /* L'autre flèche peut être encore masquée (elle apparaît au même instant) : elle refuse alors le focus. */
+        if (!arrow || document.activeElement !== arrow) {
+          el.querySelector<HTMLElement>("input:checked")?.focus({ preventScroll: true });
+        }
       }
     };
 
