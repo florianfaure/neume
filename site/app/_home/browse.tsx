@@ -8,9 +8,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SearchField } from "@/components/ui/search-field";
 import { Slider } from "@/components/ui/slider";
 import { Tile } from "@/components/ui/tile";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import type { Theme } from "@/data/themes";
 import { cn } from "@/lib/cn";
 import { NeumeIcon } from "@/lib/neume";
+import type { Style } from "@/lib/neume";
 import { SIZES } from "@neume-icons/svg/render";
 
 
@@ -22,17 +24,31 @@ interface BrowseProps {
   onQueryChange: (query: string) => void;
   size: number;
   onSizeChange: (size: number) => void;
+  /** Le style de tout le catalogue : le dessin de base, ou sa version pleine. */
+  style: Style;
+  onStyleChange: (style: Style) => void;
   onOpen: (name: string) => void;
   /** Ouvre la demande d'icône, avec la recherche comme nom quand elle en a la forme. */
   onRequest: (name?: string) => void;
 }
 
 /**
- * « Browse the icons » : la barre d'outils (recherche, taille, thèmes) qui se compacte et se colle en
+ * « Browse the icons » : la barre d'outils (recherche, style, taille, thèmes) qui se compacte et se colle en
  * descendant, et reprend sa forme en remontant ; puis la grille par thème. Un clic sur une tuile remonte
  * à la page, qui ouvre la fiche.
  */
-export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeChange, onOpen, onRequest }: BrowseProps) {
+export function Browse({
+  themes,
+  totalIcons,
+  query,
+  onQueryChange,
+  size,
+  onSizeChange,
+  style,
+  onStyleChange,
+  onOpen,
+  onRequest,
+}: BrowseProps) {
   const sentinel = useRef<HTMLDivElement>(null);
   const chips = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState(false);
@@ -156,14 +172,27 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
                 onValueChange={onQueryChange}
               />
             </div>
-            <div className="w-full md:ml-auto md:w-[var(--site-slider-width)]">
-              <Slider
-                label="Icon size"
-                steps={SIZES}
-                value={size}
-                onValueChange={onSizeChange}
-                formatValueText={(value) => `${value} pixels`}
+            {/* Base / Solid pour tout le catalogue, les mêmes mots que les onglets de la fiche : l'étoile et
+                son plein disent le choix sans le lire. */}
+            <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
+              <ToggleGroup
+                label="Icon style"
+                items={[
+                  { value: "base", label: "Base", icon: "star" },
+                  { value: "solid", label: "Solid", icon: "star-solid" },
+                ]}
+                value={style}
+                onValueChange={(value) => onStyleChange(value === "solid" ? "solid" : "base")}
               />
+              <div className="min-w-0 flex-1 md:w-[var(--site-slider-width)] md:flex-none">
+                <Slider
+                  label="Icon size"
+                  steps={SIZES}
+                  value={size}
+                  onValueChange={onSizeChange}
+                  formatValueText={(value) => `${value} pixels`}
+                />
+              </div>
             </div>
           </div>
           <div
@@ -238,7 +267,7 @@ export function Browse({ themes, totalIcons, query, onQueryChange, size, onSizeC
             <div className="site-tile-grid gap-2">
               {theme.icons.map((name) => (
                 <Tile key={name} label={name} onClick={() => onOpen(name)}>
-                  <NeumeIcon name={name} size={size} />
+                  <NeumeIcon name={name} size={size} style={style} />
                 </Tile>
               ))}
             </div>
