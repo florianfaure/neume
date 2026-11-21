@@ -13,10 +13,10 @@
 </p>
 
 <p align="center">
-  <img src=".github/assets/preview.svg" alt="The 248 Neume icons, at 24 px.">
+  <img src=".github/assets/preview.svg" alt="The 513 Neume icons, at 24 px.">
 </p>
 
-Neume is 248 icons, each drawn cell by cell on a grid of 12 × 12 squares, and each with a solid version
+Neume is 513 icons, each drawn cell by cell on a grid of 12 × 12 squares, and each with a solid version
 drawn on the same grid. The same drawing serves every
 size: at 12, 24, 36, 48 and 60 px every square lands on whole pixels and the edges stay sharp. In between,
 the icon scales smoothly and keeps its proportions. The full documentation lives at

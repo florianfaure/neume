@@ -1,6 +1,6 @@
 import { BrandMark } from "@/components/brand";
 import { Footer } from "@/components/ui/footer";
-import { Icon } from "@/components/ui/icon";
+import { NeumeIcon } from "@/lib/neume";
 
 /**
  * Le pied de neume.dev, le même sur toutes les pages : la ligne (filet, licence, signature), puis le grand
@@ -14,7 +14,9 @@ export function SiteFooter() {
       start="MIT licence"
       end={
         <span className="inline-flex items-center gap-2">
-          <Icon name="edit" size={16} />
+          {/* `pencil` remplace `edit` depuis Neume 2.0.0. `Icon`, copie du portfolio, ne connaît pas encore ce nom :
+              le glyphe vient du paquet, jusqu'à la prochaine recopie. */}
+          <NeumeIcon name="pencil" size={16} />
           Drawn by Florian Faure
         </span>
       }

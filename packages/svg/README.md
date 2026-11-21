@@ -1,6 +1,6 @@
 # @neume-icons/svg
 
-Neume is a pixel icon set: 248 icons on a 12 × 12 grid, each with a solid version.
+Neume is a pixel icon set: 513 icons on a 12 × 12 grid, each with a solid version.
 This package is the framework-agnostic core. For React, use [`@neume-icons/react`](../react).
 
 ```sh
