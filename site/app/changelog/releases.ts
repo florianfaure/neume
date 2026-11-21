@@ -16,6 +16,20 @@ export type Release = {
 
 export const RELEASES: Release[] = [
   {
+    version: "2.0.0",
+    date: "2026-11-21",
+    title: "513 icons, twice the set",
+    summary:
+      "Neume grows from 248 to 513 icons, each with its solid version. 266 are new, across every category, with three new ones: food and drink, objects and tools.",
+    changes: [
+      "266 new icons and their 266 solid versions, in both packages and in the zip of SVG files.",
+      "New categories: Food & drink (coffee, pizza, burger), Objects (lamp, backpack, pill) and Tools (hammer, saw, drill, anvil).",
+      "More of what was already there: arrows and carets, circled and squared actions, file and folder states, headings, weather, devices, git and code signs.",
+      "Redrawn solid versions of at-sign, video and pin.",
+      "Breaking: edit is removed. Use pencil, <Pencil />, pencil.svg.",
+    ],
+  },
+  {
     version: "1.0.0",
     date: "2026-11-14",
     title: "A solid version of every icon",
