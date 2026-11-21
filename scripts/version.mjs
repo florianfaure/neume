@@ -32,6 +32,14 @@ if (assert) {
     if (p.dependencies?.["@neume-icons/svg"]) p.dependencies["@neume-icons/svg"] = `^${v}`;
     writeFileSync(f, JSON.stringify(p, null, 2) + "\n");
   }
+  // Le site épingle le cœur à la version exacte : sans cela, npm cesse de lier le paquet local et installe
+  // l'ancienne version depuis le registre, et le site se construit avec l'ancien set.
+  const site = new URL("../site/package.json", import.meta.url);
+  const s = read(site);
+  if (s.dependencies?.["@neume-icons/svg"]) {
+    s.dependencies["@neume-icons/svg"] = v;
+    writeFileSync(site, JSON.stringify(s, null, 2) + "\n");
+  }
   execSync("npm install --package-lock-only --silent && npm run -s build", { stdio: "inherit" });
   console.log(`Les deux paquets sont en ${v}. Commit, PR, fusion, puis une release GitHub « v${v} ».`);
 }
