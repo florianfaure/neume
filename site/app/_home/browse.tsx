@@ -8,7 +8,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SearchField } from "@/components/ui/search-field";
 import { Slider } from "@/components/ui/slider";
 import { Tile } from "@/components/ui/tile";
-import { ToggleGroup } from "@/components/ui/toggle-group";
 import type { Theme } from "@/data/themes";
 import { cn } from "@/lib/cn";
 import { NeumeIcon } from "@/lib/neume";
@@ -172,18 +171,21 @@ export function Browse({
                 onValueChange={onQueryChange}
               />
             </div>
-            {/* Base / Solid pour tout le catalogue, les mêmes mots que les onglets de la fiche : l'étoile et
-                son plein disent le choix sans le lire. */}
+            {/* Base / Solid pour tout le catalogue : les mêmes mots, sur la même piste, que les onglets de la
+                fiche. `shrink-0` : la rangée de chips est un défileur qui prendrait sinon toute la largeur. */}
             <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
-              <ToggleGroup
-                label="Icon style"
-                items={[
-                  { value: "base", label: "Base", icon: "star" },
-                  { value: "solid", label: "Solid", icon: "star-solid" },
-                ]}
-                value={style}
-                onValueChange={(value) => onStyleChange(value === "solid" ? "solid" : "base")}
-              />
+              <div className="shrink-0">
+                <ChipGroup
+                  label="Icon style"
+                  surface="track"
+                  items={[
+                    { value: "base", label: "Base" },
+                    { value: "solid", label: "Solid" },
+                  ]}
+                  value={style}
+                  onValueChange={(value) => onStyleChange(value === "solid" ? "solid" : "base")}
+                />
+              </div>
               <div className="min-w-0 flex-1 md:w-[var(--site-slider-width)] md:flex-none">
                 <Slider
                   label="Icon size"
