@@ -41,11 +41,13 @@ async function copyCommand() {
 /**
  * Les deux couches globales de neume.dev, la palette (⌘K) et la fiche d'icône, qui se parlent par l'état
  * de la page. `order` est l'ordre que suivent suivant / précédent dans la fiche (sur l'accueil, celui du
- * catalogue filtré) ; `size` est la taille du SVG et du JSX que la fiche copie.
+ * catalogue filtré) ; `size` est la taille du SVG et du JSX que la fiche copie ; `openStyle` est le style
+ * dans lequel la fiche s'ouvre (sur l'accueil, celui du catalogue).
  */
 export function useSiteLayers(
   order: readonly string[],
   size: number,
+  openStyle: Style = "base",
 ): {
   openPalette: () => void;
   openIcon: (name: string) => void;
@@ -63,6 +65,7 @@ export function useSiteLayers(
 
   const openIcon = (name: string) => {
     setCurrent(name);
+    setStyle(openStyle);
     setSheetOpen(true);
   };
 

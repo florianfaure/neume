@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
 import { THEMES, KEYWORDS } from "@/data/themes";
+import type { Style } from "@/lib/neume";
 import { SiteFooter } from "../_shell/site-footer";
 import { SiteNav } from "../_shell/site-nav";
 import { REPO_URL } from "../_shell/links";
@@ -26,15 +27,17 @@ function filterThemes(query: string) {
 /**
  * L'accueil de neume.dev : la barre, le hero, les cartes, le catalogue, le pied — et les deux couches
  * globales de `useSiteLayers`, la palette (⌘K) et la fiche d'icône, qui suit l'ordre du catalogue filtré
- * et copie à la taille de son curseur.
+ * et copie à la taille de son curseur. Le style du catalogue (Base / Solid) est aussi celui dans lequel la
+ * fiche s'ouvre.
  */
 export function Home() {
   const [query, setQuery] = useState("");
   const [size, setSize] = useState(24);
+  const [style, setStyle] = useState<Style>("base");
 
   const themes = useMemo(() => filterThemes(query), [query]);
   const order = useMemo(() => themes.flatMap((t) => t.icons), [themes]);
-  const { openPalette, openIcon, openRequest, layers } = useSiteLayers(order, size);
+  const { openPalette, openIcon, openRequest, layers } = useSiteLayers(order, size, style);
 
   return (
     <>
@@ -51,6 +54,8 @@ export function Home() {
             onQueryChange={setQuery}
             size={size}
             onSizeChange={setSize}
+            style={style}
+            onStyleChange={setStyle}
             onOpen={openIcon}
             onRequest={openRequest}
           />
